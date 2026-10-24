@@ -29,7 +29,9 @@ def main():
     if flags.returncode:
         raise RuntimeError('Faltan cabeceras/metadatos de Qt6 Gui/Qml/Quick (qt6-base, qt6-declarative):\n' + flags.stderr)
     command = compiler + ['-std=c++17', '-O2', '-fPIC'] + shlex.split(os.environ.get('CXXFLAGS', ''))
-    command += [str(HERE / 'src/main.cpp')] + shlex.split(flags.stdout) + ['-lLayerShellQtInterface']
+    command += [str(HERE / 'src/main.cpp')] + shlex.split(flags.stdout) + [
+        # KF6GlobalAccel no instala un .pc: cabeceras y biblioteca directas.
+        '-I/usr/include/KF6/KGlobalAccel', '-lKF6GlobalAccel', '-lLayerShellQtInterface']
     command += shlex.split(os.environ.get('LDFLAGS', ''))
     fingerprint = hashlib.sha256(json.dumps([command, stamp(compiler[0]),
                                 stamp(__file__)]).encode()).hexdigest()

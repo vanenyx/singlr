@@ -1,8 +1,11 @@
 // Lanzador del shell Singlr: activa layer-shell solo para este proceso y pide a KWin
 // el desenfoque de fondo para las ventanas QML que lo declaran.
+#include <KGlobalAccel>
 #include <KWindowEffects>
+#include <QAction>
 #include <LayerShellQt/Shell>
 #include <QDBusConnection>
+#include <QDBusConnectionInterface>
 #include <QDBusMessage>
 #include <QDBusVirtualObject>
 #include <QGuiApplication>
@@ -110,6 +113,17 @@ int main(int argc, char *argv[])
         // Los nombres solo están libres si plasmashell y krunner no se ejecutan.
         if (bus.registerService(QStringLiteral("org.kde.plasmashell")))
             bus.registerVirtualObject(QStringLiteral("/PlasmaShell"), bridge);
+        // Meta llega por kglobalaccel como acción del componente «plasmashell». Mientras Plasma está
+        // parado, Singlr registra esa misma acción y carga el atajo ya guardado sin modificarlo.
+        if (bus.interface()->registeredServiceNames().value().contains(QStringLiteral("org.kde.plasmashell"))
+            && bus.interface()->serviceOwner(QStringLiteral("org.kde.plasmashell")).value() == bus.baseService()) {
+            auto *action = new QAction(&app);
+            action->setObjectName(QStringLiteral("activate application launcher"));
+            action->setProperty("componentName", QStringLiteral("plasmashell"));
+            action->setText(QStringLiteral("Activar el lanzador de aplicaciones"));
+            KGlobalAccel::self()->setShortcut(action, {QKeySequence(Qt::META), QKeySequence(Qt::ALT | Qt::Key_F1)}, KGlobalAccel::Autoloading);
+            QObject::connect(action, &QAction::triggered, session, [session] { QMetaObject::invokeMethod(session, "toggleLauncher"); });
+        }
         if (bus.registerService(QStringLiteral("org.kde.krunner"))) {
             bus.registerVirtualObject(QStringLiteral("/App"), bridge);
             bus.registerVirtualObject(QStringLiteral("/org/kde/krunner"), bridge);
