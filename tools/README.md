@@ -43,3 +43,7 @@ QT_QUICK_BACKEND=rhi QSG_RHI_BACKEND=opengl tools/run-prototype.sh prototypes/ru
 
 Resultados ejecutados en tools/evidence/. Ventana, blur real y cierre anidado
 completo requieren verificación externa al sandbox. No hay dependencias nuevas.
+
+La sesión Singlr con aplicaciones reales usa `tools/run-singlr.sh`,
+`tools/capture-session.sh` y `tools/check-shell.sh`. Contrato, evidencia y
+comandos externos: [shell/session/README.md](../shell/session/README.md).

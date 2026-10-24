@@ -35,19 +35,24 @@ def stop(process):
     process.wait()
 
 
+def isolated_environment(base):
+    """Keep system imports/applications, isolate every persistent XDG write."""
+    env = os.environ.copy()
+    for key, subdir in [('XDG_CONFIG_HOME', 'config'), ('XDG_CACHE_HOME', 'cache'),
+                        ('XDG_DATA_HOME', 'data'), ('XDG_STATE_HOME', 'state')]:
+        path = base / subdir
+        path.mkdir(mode=0o700)
+        env[key] = str(path)
+    return env
+
+
 def run(source, mode, output=None, size=None, duration=0):
     qml = shutil.which('qml6')
     if not qml:
         raise RuntimeError('qml6 missing (Arch: qt6-declarative)')
     with tempfile.TemporaryDirectory(prefix='singlr-runtime-') as directory:
         base = Path(directory)
-        env = os.environ.copy()
-        # Keep the parent runtime socket for --window; isolate all persistent writes.
-        for key, subdir in [('XDG_CONFIG_HOME', 'config'), ('XDG_CACHE_HOME', 'cache'),
-                            ('XDG_DATA_HOME', 'data'), ('XDG_STATE_HOME', 'state')]:
-            path = base / subdir
-            path.mkdir()
-            env[key] = str(path)
+        env = isolated_environment(base)
         env['QT_QUICK_CONTROLS_STYLE'] = 'Basic'
         env['QT_QPA_PLATFORMTHEME'] = ''
         env['QT_WAYLAND_SHELL_INTEGRATION'] = 'xdg-shell'
