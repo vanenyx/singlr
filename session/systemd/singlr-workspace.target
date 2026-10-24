@@ -1,0 +1,16 @@
+[Unit]
+Description=Singlr Wayland Workspace
+# Portals start AFTER graphical-session.target: do not add implicit After=Wants.
+DefaultDependencies=no
+Requires=graphical-session.target singlr-shell.service plasma-kwin_wayland.service
+BindsTo=graphical-session.target singlr-shell.service plasma-kwin_wayland.service
+PartOf=graphical-session.target
+Wants=graphical-session-pre.target plasma-kded6.service
+Wants=plasma-polkit-agent.service plasma-powerdevil.service
+Wants=plasma-xdg-desktop-portal-kde.service xdg-desktop-portal.service
+Wants=plasma-kactivitymanagerd.service
+Wants=pipewire.socket pipewire-pulse.socket wireplumber.service
+After=graphical-session-pre.target plasma-kwin_wayland.service singlr-shell.service
+Before=graphical-session.target
+Conflicts=shutdown.target
+Before=shutdown.target

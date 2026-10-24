@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Singlr
+Comment=Singlr Wayland desktop with KDE services
+Exec=/usr/lib/singlr/startsinglr-wayland
+TryExec=/usr/lib/singlr/startsinglr-wayland
+DesktopNames=Singlr;KDE;
