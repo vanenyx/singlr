@@ -1,3 +1,29 @@
+# T209 — Ciclo fiable del dock (P-009)
+
+Sustituye el comportamiento T208: app inactiva → solo la ventana con mayor
+`LastActivated` (sin fechas, primer hijo actual); app activa → siguiente id en
+orden lexicográfico y cíclico. Una ventana activa no recibe ninguna acción.
+Nunca minimiza. Menú contextual, clic central y rueda conservan su comportamiento.
+
+Cada clic relee los hijos con `rowCount`/`makeModelIndex` y resuelve de nuevo el
+índice por `WinIdList` inmediatamente antes de activar. Solo guarda ids, incluidos
+UUID Wayland. Una petición pendiente por app sirve de referencia mientras
+`IsActive` se retrasa; se descarta al confirmarse o desaparecer la ventana.
+`Dock.cycleApp(appId)` busca el `AppId` (también admite la URL de lanzador) y usa
+la misma función que el clic; devuelve false si no encuentra la app.
+
+Verificado con Qt 6.12.0 / Plasma Workspace 6.8.1 y contratos de roles en el
+qmltypes instalado y la fuente oficial enlazada en T208. `qmllint` con los imports
+del comando inferior: exit 0, sin avisos. Suite offscreen/software completa:
+**38 passed, 0 failed**. El doble reordena los hijos tras cada activación y prueba
+ciclos completos, UUID, `IsActive` retrasado, foco externo tras confirmación,
+ventana pendiente eliminada, minimizadas y grupo reducido a una ventana.
+Registro vivo seguido con `tail -F`: recargas sin errores QML; persiste el aviso
+previo del portal (`App info not found for 'singlr-shell'`). Pendiente: prueba real
+de varias ventanas en KWin anidado por Claude mediante `cycleApp`.
+
+---
+
 # T208 — Dock según P-008
 
 Decisión explícita del creador: clic trae las ventanas no minimizadas de la app,

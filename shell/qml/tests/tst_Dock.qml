@@ -9,6 +9,7 @@ Item {
         id: doubleModel
         property var children: []
         property var calls: []
+        property bool delayActive: false
         property int clock: 100
         property string activatedId: ""
         function index(row, column) { return {row: row, child: -1}; }
@@ -27,12 +28,12 @@ Item {
             const chosen = children[index.child < 0 ? 0 : index.child];
             calls.push("activate:" + chosen.id);
             activatedId = chosen.id;
-            for (const child of children) child.active = child.id === chosen.id;
+            if (!delayActive) for (const child of children) child.active = child.id === chosen.id;
             chosen.time = ++clock;
             chosen.minimized = false;
             // Reproduce the real regression: the activated child becomes row zero.
             children = [chosen].concat(children.filter(w => w.id !== chosen.id));
-            setProperty(0, "IsActive", true);
+            if (!delayActive) setProperty(0, "IsActive", true);
         }
         function requestToggleMinimized(index) {
             calls.push(children[index.child].id);
@@ -52,8 +53,8 @@ Item {
         name: "DockBehaviour"; when: windowShown
         function task() { return doubleModel.get(0); }
         function init() {
-            dock.closeMenu(); dock.hideTooltip(); dock.activationHistory = ({}); dock.observedActive = ""; dock.launching = ({});
-            doubleModel.clear(); doubleModel.calls = []; doubleModel.activatedId = "";
+            dock.closeMenu(); dock.hideTooltip(); dock.requestedWindows = ({}); dock.launching = ({});
+            doubleModel.delayActive = false; doubleModel.clear(); doubleModel.calls = []; doubleModel.activatedId = "";
             doubleModel.children = [
                 {id:"40", active:false, minimized:false, time:4},
                 {id:"20", active:true, minimized:false, time:8},
@@ -69,51 +70,91 @@ Item {
             const size = [dock.width, dock.height, dock.visible];
             for (let i = 0; i < 3; ++i) {
                 doubleModel.calls = [];
-                dock.activate(0, task());
-                compare(doubleModel.calls, ["activate:10", "activate:30", "activate:40", "activate:20"]);
+                for (let click = 0; click < 4; ++click) verify(dock.cycleApp("browser"));
+                compare(doubleModel.calls, ["activate:30", "activate:40", "activate:10", "activate:20"]);
                 compare(doubleModel.activatedId, "20");
                 compare([dock.width, dock.height, dock.visible], size);
             }
+            verify(!dock.cycleApp("missing"));
         }
         function test_inactiveUsesMostRecent() {
             doubleModel.setProperty(0,"IsActive",false);
             doubleModel.children.forEach(w => w.active = false);
-            dock.activationHistory = ({"applications:browser.desktop|10":999});
-            dock.activate(0, task()); compare(doubleModel.activatedId,"20");
-            compare(doubleModel.calls, ["activate:10", "activate:30", "activate:40", "activate:20"]);
+            dock.cycleApp("browser"); compare(doubleModel.activatedId,"20");
+            compare(doubleModel.calls, ["activate:20"]);
+        }
+        function test_inactiveWithoutDatesUsesFirstChild() {
+            doubleModel.setProperty(0,"IsActive",false);
+            doubleModel.children.forEach(w => { w.active = false; w.time = 0; });
+            dock.cycleApp("browser");
+            compare(doubleModel.calls, ["activate:40"]);
         }
         function test_allMinimizedRestoreOnlyRecent() {
             doubleModel.setProperty(0,"IsActive",false);
             doubleModel.children.forEach(w => { w.active = false; w.minimized = true; });
-            dock.activate(0, task()); compare(doubleModel.activatedId,"20");
+            dock.cycleApp("browser"); compare(doubleModel.activatedId,"20");
             compare(doubleModel.calls, ["activate:20"]);
             compare(doubleModel.children.filter(w => w.minimized).length,3);
         }
-        function test_mixedLeavesMinimizedAlone() {
+        function test_recentMinimizedWindowIsRestored() {
+            doubleModel.setProperty(0,"IsActive",false);
             doubleModel.children.find(w => w.id === "20").minimized = true;
             doubleModel.children.forEach(w => w.active = false);
             dock.activate(0, task());
-            compare(doubleModel.calls, ["activate:10", "activate:30", "activate:40"]);
-            verify(doubleModel.children.find(w => w.id === "20").minimized);
+            compare(doubleModel.calls, ["activate:20"]);
+            verify(!doubleModel.children.find(w => w.id === "20").minimized);
         }
         function test_singleActiveNeverMinimizes() {
             doubleModel.children = [{id:"20",active:true,minimized:false,time:8}];
             const single = {AppName:"Browser", IsGroupParent:false, IsActive:true, IsMinimizable:true, WinIdList:["20"]};
             dock.activate(0,single); dock.activate(0,single);
-            compare(doubleModel.calls,["activate:20","activate:20"]);
+            compare(doubleModel.calls,[]);
             verify(!doubleModel.children[0].minimized);
+            dock.cycleApp("browser"); compare(doubleModel.calls,[]);
         }
-        function test_externalActivationFallbackAndRemovedWindow() {
-            doubleModel.children.forEach(w => w.time = 0);
-            dock.rememberActive();
-            doubleModel.children.forEach(w => w.active = w.id === "10");
-            dock.rememberActive();
-            doubleModel.children.forEach(w => w.active = false);
+        function test_rapidClicksWithDelayedActiveAndReordering() {
+            doubleModel.delayActive = true;
+            for (let i = 0; i < 8; ++i) dock.cycleApp("browser");
+            compare(doubleModel.calls, ["activate:30", "activate:40", "activate:10", "activate:20",
+                                        "activate:30", "activate:40", "activate:10", "activate:20"]);
+        }
+        function test_rapidClicksFromInactiveApp() {
+            doubleModel.delayActive = true;
             doubleModel.setProperty(0,"IsActive",false);
-            dock.activate(0,task()); compare(doubleModel.activatedId,"10");
-            doubleModel.children = doubleModel.children.filter(w => w.id !== "10");
-            doubleModel.children.forEach(w => { w.active = false; w.time = 0; });
-            dock.activate(0,task()); compare(doubleModel.activatedId,"20");
+            doubleModel.children.forEach(w => w.active = false);
+            for (let i = 0; i < 3; ++i) dock.cycleApp("browser");
+            compare(doubleModel.calls, ["activate:20", "activate:30", "activate:40"]);
+        }
+        function test_acknowledgementThenExternalActivation() {
+            doubleModel.delayActive = true;
+            dock.cycleApp("browser"); // Requests 30 while IsActive still says 20.
+            doubleModel.children.forEach(w => w.active = w.id === "30");
+            dock.reconcileRequests();
+            doubleModel.children.forEach(w => w.active = w.id === "10");
+            dock.cycleApp("browser");
+            compare(doubleModel.calls,["activate:30","activate:20"]);
+        }
+        function test_removedPendingWindowAndGroupBecomesSingle() {
+            doubleModel.delayActive = true;
+            dock.cycleApp("browser");
+            doubleModel.children = doubleModel.children.filter(w => w.id !== "30");
+            dock.cycleApp("browser");
+            compare(doubleModel.calls,["activate:30","activate:40"]);
+            doubleModel.children = [{id:"20",active:true,minimized:false,time:8}];
+            dock.cycleApp("browser");
+            compare(doubleModel.calls,["activate:30","activate:40"]);
+        }
+        function test_waylandUuidLexicalOrder() {
+            doubleModel.delayActive = true;
+            doubleModel.children = [
+                {id:"{e0000000-0000-0000-0000-000000000001}",active:false},
+                {id:"{a0000000-0000-0000-0000-000000000001}",active:true},
+                {id:"{c0000000-0000-0000-0000-000000000001}",active:false}
+            ];
+            for (let i = 0; i < 3; ++i) dock.cycleApp("browser");
+            compare(doubleModel.calls,["activate:{c0000000-0000-0000-0000-000000000001}",
+                                       "activate:{e0000000-0000-0000-0000-000000000001}",
+                                       "activate:{a0000000-0000-0000-0000-000000000001}"]);
         }
         function test_quitClosesAllWindows() {
             dock.openContext(0,task());

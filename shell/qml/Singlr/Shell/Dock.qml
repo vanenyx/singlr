@@ -38,9 +38,8 @@ Rectangle {
     property var modelOverride: null
     readonly property var taskSource: modelOverride || tasks
     property alias tasksModel: tasks
-    property var activationHistory: ({})
-    property string observedActive: ""
-    property double activationClock: 0
+    // Only window identities survive child reordering and delayed IsActive updates.
+    property var requestedWindows: ({})
     property var launching: ({})
     readonly property var candidates: ["org.kde.dolphin.desktop", "org.kde.konsole.desktop", "firefox.desktop", "org.kde.kate.desktop", "systemsettings.desktop"]
     property var pinUrls: []
@@ -87,7 +86,7 @@ Rectangle {
                 active: !!read(TaskManager.AbstractTasksModel.IsActive), minimized: !!read(TaskManager.AbstractTasksModel.IsMinimized),
                 lastActivated: TaskManager.AbstractTasksModel.LastActivated !== undefined ? Number(read(TaskManager.AbstractTasksModel.LastActivated)) || 0 : 0});
         }
-        return DockLogic.ordered(result);
+        return result;
     }
     function windowIndex(row, task, id) {
         if (!task.IsGroupParent) return taskSource.index(row, 0);
@@ -101,13 +100,13 @@ Rectangle {
     function activateWindow(row, task, id) {
         const idx = windowIndex(row, task, id);
         if (idx === null) return;
-        recordActivation(task, id);
+        requestedWindows[appKey(task)] = id;
         taskSource.requestActivate(idx);
     }
     function closeMenu() { contextRow = -1; }
     function openContext(row, task) {
         hideTooltip(); contextTask = task; contextRow = row;
-        contextWindows = windows(row, task);
+        contextWindows = DockLogic.ordered(windows(row, task));
         menuEntries = contextWindows.map(w => ({label: w.title, id: w.id, action: "window", active: w.active, enabled: true})).concat([
             {label: "Nueva ventana", action: "new", separator: contextWindows.length > 0, enabled: !!(task.IsLauncher || task.IsNewInstanceable)},
             {label: task.IsLauncher || task.HasLauncher ? "Quitar del dock" : "Fijar en el dock", action: "pin", enabled: !!(task.LauncherUrlWithoutIcon || task.LauncherUrl)},
@@ -171,7 +170,7 @@ Rectangle {
         if (contextRow < 0 || !contextTask || !contextTask.IsClosable) return;
         const row = contextRow;
         const task = contextTask;
-        const list = windows(row, task);
+        const list = DockLogic.ordered(windows(row, task));
         closeMenu();
         // Resolve every identity again: closing a child can reorder the model.
         for (const window of list) {
@@ -179,40 +178,58 @@ Rectangle {
             if (idx !== null) taskSource.requestClose(idx);
         }
     }
-    function recordActivation(task, id) {
-        const key = appKey(task) + "|" + id;
-        if (observedActive === key) return;
-        activationClock = Math.max(Date.now(), activationClock + 1);
-        activationHistory[key] = activationClock;
-        observedActive = key;
-    }
-    function rememberActive() {
+    function reconcileRequests() {
         for (let row = 0; row < pinned.count; ++row) {
             const item = pinned.itemAt(row) as TaskEntry;
-            if (!item || !item.model.IsActive || item.model.IsLauncher) continue;
-            const active = windows(row, item.model).find(w => w.active);
-            if (active) { recordActivation(item.model, active.id); return; }
+            if (!item || item.model.IsLauncher) continue;
+            const key = appKey(item.model);
+            const requested = requestedWindows[key];
+            if (!requested) continue;
+            const list = windows(row, item.model);
+            // Once acknowledged, subsequent external focus changes take precedence.
+            if (!list.some(w => w.id === requested) || list.some(w => w.id === requested && w.active))
+                delete requestedWindows[key];
         }
-        observedActive = "";
     }
     Connections {
         target: dock.taskSource
         ignoreUnknownSignals: true
-        function onDataChanged() { dock.rememberActive(); }
-        function onModelReset() { dock.closeMenu(); dock.activationHistory = ({}); dock.observedActive = ""; }
-        function onRowsRemoved() { dock.closeMenu(); }
+        function onDataChanged() { dock.reconcileRequests(); }
+        function onModelReset() { dock.closeMenu(); dock.requestedWindows = ({}); }
+        function onRowsRemoved() { dock.closeMenu(); dock.reconcileRequests(); }
         function onLayoutChanged() { dock.closeMenu(); }
+    }
+    // Test entry point: resolve the current app row, then follow the exact click path.
+    function cycleApp(appId) {
+        for (let row = 0; row < pinned.count; ++row) {
+            const item = pinned.itemAt(row) as TaskEntry;
+            if (item && (String(item.model.AppId) === appId || appKey(item.model) === appId)) {
+                activate(row, item.model);
+                return true;
+            }
+        }
+        return false;
     }
     function activate(row, task) {
         hideTooltip(); closeMenu();
         if (task.IsLauncher) { beginLaunch(row, task); return; }
-        rememberActive();
-        // Snapshot before activating: TasksModel may reorder children on each request.
-        const list = DockLogic.activationOrder(windows(row, task), activationHistory, appKey(task));
-        const visible = list.filter(w => !w.minimized);
-        const targets = visible.length ? visible : list.slice(-1);
-        // requestActivate restores minimized windows; never toggle minimization.
-        for (const window of targets) activateWindow(row, task, window.id);
+        const list = windows(row, task);
+        if (!list.length) return;
+        const key = appKey(task);
+        const pending = list.find(w => w.id === requestedWindows[key]);
+        if (!pending) delete requestedWindows[key];
+        else if (pending.active) delete requestedWindows[key];
+        const active = pending || list.find(w => w.active);
+        if (active || task.IsActive) {
+            if (list.length === 1) return;
+            const ordered = DockLogic.ordered(list);
+            const position = ordered.findIndex(w => active && w.id === active.id);
+            activateWindow(row, task, ordered[(position + 1) % ordered.length].id);
+        } else {
+            // No dates means the first current child, without inventing recency.
+            const recent = list.reduce((best, w) => w.lastActivated > best.lastActivated ? w : best);
+            activateWindow(row, task, recent.id);
+        }
     }
     FolderListModel {
         id: applications; folder: "file:///usr/share/applications"; showDirs: false
