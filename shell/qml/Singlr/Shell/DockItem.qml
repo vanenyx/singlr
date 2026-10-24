@@ -12,7 +12,8 @@ Rectangle {
     readonly property bool running: !!task?.IsWindow || !!task?.IsGroupParent
     width: 32; height: 48; radius: 6
     color: "transparent"
-    border.color: activeFocus ? Theme.accentText : "transparent"
+    // Marco de foco solo para navegación con teclado, nunca al hacer clic.
+    border.color: activeFocus && !pointer.pressed && !pointer.containsMouse ? Theme.accentText : "transparent"
     activeFocusOnTab: true
     Accessible.role: Accessible.Button
     Accessible.name: String(task?.AppName || task?.display || "Aplicación")
@@ -26,13 +27,12 @@ Rectangle {
         AppIcon { visible: !tile.task?.singlrGrid; anchors.fill: parent; source: tile.task?.decoration }
         Icon { anchors.centerIn: parent; visible: !!tile.task?.singlrGrid; name: "squares-four"; width: 24; height: 24; font.pixelSize: 24; color: Theme.secondary }
     }
-    Rectangle { visible: tile.running; anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 3; width: 4; height: 4; radius: 2; color: "#f7f8f8"; opacity: tile.task?.IsActive ? 1 : 0.7 }
     MouseArea { id: pointer; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton; onContainsMouseChanged: {
         const center = tile.mapToItem(null, tile.width / 2, 0).x;
         tile.tooltipRequested(containsMouse ? tile.Accessible.name : "", center);
     }
     onPressedChanged: if (pressed) tile.tooltipRequested("", 0)
-    onClicked: mouse => { tile.forceActiveFocus(); if (mouse.button === Qt.RightButton) tile.contextRequested(); else tile.activated(); } }
+    onClicked: mouse => { if (mouse.button === Qt.RightButton) tile.contextRequested(); else tile.activated(); } }
     Controls.Popup {
         visible: !tile.sessionMode && pointer.containsMouse && !pointer.pressed
         popupType: Controls.Popup.Item

@@ -56,7 +56,7 @@ Rectangle {
         onStatusChanged: if (status === FolderListModel.Ready) dock.refreshPins()
         onCountChanged: dock.refreshPins()
     }
-    TaskManager.TasksModel { id: tasks; groupMode: TaskManager.TasksModel.GroupDisabled; sortMode: TaskManager.TasksModel.SortManual; launchInPlace: true; hideActivatedLaunchers: true; onCountChanged: dock.contextRow = -1 }
+    TaskManager.TasksModel { id: tasks; groupMode: TaskManager.TasksModel.GroupApplications; groupInline: false; sortMode: TaskManager.TasksModel.SortManual; launchInPlace: true; hideActivatedLaunchers: true; onCountChanged: dock.contextRow = -1 }
     readonly property string activeAppName: {
         for (let i = 0; i < pinned.count; ++i) {
             const item = pinned.itemAt(i) as TaskEntry;

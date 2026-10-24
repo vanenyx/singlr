@@ -3,6 +3,7 @@
 #include <KWindowEffects>
 #include <LayerShellQt/Shell>
 #include <QGuiApplication>
+#include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
 #include <QRegion>
@@ -57,6 +58,10 @@ int main(int argc, char *argv[])
     qunsetenv("QT_WAYLAND_SHELL_INTEGRATION");
     app.setApplicationName(QStringLiteral("singlr-shell"));
     app.setDesktopFileName(QStringLiteral("singlr-shell"));
+    // Logotipos originales de las apps: hicolor contiene los iconos que instala cada
+    // aplicación; los temas tipo WhiteSur los encierran en placas. Breeze cubre lo que falte.
+    QIcon::setThemeName(QStringLiteral("hicolor"));
+    QIcon::setFallbackThemeName(QStringLiteral("breeze"));
 
     if (argc < 3) {
         qCritical("uso: singlr-shell <import-path> <Shell.qml> [-- argumentos]");
