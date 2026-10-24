@@ -3,7 +3,7 @@
 ## Contexto y alcance
 Singlr es una experiencia de escritorio completa y distribuible para Linux, con primera base en KDE Plasma 6. Lee [README.md](README.md) y [la visión original](SINGLR_recuperacion_desde_mensajes_originales.md). Esa recuperación conserva decisiones y dudas; los borradores históricos y propuestas de agentes no constituyen aprobaciones.
 
-**Fase actual: configuración del proyecto y de los agentes.** Prepara documentación, herramientas y verificaciones. Iniciar diseño, prototipos o implementación requiere una nueva tarea del creador. Los roles no autorizan automáticamente el trabajo futuro.
+**Fase actual: Fase 1, dirección visual y prototipo integrado** ([brief](docs/phase1/brief.md)). Se trabaja en un entorno aislado que no altera la sesión KDE habitual. La implementación definitiva y las decisiones visuales requieren aprobación del creador. Los roles no autorizan automáticamente el trabajo futuro.
 
 ## Producto
 - Linear influye en UI y UX; macOS también. Mantén una identidad propia.
