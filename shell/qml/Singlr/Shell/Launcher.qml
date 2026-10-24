@@ -4,21 +4,25 @@ import org.kde.milou as Milou
 import Singlr.Ui
 FocusScope {
     id: launcher
+    property bool sessionMode: false
+    property bool applicationsMode: false
     property Item backdrop
     property var modelOverride: null
-    readonly property var resultsModel: modelOverride || runnerLoader.item
+    readonly property var resultsModel: modelOverride || (applicationsMode ? appsLoader.item : runnerLoader.item)
     property alias query: input.text
     property alias selectedIndex: list.currentIndex
     readonly property int resultCount: list.count
-    readonly property var selectedActions: selectedResult ? selectedResult.resultActions : []
+    readonly property var selectedActions: !applicationsMode && selectedResult ? selectedResult.resultActions : []
     readonly property ListItem selectedResult: list.currentItem as ListItem
     property bool actionsOpen: false
     property int actionIndex: 0
+    readonly property string emptyMessage: !query ? (applicationsMode ? "No hay aplicaciones disponibles" : "Busca o abre Todas las aplicaciones") : (resultsModel && resultsModel.querying) ? "Buscando…" : "Sin resultados"
     signal closed()
+    Keys.onEscapePressed: { if (actionsOpen) actionsOpen = false; else close(); }
     width: 760; height: 542
     Loader {
         id: runnerLoader
-        active: launcher.visible && launcher.query.length > 0 && !launcher.modelOverride
+        active: launcher.visible && !launcher.applicationsMode && launcher.query.length > 0 && !launcher.modelOverride
         sourceComponent: Component {
             Milou.ResultsModel {
                 queryString: launcher.query
@@ -27,6 +31,12 @@ FocusScope {
             }
         }
     }
+    Loader {
+        id: appsLoader
+        active: launcher.visible && launcher.applicationsMode && !launcher.modelOverride
+        sourceComponent: Component { ApplicationsModel { query: launcher.query } }
+    }
+    function showApplications() { applicationsMode = true; query = ""; selectedIndex = 0; actionsOpen = false; input.forceActiveFocus(); }
     function actionArray(value) {
         if (!value) return [];
         if (value.length !== undefined) return value;
@@ -34,7 +44,8 @@ FocusScope {
         for (let i = 0; i < value.count; ++i) rows.push(value.get(i));
         return rows;
     }
-    function open() { visible = true; query = ""; selectedIndex = 0; actionsOpen = false; input.forceActiveFocus(); }
+    function open(apps = false) { query = ""; applicationsMode = apps; visible = true; selectedIndex = 0; actionsOpen = false; input.forceActiveFocus(); }
+    function focusInput() { input.forceActiveFocus(); }
     function close() { actionsOpen = false; visible = false; closed(); }
     function move(delta) {
         const count = actionsOpen ? selectedActions.length : list.count;
@@ -47,13 +58,16 @@ FocusScope {
     }
     function run() {
         if (selectedIndex < 0 || selectedIndex >= list.count) return;
+        if (actionsOpen && (actionIndex < 0 || actionIndex >= selectedActions.length)) return;
         const idx = resultsModel.index(selectedIndex, 0);
         const done = actionsOpen ? resultsModel.runAction(idx, actionIndex) : resultsModel.run(idx);
         if (done) close();
         else input.forceActiveFocus();
     }
     onQueryChanged: { selectedIndex = 0; actionsOpen = false; }
-    Glass { anchors.fill: parent; backdrop: launcher.backdrop }
+    Glass { anchors.fill: parent; backdrop: launcher.backdrop; visible: !launcher.sessionMode }
+    Rectangle { anchors.fill: parent; visible: launcher.sessionMode; radius: 12; color: "#f018181b"; border.color: Theme.focusBorder }
+    MouseArea { anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton; onPressed: launcher.focusInput() }
     Icon { x: 24; y: 25; width: 24; height: 24; font.pixelSize: 24; name: "magnifying-glass" }
     TextInput {
         id: input; objectName: "launcherInput"
@@ -61,7 +75,7 @@ FocusScope {
         color: Theme.text; selectionColor: Theme.selection; selectedTextColor: Theme.text
         font.family: Theme.family; font.pixelSize: 21; clip: true; focus: true
         verticalAlignment: TextInput.AlignVCenter
-        Accessible.name: "Buscar aplicaciones, archivos y comandos"
+        Accessible.name: launcher.applicationsMode ? "Buscar en todas las aplicaciones" : "Buscar aplicaciones, archivos y comandos"
         Keys.onUpPressed: launcher.move(-1)
         Keys.onDownPressed: launcher.move(1)
         Keys.onReturnPressed: launcher.run()
@@ -70,7 +84,7 @@ FocusScope {
         Keys.onPressed: event => {
             if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_K) { launcher.openActions(); event.accepted = true; }
         }
-        UiText { anchors.fill: parent; text: "Buscar aplicaciones, archivos, comandos…"; font.pixelSize: 21; color: Theme.faint; visible: !input.text }
+        UiText { anchors.fill: parent; text: launcher.applicationsMode ? "Buscar en todas las aplicaciones…" : "Buscar aplicaciones, archivos, comandos…"; font.pixelSize: 21; color: Theme.faint; visible: !input.text }
     }
     ShortcutHint { x: parent.width-47; y: 27; text: "esc" }
     Rectangle { y: 76; width: parent.width; height: 1; color: Theme.border }
@@ -87,19 +101,19 @@ FocusScope {
             resultActions: launcher.actionArray(model.actions)
             width: ListView.view.width
             title: String(model.display || "")
-            subtitle: String(model.subtext || "")
+            subtitle: launcher.applicationsMode ? "Aplicación" : String(model.subtext || "")
             iconSource: model.decoration
             selected: launcher.selectedIndex === index
             onClicked: { launcher.selectedIndex = index; launcher.run(); }
         }
         UiText {
             anchors.centerIn: parent; visible: list.count === 0
-            text: !launcher.query ? "Aplicaciones, archivos y acciones de KRunner" : (launcher.resultsModel && launcher.resultsModel.querying) ? "Buscando…" : "Sin resultados"
+            text: launcher.emptyMessage
             color: Theme.muted
         }
     }
     Rectangle { y: parent.height-42; width: parent.width; height: 1; color: Theme.border }
-    UiText { x: 24; y: parent.height-30; text: "Singlr"; height: 16; font.pixelSize: 11; color: Theme.faint }
+    Tool { x: 18; y: parent.height-35; icon: launcher.applicationsMode ? "arrow-left" : "squares-four"; label: launcher.applicationsMode ? "Búsqueda general" : "Todas las aplicaciones"; onClicked: { if (launcher.applicationsMode) launcher.open(); else launcher.showApplications(); } }
     Row { anchors.right: parent.right; anchors.rightMargin: 16; y: parent.height-35; spacing: 12
         Tool { icon: "key-return"; label: "Abrir"; onClicked: launcher.run() }
         Tool { visible: launcher.selectedActions.length > 0; icon: "command"; label: "Acciones  Ctrl K"; onClicked: launcher.openActions() }

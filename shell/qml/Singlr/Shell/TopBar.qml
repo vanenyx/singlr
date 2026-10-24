@@ -11,10 +11,11 @@ Rectangle {
     color: Theme.panel
     Timer { interval: 1000; running: true; repeat: true; onTriggered: bar.now = new Date() }
     Row { x: 24; height: 38; spacing: 16
-        Tool { y: 5; icon: "circle"; label: "Singlr"; onClicked: bar.menuOpen = !bar.menuOpen }
+        Tool { y: 5; icon: "circle"; label: "Singlr"; onClicked: { bar.menuOpen = !bar.menuOpen; if (bar.menuOpen) bar.forceActiveFocus(); } }
         Tool { y: 5; icon: "magnifying-glass"; label: "Buscar"; onClicked: bar.launcherRequested() }
     }
-    UiText { anchors.centerIn: parent; text: Qt.formatDateTime(bar.now, "ddd d MMM    HH:mm"); font.pixelSize: 12; color: Theme.muted }
+    UiText { anchors.centerIn: parent; text: bar.now.toLocaleString(Qt.locale("es_ES"), "ddd d MMM    HH:mm"); font.pixelSize: 12; color: Theme.muted }
+    StatusIndicators { anchors.right: parent.right; anchors.rightMargin: 24; anchors.verticalCenter: parent.verticalCenter }
     Rectangle {
         visible: bar.menuOpen; x: 24; y: 38; width: 206; height: 44; radius: 6
         color: Theme.raised; border.color: Theme.border; z: 10
