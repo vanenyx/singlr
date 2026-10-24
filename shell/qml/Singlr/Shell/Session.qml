@@ -32,7 +32,7 @@ Item {
     }
     Window {
         transientParent: null; visible: true; width: dock.width; height: dock.height; property bool singlrBlur: true; property int singlrBlurRadius: 14; color: "transparent"
-        LayerShell.Window.layer: LayerShell.Window.LayerBottom
+        LayerShell.Window.layer: LayerShell.Window.LayerTop  // Top: el dock queda por encima de las ventanas, como en macOS.
         LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
         LayerShell.Window.margins.bottom: 10
         LayerShell.Window.exclusionZone: 0
