@@ -9,8 +9,10 @@ Item {
     id: session
     function openLauncher(apps = false) { overlay.visible = true; launcher.open(apps); overlay.requestActivate(); focusTimer.restart(); }
     Timer { id: focusTimer; interval: 0; onTriggered: launcher.focusInput() }
+    // --no-background: sobre una sesión Plasma real se conserva el fondo del usuario.
+    readonly property bool showBackground: Qt.application.arguments.indexOf("--no-background") < 0
     Window {
-        transientParent: null; visible: true; color: Theme.background
+        transientParent: null; visible: session.showBackground; color: Theme.background
         LayerShell.Window.layer: LayerShell.Window.LayerBackground
         LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
         LayerShell.Window.exclusionZone: -1
