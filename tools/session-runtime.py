@@ -29,7 +29,7 @@ def interrupt(signum, frame):
 def config_hashes():
     home = Path(os.environ.get('XDG_CONFIG_HOME', str(Path.home() / '.config')))
     paths = set()
-    for pattern in ('k*', 'plasma*'):
+    for pattern in ('k*', 'plasma*', 'dolphin*'):
         for entry in home.glob(pattern):
             paths.update(entry.rglob('*') if entry.is_dir() else [entry])
     return {str(p): hashlib.sha256(p.read_bytes()).hexdigest()
@@ -55,12 +55,30 @@ def descendants():
     return {pid for pid in owned - {os.getpid()} if parents[pid][1] != 'Z'}
 
 
-def clean_children(grace=1.5):
+def marked_processes(session_id):
+    """Find external clients too; exact NUL-delimited environment marker, never cmdline."""
+    marker = f'SINGLR_SESSION_ID={session_id}'.encode()
+    found = set()
+    for directory in Path('/proc').iterdir():
+        if not directory.name.isdigit() or int(directory.name) == os.getpid():
+            continue
+        try:
+            if marker in (directory / 'environ').read_bytes().split(b'\0'):
+                # Zombies cannot be signalled and must be reaped by their own parent.
+                state = (directory / 'stat').read_text().rsplit(')', 1)[1].split()[0]
+                if state != 'Z':
+                    found.add(int(directory.name))
+        except (OSError, ValueError, IndexError):
+            pass
+    return found
+
+
+def clean_children(grace=1.5, session_id=None):
     for sig, delay in ((signal.SIGTERM, grace), (signal.SIGKILL, 0.5)):
         signalled = set()
         deadline = time.monotonic() + delay
         while True:
-            remaining = descendants()
+            remaining = descendants() | (marked_processes(session_id) if session_id else set())
             for pid in remaining - signalled:
                 try:
                     os.kill(pid, sig)
@@ -77,17 +95,19 @@ def clean_children(grace=1.5):
             if not remaining or time.monotonic() >= deadline:
                 break
             time.sleep(0.05)
-    remaining = descendants()
+    remaining = descendants() | (marked_processes(session_id) if session_id else set())
     print(f'SINGLR_CLEANUP remaining={sorted(remaining)}', flush=True)
     return not remaining
 
 
-def save_descriptor(path, env):
-    keys = [k for k in env if k.startswith('XDG_') or k in (
+def save_descriptor(path, env, shell_pid=None):
+    keys = [k for k in env if k.startswith(('XDG_', 'LC_')) or k in (
+        'LANG', 'LANGUAGE',
         'DBUS_SESSION_BUS_ADDRESS', 'WAYLAND_DISPLAY', 'QT_QPA_PLATFORM',
         'QT_QPA_PLATFORMTHEME', 'KDE_SESSION_VERSION', 'KDE_FULL_SESSION',
         '_KDE_APPLICATIONS_AS_FORKING', 'SINGLR_SESSION_ID')]
-    data = dict(kind='singlr-nested-v1', pid=os.getpid(), env={k: env[k] for k in keys})
+    data = dict(kind='singlr-nested-v1', pid=os.getpid(), shell_pid=shell_pid,
+                env={k: env[k] for k in keys})
     temporary = path.with_name(path.name + '.tmp')
     with temporary.open('x') as stream:
         os.chmod(temporary, 0o600)
@@ -170,13 +190,13 @@ def inside(base, source, width, height):
         # D-Bus activation must inherit the nested display, not the host socket.
         subprocess.run(['dbus-update-activation-environment',
                         *[key for key in env if key.startswith(('XDG_', 'QT_', 'KDE_', '_KDE_'))
-                          or key in ('WAYLAND_DISPLAY', 'SINGLR_SESSION_ID')]], env=env, check=True)
-        save_descriptor(descriptor, env)
-        print(f'SINGLR_SESSION_FILE={descriptor}', flush=True)
+                          or key.startswith('LC_') or key in ('WAYLAND_DISPLAY', 'SINGLR_SESSION_ID', 'LANG', 'LANGUAGE')]], env=env, check=True)
         client_env = env.copy()
         if env.get('SINGLR_WAYLAND_DEBUG'):
             client_env['WAYLAND_DEBUG'] = '1'
         client = subprocess.Popen([str(ROOT / 'shell/session/qml-shell'), str(source)], env=client_env)
+        save_descriptor(descriptor, env, client.pid)
+        print(f'SINGLR_SESSION_FILE={descriptor}', flush=True)
         duration = int(env.get('SINGLR_DURATION_MS', '0')) / 1000
         deadline = time.monotonic() + duration if duration else None
         while client.poll() is None and compositor.poll() is None:
@@ -233,7 +253,7 @@ def launch(source, size):
                 code = process.wait()
             finally:
                 # Also adopt descendants if the bus/controller has already exited.
-                if not clean_children(grace=3):
+                if not clean_children(grace=3, session_id=base.name):
                     code = 1
     finally:
         after = config_hashes()
@@ -249,9 +269,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--size', default='2048x1280')
     parser.add_argument('--entry', type=Path, default=ROOT / 'shell/qml/Shell.qml')
+    parser.add_argument('--duration', type=float, help='Duración en segundos; sin opción, hasta cerrar KWin o Ctrl+C')
     parser.add_argument('--inside', type=Path, help=argparse.SUPPRESS)
     parser.add_argument('--capture-session', type=Path, metavar='SALIDA.png')
     args = parser.parse_args()
+    if args.duration is not None:
+        if not 0 < args.duration < float('inf'):
+            parser.error('--duration debe ser un número positivo finito')
+        os.environ['SINGLR_DURATION_MS'] = str(max(1, round(args.duration * 1000)))
     if args.capture_session:
         capture(args.capture_session)
         return 0
