@@ -1,0 +1,17 @@
+[Unit]
+Description=Singlr Desktop Shell
+Requires=plasma-kwin_wayland.service
+BindsTo=plasma-kwin_wayland.service
+After=plasma-kwin_wayland.service
+Before=plasma-kded6.service
+PartOf=singlr-workspace.target graphical-session.target
+
+[Service]
+# Type=simple: declarar BusName=org.kde.plasmashell choca con plasma-plasmashell.service
+# (systemd rechaza dos unidades con el mismo nombre). El shell toma el nombre en tiempo de ejecución.
+Type=simple
+ExecStart=/usr/lib/singlr/startsinglr-wayland --shell
+Slice=session.slice
+TimeoutStartSec=30
+TimeoutStopSec=10
+Restart=no
