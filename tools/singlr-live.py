@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Singlr en vivo sobre la sesión Plasma real: reinicia el shell al cambiar shell/qml.
 
-Uso: tools/singlr-live.sh start | stop | status
-No modifica Plasma ni su configuración; detenerlo retira las superficies de Singlr.
+Uso: tools/singlr-live.sh start [--keep-plasma] | stop | status
+Por defecto sustituye a plasmashell mientras está activo (autorizado por el creador el 24 oct);
+`stop` vuelve a arrancar Plasma. No cambia la configuración de Plasma.
 """
 import os
 from pathlib import Path
@@ -15,6 +16,8 @@ ROOT = Path(__file__).resolve().parents[1]
 QML = ROOT / 'shell/qml'
 STATE = Path(os.environ.get('XDG_RUNTIME_DIR', '/tmp')) / 'singlr-live'
 PIDFILE = STATE / 'supervisor.pid'
+PLASMA_MARK = STATE / 'plasma-stopped'
+PLASMA_UNIT = 'plasma-plasmashell.service'
 LOG = STATE / 'shell.log'
 
 
@@ -32,10 +35,22 @@ def running():
         return None
 
 
-def supervise():
+def plasma(action):
+    return subprocess.run(['systemctl', '--user', action, PLASMA_UNIT], capture_output=True, text=True)
+
+
+def restore_plasma():
+    if PLASMA_MARK.exists():
+        plasma('start')
+        PLASMA_MARK.unlink(missing_ok=True)
+
+
+def supervise(takeover):
     binary = subprocess.run([str(ROOT / 'shell/session/build.sh')], check=True,
                             capture_output=True, text=True).stdout.strip().splitlines()[-1]
-    command = [binary, str(QML), str(QML / 'Shell.qml'), '--', '--no-background']
+    command = [binary, str(QML), str(QML / 'Shell.qml')]
+    if not takeover:
+        command += ['--', '--no-background']
     stop = False
 
     def finish(*_):
@@ -68,6 +83,7 @@ def supervise():
     if shell is not None and shell.poll() is None:
         shell.terminate()
         shell.wait(timeout=3)
+    restore_plasma()
     PIDFILE.unlink(missing_ok=True)
 
 
@@ -81,6 +97,10 @@ def main():
         if not os.environ.get('WAYLAND_DISPLAY'):
             print('Se requiere una sesión Wayland', file=sys.stderr)
             return 1
+        takeover = '--keep-plasma' not in sys.argv
+        if takeover and plasma('is-active').stdout.strip() == 'active':
+            PLASMA_MARK.write_text('1')
+            plasma('stop')
         if os.fork():
             time.sleep(1.5)
             print(f'Singlr en vivo activo. Registro: {LOG}. Para quitarlo: tools/singlr-live.sh stop')
@@ -90,11 +110,15 @@ def main():
         devnull = os.open(os.devnull, os.O_RDWR)
         for fd in (0, 1, 2):
             os.dup2(devnull, fd)
-        supervise()
+        try:
+            supervise(takeover)
+        finally:
+            restore_plasma()
         return 0
     if action == 'stop':
         pid = running()
         if not pid:
+            restore_plasma()
             print('Singlr en vivo no está activo')
             return 0
         os.kill(pid, signal.SIGTERM)
