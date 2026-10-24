@@ -1,0 +1,47 @@
+QtQuick.Effects: PASS
+QtQuick.Shapes: PASS
+QtQuick.Controls: PASS
+QtQuick.Layouts: PASS
+Qt5Compat.GraphicalEffects: PASS
+org.kde.kirigami: PASS
+org.kde.layershell: PASS
+Quickshell: FAIL
+qml: Did not load any objects, exiting.
+QQmlApplicationEngine failed to load component
+file:///tmp/singlr-imports-rm3tt52o/Probe.qml:2:1: module "Quickshell" is not installed
+Quickshell.Wayland: FAIL
+qml: Did not load any objects, exiting.
+QQmlApplicationEngine failed to load component
+file:///tmp/singlr-imports-rm3tt52o/Probe.qml:2:1: module "Quickshell.Wayland" is not installed
+org.kde.plasma.activityswitcher: PASS
+org.kde.plasma.clock: PASS
+org.kde.plasma.components: PASS
+org.kde.plasma.configuration: PASS
+org.kde.plasma.core: PASS
+org.kde.plasma.emoji: PASS
+org.kde.plasma.extras: PASS
+org.kde.plasma.keyboard.lib: PASS
+org.kde.plasma.lookandfeel: PASS
+org.kde.plasma.networkmanagement.cellular: PASS
+org.kde.plasma.networkmanagement: PASS
+org.kde.plasma.plasma5support: PASS
+org.kde.plasma.plasmoid: PASS
+org.kde.plasma.printmanager: PASS
+org.kde.plasma.shell: PASS
+org.kde.plasma.wallpapers.image: PASS
+org.kde.plasma.wallpapers.potd: PASS
+org.kde.plasma.welcome: FAIL
+qml: Did not load any objects, exiting.
+QQmlApplicationEngine failed to load component
+file:///tmp/singlr-imports-rm3tt52o/Probe.qml:2:1: module "org.kde.plasma.welcome" plugin "plasma-welcome-publicplugin" not found
+org.kde.plasma.workspace.calendar: PASS
+org.kde.plasma.workspace.components: PASS
+org.kde.plasma.workspace.dbus: PASS
+org.kde.plasma.workspace.keyboardlayout: PASS
+org.kde.plasma.workspace.loginlockscreen: PASS
+org.kde.plasma.workspace.osd: PASS
+org.kde.plasma.workspace.timezoneselector: PASS
+org.kde.plasma.workspace.trianglemousefilter: PASS
+QtQuick.ShaderEffect: PASS
+Import probes only; services, attached properties and GPU rendering require separate integration checks.
+Unavailable: Quickshell, Quickshell.Wayland, org.kde.plasma.welcome

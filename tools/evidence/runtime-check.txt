@@ -1,0 +1,69 @@
+$ tools/check-qml.sh prototypes/runtime-check
+qt.scenegraph.general: Loading backend software
+qml: SINGLR_LOADED file:///home/sunw/Projects/singlr-worktrees/codex-2/prototypes/runtime-check/Main.qml
+qml: SINGLR_CAPTURE /tmp/singlr-check-kv_xfcd2/0.png
+SINGLR_NOTICE software renderer: shader effects unavailable
+CHECK Main.qml: PASS
+EXIT=0; expected=0
+
+$ tools/run-prototype.sh prototypes/runtime-check/Main.qml --capture /tmp/singlr-runtime.png --size 2048x1280
+qt.scenegraph.general: Loading backend software
+qml: SINGLR_LOADED file:///home/sunw/Projects/singlr-worktrees/codex-2/prototypes/runtime-check/Main.qml
+qml: SINGLR_CAPTURE /tmp/singlr-runtime.png
+SINGLR_NOTICE software renderer: shader effects unavailable
+EXIT=0; expected=0
+
+PNG verified: 2048x1280; inspected visually; software backend omits shader blur.
+
+$ tools/run-prototype.sh prototypes/runtime-check/Main.qml --window
+Failed to create wl_display (Operation not permitted)
+qt.qpa.plugin: Could not load the Qt platform plugin "wayland" in "" even though it was found.
+This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.
+
+Available platform plugins are: eglfs, linuxfb, minimal, minimalegl, offscreen, vkkhrdisplay, vnc, wayland-brcm, wayland-egl, wayland, xcb.
+
+EXIT=1; expected=1
+
+$ tools/run-prototype.sh prototypes/runtime-check/Main.qml --nested
+dbus-daemon[42]: Failed to start message bus: Failed to bind socket "/tmp/dbus-AK3MPlZDy2": Operation not permitted
+dbus-run-session: EOF reading address from bus daemon
+SINGLR_ERROR nested compositor exited 127 before socket ready
+EXIT=1; expected=1
+
+$ tools/run-prototype.sh /tmp/singlr-errors-itt5kqmp/Window.qml --capture /tmp/singlr-errors-itt5kqmp/window.png --size 400x300
+qt.scenegraph.general: Loading backend software
+qml: SINGLR_LOADED file:///tmp/singlr-errors-itt5kqmp/Window.qml
+qml: SINGLR_CAPTURE /tmp/singlr-errors-itt5kqmp/window.png
+SINGLR_NOTICE software renderer: shader effects unavailable
+EXIT=0; expected=0
+
+$ tools/check-qml.sh /tmp/singlr-errors-itt5kqmp
+Warning: /tmp/singlr-errors-itt5kqmp/Bad.qml:2:8: Could not find property "nonexistentProperty". [missing-property]
+Item { nonexistentProperty: true }
+       ^^^^^^^^^^^^^^^^^^^
+qt.scenegraph.general: Loading backend software
+qml: SINGLR_ERROR file:///tmp/singlr-errors-itt5kqmp/Bad.qml:2:8: Cannot assign to non-existent property "nonexistentProperty"
+
+SINGLR_NOTICE software renderer: shader effects unavailable
+CHECK Bad.qml: FAIL
+qt.scenegraph.general: Loading backend software
+qml: SINGLR_LOADED file:///tmp/singlr-errors-itt5kqmp/Window.qml
+qml: SINGLR_CAPTURE /tmp/singlr-check-cb9u8n3g/1.png
+SINGLR_NOTICE software renderer: shader effects unavailable
+CHECK Window.qml: PASS
+EXIT=1; expected=1
+
+Active config snapshot: 27 files, unchanged=True
+
+Residual prototype/KWin processes: []; nested never acquired a socket.
+
+$ /usr/lib/qt6/bin/qmllint -I /usr/lib/qt6/qml tools/PrototypeHost.qml
+EXIT=0; expected=0
+
+$ /usr/lib/qt6/bin/qsb --qt6 -o /tmp/singlr-probe.frag.qsb prototypes/runtime-check/probe.frag
+EXIT=0; expected=0
+
+$ python3 scripts/check_setup.py
+OK: documentos, JSON/TOML, 5 skills y enlaces compartidos.
+Este check no acredita carga en sesiones ni ejecución de Qt/KDE.
+EXIT=0; expected=0
