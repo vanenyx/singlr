@@ -5,6 +5,8 @@ import Singlr.Ui
 Rectangle {
     id: bar
     property bool sessionMode: false
+    property Item menuHost: null
+    function closeMenu() { menu.close(); }
     signal launcherRequested()
     signal applicationsRequested()
     property string activeAppName: "Escritorio"
@@ -25,8 +27,9 @@ Rectangle {
         UiText { height: 28; text: bar.now.toLocaleString(Qt.locale("es_ES"), "ddd d MMM  HH:mm"); weight: 510; color: Theme.secondary }
     }
     Controls.Popup {
-        id: menu; x: 16; y: 32; width: 220; height: 80; padding: 4; focus: true
-        popupType: bar.sessionMode ? Controls.Popup.Window : Controls.Popup.Item
+        id: menu; parent: bar.menuHost || bar; x: bar.menuHost ? 0 : 16; y: bar.menuHost ? 0 : 32; width: 220; height: 80; padding: 4; focus: true
+        popupType: Controls.Popup.Item
+        closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
         background: Rectangle { radius: 8; color: Theme.raised; border.color: Theme.border }
         contentItem: Column {
             Tool { width: parent.width; height: 36; icon: "squares-four"; label: "Todas las aplicaciones"; onClicked: { menu.close(); bar.applicationsRequested(); } }

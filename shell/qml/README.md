@@ -8,8 +8,12 @@ para clic y menú. Tooltip de 12 px, escalas 1.1/0.94 y puntos de actividad de 4
 Lanzador y catálogo comparten texto de 13 px, filas de 36 e iconos de 20.
 
 Las ventanas de barra y dock declaran `singlrBlur: true`, radios 0/14 y geometría
-sin márgenes transparentes. Los menús/tooltip usan Popup.Window en sesión y
-Popup.Item en preview; no expanden la superficie del panel. Toda Window explícita
+sin márgenes transparentes. Todos los popups usan `Popup.Item`. En sesión, los menús se alojan en ventanas
+layer-shell Top de tamaño justo, sin zona exclusiva y con teclado OnDemand.
+El tooltip es una escena propia en una ventana sin entrada ni teclado. Estas
+superficies solo se muestran mientras se usan; el dock conserva sus 48 px.
+Los menús se cierran con Esc o al perder activación; el fondo también los cierra
+al pulsar. En preview se conservan dentro de la escena del escritorio. Toda Window explícita
 conserva `transientParent: null`. KRunner sigue recibiendo la consulta desde Timer.
 El contrato de blur queda preparado para C++ de Claude; este cambio no implementa
 el desenfoque de KWin. RectangularShadow aporta sombra de 24 px desplazada 8 px en
@@ -155,3 +159,18 @@ inmediato al abrir, que pulsar dentro del panel no lo cierra, que Esc funciona t
 Tab y que las apps recuperan teclado al cerrar. Probar actualización de red,
 volumen y batería donde haya servicios/dispositivos. «Salir de Singlr» debe cerrar
 la sesión a través del supervisor. No se ejecutaron estas pruebas en el sandbox.
+
+
+### T206: popups en layer-shell (24 oct 2026)
+
+Solución técnica derivada del encargo: `Popup.Item` explícito en los tres popups;
+ventanas independientes y ajustadas para ambos menús y el tooltip del dock.
+`activateOnShow` solicita foco para los menús OnDemand. Sin cambio de tokens visuales.
+Verificado: qmllint sin advertencias; qmltestrunner 18 passed / 0 failed,
+incluido host externo, Esc/clic fuera y señal de hover; captura offscreen del escritorio
+y lanzador vacío en `/tmp/singlr-t206-{desktop,launcher}.png`.
+Registro real seguido con `tail -f`: sin errores QML/layershellqt tras recargar;
+persisten avisos previos de SVG y portal. Pendiente: recorrido físico de hover,
+menú contextual y pérdida de foco entre aplicaciones en la sesión real.
+Una captura adicional con búsqueda «konsole» abortó en KRunner/KIO en el sandbox
+(`QWidget ... without QApplication`); el lanzador vacío sí se captura.

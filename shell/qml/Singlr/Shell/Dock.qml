@@ -8,6 +8,11 @@ import Singlr.Ui
 Rectangle {
     id: dock
     property bool sessionMode: false
+    property Item menuHost: null
+    property string tooltipText: ""
+    property real tooltipCenter: 0
+    function showTooltip(text, center) { tooltipCenter = center; tooltipText = text; }
+    function closeMenu() { contextRow = -1; }
     signal launcherRequested()
     signal applicationsRequested()
     property int contextRow: -1
@@ -22,7 +27,7 @@ Rectangle {
         for (let i=0; i<applications.count; ++i) found.push(applications.get(i, "fileName"));
         tasks.launcherList = candidates.filter(n => found.indexOf(n) >= 0).map(n => "applications:" + n);
     }
-    function openContext(row, task) { contextTask = task; contextRow = row; forceActiveFocus(); }
+    function openContext(row, task) { tooltipText = ""; contextTask = task; contextRow = row; forceActiveFocus(); }
     function newInstance() {
         if (contextRow < 0 || !contextTask || !(contextTask.IsLauncher || contextTask.IsNewInstanceable)) return;
         taskSource.requestNewInstance(taskSource.index(contextRow, 0)); contextRow = -1;
@@ -84,6 +89,7 @@ Rectangle {
                 model: dock.taskSource
                 delegate: DockItem {
                     sessionMode: dock.sessionMode
+                    onTooltipRequested: (text, center) => dock.showTooltip(text, center)
                     required property var model
                     required property int index
                     visible: !!model && !model.IsLauncher && !model.HasLauncher
@@ -94,7 +100,7 @@ Rectangle {
             }
         }
         Rectangle { visible: pinned.count > 0; width: 1; height: 20; y: 14; color: "#14ffffff" }
-        DockItem { sessionMode: dock.sessionMode; task: ({AppName: "Todas las aplicaciones", singlrGrid: true, decoration: ""}); onActivated: dock.applicationsRequested() }
+        DockItem { sessionMode: dock.sessionMode; onTooltipRequested: (text, center) => dock.showTooltip(text, center); task: ({AppName: "Todas las aplicaciones", singlrGrid: true, decoration: ""}); onActivated: dock.applicationsRequested() }
     }
     component TaskEntry: Item {
         id: entry
@@ -105,14 +111,17 @@ Rectangle {
         visible: pinnedTask; width: 32; height: 48
         DockItem {
             sessionMode: dock.sessionMode; task: entry.model
+            onTooltipRequested: (text, center) => dock.showTooltip(text, center)
             onActivated: dock.activate(entry.index, entry.model)
             onContextRequested: dock.openContext(entry.index, entry.model)
         }
     }
     Keys.onEscapePressed: contextRow = -1
     Controls.Popup {
-        visible: dock.menuOpen; x: 0; y: -height-8; width: 224; height: 116; padding: 4; focus: true
-        popupType: dock.sessionMode ? Controls.Popup.Window : Controls.Popup.Item
+        parent: dock.menuHost || dock
+        visible: dock.menuOpen; x: 0; y: dock.menuHost ? 0 : -height-8; width: 224; height: 116; padding: 4; focus: true
+        popupType: Controls.Popup.Item
+        closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
         onClosed: dock.contextRow = -1
         background: Rectangle { radius: 8; color: Theme.raised; border.color: Theme.border }
         contentItem: Column {

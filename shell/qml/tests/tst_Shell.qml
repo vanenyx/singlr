@@ -28,7 +28,8 @@ Item {
         function requestClose(row) { operation = "close"; lastRow = row; }
     }
     Dock { id: dock; y: 640; modelOverride: fakeTasks }
-    TopBar { id: topbar; activeAppName: dock.activeAppName }
+    Item { id: menuHost; x: 400; y: 100; width: 220; height: 80 }
+    TopBar { id: topbar; width: 1000; activeAppName: dock.activeAppName }
     TestCase {
         name: "ShellInteraction"; when: windowShown
         SignalSpy { id: closedSpy; target: search; signalName: "closed" }
@@ -100,6 +101,30 @@ Item {
             fakeTasks.clear();
             tryCompare(topbar, "activeAppName", "Escritorio");
             compare(dock.height, 48);
+        }
+        SignalSpy { id: tooltipSpy; target: tile; signalName: "tooltipRequested" }
+        function test_sessionTooltipHover() {
+            search.close(); tile.sessionMode = true;
+            mouseMove(tile, -20, -20); tooltipSpy.clear();
+            mouseMove(tile, 16, 20);
+            tryVerify(() => tooltipSpy.count > 0);
+            compare(tooltipSpy.signalArguments[tooltipSpy.count - 1][0], tile.Accessible.name);
+            mouseMove(tile, -20, -20);
+            compare(tooltipSpy.signalArguments[tooltipSpy.count - 1][0], "");
+            tile.sessionMode = false;
+        }
+        function test_menuInExternalSceneHost() {
+            search.close();
+            topbar.sessionMode = true; topbar.menuHost = menuHost;
+            mouseClick(topbar, 28, 14);
+            tryCompare(topbar, "menuOpen", true);
+            keyClick(Qt.Key_Escape);
+            tryCompare(topbar, "menuOpen", false);
+            mouseClick(topbar, 28, 14);
+            tryCompare(topbar, "menuOpen", true);
+            mouseClick(topbar, 300, 14);
+            tryCompare(topbar, "menuOpen", false);
+            topbar.menuHost = null; topbar.sessionMode = false;
         }
         function test_dockRoles() {
             verify(!tile.running);
