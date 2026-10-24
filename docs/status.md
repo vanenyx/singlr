@@ -2,7 +2,7 @@
 
 **Día 1 (24 oct 2026):** primer shell Singlr ejecutable sobre Plasma 6 en una sesión KWin anidada y aislada. Ver [handoffs/day1.md](handoffs/day1.md).
 
-Fase: configuración del proyecto y de la coordinación. Todavía no hay producto implementado. La visión original permanece conservada en la raíz.
+Fase 1 en desarrollo: objetivo de producto instalable el 31 oct 2026. La visión original permanece conservada en la raíz.
 
 ## Flujo vigente
 
