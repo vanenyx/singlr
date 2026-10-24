@@ -1,44 +1,65 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Controls as Controls
 import Singlr.Ui
-Rectangle {
+Controls.Control {
     id: tile
     property bool sessionMode: false
     required property var task
+    property bool launching: false
+    property bool keyboardFocus: false
+    signal interacted()
+    signal scrolled(int direction)
+    signal newInstanceRequested()
     signal activated()
     signal contextRequested()
     signal tooltipRequested(string text, real center)
     readonly property bool running: !!task?.IsWindow || !!task?.IsGroupParent
-    width: 32; height: 48; radius: 6
-    color: "transparent"
+    width: 32; height: 48; padding: 0
     // Marco de foco solo para navegación con teclado, nunca al hacer clic.
-    border.color: activeFocus && !pointer.pressed && !pointer.containsMouse ? Theme.accentText : "transparent"
+    background: Rectangle { radius: 6; color: "transparent"; border.color: tile.activeFocus && tile.keyboardFocus ? Theme.accentText : "transparent" }
     activeFocusOnTab: true
+    onActiveFocusChanged: keyboardFocus = activeFocus && (focusReason === Qt.TabFocusReason || focusReason === Qt.BacktabFocusReason)
     Accessible.role: Accessible.Button
     Accessible.name: String(task?.AppName || task?.display || "Aplicación")
-    Keys.onMenuPressed: contextRequested()
+    Keys.onMenuPressed: { interacted(); contextRequested(); }
     Keys.onReturnPressed: activated()
     Keys.onSpacePressed: activated()
+    Rectangle {
+        anchors.horizontalCenter: parent.horizontalCenter; y: 23; width: 30; height: 17; radius: 8
+        color: Theme.accentText; opacity: 0.16
+        visible: !!tile.task?.IsDemandingAttention && !tile.task?.IsActive
+        layer.enabled: true
+        layer.effect: MultiEffect { blurEnabled: true; blurMax: 16; blur: 1 }
+    }
     Item {
+        id: iconContainer
         anchors.horizontalCenter: parent.horizontalCenter; y: 5; width: 32; height: 32
-        scale: pointer.pressed ? 0.94 : pointer.containsMouse ? 1.1 : 1
+        scale: tile.launching ? 1 : pointer.pressed ? 0.94 : pointer.containsMouse ? 1.08 : 1
+        Item {
+            id: pulse; anchors.fill: parent
+            AppIcon { visible: !tile.task?.singlrGrid; anchors.fill: parent; source: tile.task?.decoration }
+            Icon { anchors.centerIn: parent; visible: !!tile.task?.singlrGrid; name: "squares-four"; width: 24; height: 24; font.pixelSize: 24; color: Theme.secondary }
+            SequentialAnimation on scale {
+                running: tile.launching; loops: Animation.Infinite
+                NumberAnimation { from: 1; to: 1.08; duration: 450; easing.type: Easing.InOutSine }
+                NumberAnimation { from: 1.08; to: 1; duration: 450; easing.type: Easing.InOutSine }
+                onStopped: pulse.scale = 1
+            }
+        }
         Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-        AppIcon { visible: !tile.task?.singlrGrid; anchors.fill: parent; source: tile.task?.decoration }
-        Icon { anchors.centerIn: parent; visible: !!tile.task?.singlrGrid; name: "squares-four"; width: 24; height: 24; font.pixelSize: 24; color: Theme.secondary }
     }
-    MouseArea { id: pointer; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton; onContainsMouseChanged: {
+    MouseArea { id: pointer; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton; onContainsMouseChanged: {
         const center = tile.mapToItem(null, tile.width / 2, 0).x;
-        tile.tooltipRequested(containsMouse ? tile.Accessible.name : "", center);
+        const count = tile.task?.WinIdList?.length || 0;
+        tile.tooltipRequested(containsMouse ? tile.Accessible.name + (count > 1 ? " · " + count + " ventanas" : "") : "", center);
     }
-    onPressedChanged: if (pressed) tile.tooltipRequested("", 0)
-    onClicked: mouse => { if (mouse.button === Qt.RightButton) tile.contextRequested(); else tile.activated(); } }
-    Controls.Popup {
-        visible: !tile.sessionMode && pointer.containsMouse && !pointer.pressed
-        popupType: Controls.Popup.Item
-        x: (tile.width-width)/2; y: -height-8; padding: 8
-        closePolicy: Controls.Popup.NoAutoClose
-        background: Rectangle { radius: 8; color: "#ef191a1b"; border.color: Theme.border }
-        contentItem: UiText { text: tile.Accessible.name; font.pixelSize: 12 }
+    onPressed: { tile.keyboardFocus = false; tile.interacted(); tile.tooltipRequested("", 0); }
+    onWheel: wheel => {
+        const delta = wheel.angleDelta.y || wheel.angleDelta.x;
+        if (!tile.running || !delta) { wheel.accepted = false; return; }
+        tile.interacted(); tile.scrolled(delta > 0 ? -1 : 1); wheel.accepted = true;
     }
+    onClicked: mouse => { if (mouse.button === Qt.RightButton) tile.contextRequested(); else if (mouse.button === Qt.MiddleButton) tile.newInstanceRequested(); else tile.activated(); } }
 }

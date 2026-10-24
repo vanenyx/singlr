@@ -2,6 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Effects
+import QtCore
+import "DockLogic.js" as DockLogic
 import Qt.labs.folderlistmodel
 import org.kde.taskmanager as TaskManager
 import Singlr.Ui
@@ -11,53 +13,200 @@ Rectangle {
     property Item menuHost: null
     property string tooltipText: ""
     property real tooltipCenter: 0
-    function showTooltip(text, center) { tooltipCenter = center; tooltipText = text; }
-    function closeMenu() { contextRow = -1; }
+    property string pendingTooltip: ""
+    property bool tooltipWarm: false
+    function showTooltip(text, center) {
+        tooltipDelay.stop(); tooltipReset.stop(); tooltipCenter = center;
+        pendingTooltip = menuOpen ? "" : text;
+        tooltipText = "";
+        if (!pendingTooltip) { tooltipReset.restart(); return; }
+        if (tooltipWarm) tooltipText = pendingTooltip;
+        else tooltipDelay.restart();
+    }
+    function hideTooltip() { tooltipDelay.stop(); pendingTooltip = ""; tooltipText = ""; }
+    Timer { id: tooltipDelay; interval: 400; onTriggered: { dock.tooltipWarm = true; dock.tooltipText = dock.pendingTooltip; } }
+    Timer { id: tooltipReset; interval: 150; onTriggered: dock.tooltipWarm = false }
     signal launcherRequested()
     signal applicationsRequested()
     property int contextRow: -1
     readonly property bool menuOpen: contextRow >= 0
     property var contextTask: null
+    property var contextWindows: []
+    property var menuEntries: []
+    property int menuIndex: 0
+    readonly property int menuHeight: 8 + menuEntries.length * 30 + (contextWindows.length ? 9 : 0)
     property var modelOverride: null
     readonly property var taskSource: modelOverride || tasks
     property alias tasksModel: tasks
+    property var lastWindows: ({})
+    property var launching: ({})
     readonly property var candidates: ["org.kde.dolphin.desktop", "org.kde.konsole.desktop", "firefox.desktop", "org.kde.kate.desktop", "systemsettings.desktop"]
-    function refreshPins() {
-        let found = [];
-        for (let i=0; i<applications.count; ++i) found.push(applications.get(i, "fileName"));
-        tasks.launcherList = candidates.filter(n => found.indexOf(n) >= 0).map(n => "applications:" + n);
+    property var pinUrls: []
+    property url settingsLocation: "file://" + StandardPaths.writableLocation(StandardPaths.GenericConfigLocation) + "/singlr/dock.json"
+    readonly property bool pinsLoaded: pinSettings.status === Loader.Ready
+    // Settings uses QSettings/INI, even with the requested dock.json filename.
+    Loader {
+        active: dock.sessionMode && !dock.modelOverride
+        sourceComponent: Component {
+            Settings {
+                location: dock.settingsLocation
+                property string pins: ""
+                Component.onCompleted: {
+                    if (pins) {
+                        try { dock.pinUrls = JSON.parse(pins); tasks.launcherList = dock.pinUrls; }
+                        catch (e) { console.warn("Dock: lista de fijados inválida", e); }
+                    } else dock.refreshPins();
+                }
+            }
+        }
+        id: pinSettings
     }
-    function openContext(row, task) { tooltipText = ""; contextTask = task; contextRow = row; forceActiveFocus(); }
+    function refreshPins() {
+        if (pinSettings.item && pinSettings.item.pins) return;
+        let found = [];
+        for (let i = 0; i < applications.count; ++i) found.push(applications.get(i, "fileName"));
+        pinUrls = candidates.filter(n => found.indexOf(n) >= 0).map(n => "applications:" + n);
+        tasks.launcherList = pinUrls;
+    }
+    function appKey(task) { return String(task?.LauncherUrlWithoutIcon || task?.LauncherUrl || task?.AppId || task?.AppName || "app"); }
+    function windows(row, task) {
+        const result = [];
+        if (task.IsLauncher) return result;
+        if (!task.IsGroupParent) {
+            return [{id: DockLogic.identity(task.WinIdList), title: String(task.display || task.AppName || "Ventana"),
+                     active: !!task.IsActive, minimized: !!task.IsMinimized, lastActivated: Number(task.LastActivated) || 0}];
+        }
+        const parentIndex = taskSource.index(row, 0);
+        for (let i = 0; i < taskSource.rowCount(parentIndex); ++i) {
+            const idx = taskSource.makeModelIndex(row, i);
+            const read = role => taskSource.data(idx, role);
+            result.push({id: DockLogic.identity(read(TaskManager.AbstractTasksModel.WinIdList)),
+                title: String(read(Qt.DisplayRole) || task.AppName || "Ventana"),
+                active: !!read(TaskManager.AbstractTasksModel.IsActive), minimized: !!read(TaskManager.AbstractTasksModel.IsMinimized),
+                lastActivated: Number(read(TaskManager.AbstractTasksModel.LastActivated)) || 0});
+        }
+        return DockLogic.ordered(result);
+    }
+    function windowIndex(row, task, id) {
+        if (!task.IsGroupParent) return taskSource.index(row, 0);
+        const parentIndex = taskSource.index(row, 0);
+        for (let i = 0; i < taskSource.rowCount(parentIndex); ++i) {
+            const idx = taskSource.makeModelIndex(row, i);
+            if (DockLogic.identity(taskSource.data(idx, TaskManager.AbstractTasksModel.WinIdList)) === id) return idx;
+        }
+        return null;
+    }
+    function activateWindow(row, task, id) {
+        const idx = windowIndex(row, task, id);
+        if (idx === null) return;
+        lastWindows[appKey(task)] = id;
+        taskSource.requestActivate(idx);
+    }
+    function closeMenu() { contextRow = -1; }
+    function openContext(row, task) {
+        hideTooltip(); contextTask = task; contextRow = row;
+        contextWindows = windows(row, task);
+        menuEntries = contextWindows.map(w => ({label: w.title, id: w.id, action: "window", active: w.active, enabled: true})).concat([
+            {label: "Nueva ventana", action: "new", enabled: !!(task.IsLauncher || task.IsNewInstanceable)},
+            {label: task.IsLauncher || task.HasLauncher ? "Quitar del dock" : "Fijar en el dock", action: "pin", enabled: !!(task.LauncherUrlWithoutIcon || task.LauncherUrl)},
+            {label: contextWindows.length > 1 ? "Cerrar " + contextWindows.length + " ventanas" : "Cerrar ventana", action: "close", enabled: !!task.IsClosable}
+        ]);
+        menuIndex = 0;
+        while (menuIndex < menuEntries.length - 1 && !menuEntries[menuIndex].enabled) ++menuIndex;
+        Qt.callLater(() => menuContent.forceActiveFocus());
+    }
+    function moveMenu(direction) {
+        for (let i = 0; i < menuEntries.length; ++i) {
+            menuIndex = (menuIndex + direction + menuEntries.length) % menuEntries.length;
+            if (menuEntries[menuIndex].enabled) return;
+        }
+    }
+    function runMenu(index) {
+        const entry = menuEntries[index];
+        if (!entry || !entry.enabled) return;
+        if (entry.action === "window") { activateWindow(contextRow, contextTask, entry.id); closeMenu(); }
+        else if (entry.action === "new") newInstance();
+        else if (entry.action === "close") closeTask();
+        else togglePin();
+    }
+    function togglePin() {
+        const url = String(contextTask.LauncherUrlWithoutIcon || contextTask.LauncherUrl || "");
+        if (!url) return;
+        if (contextTask.IsLauncher || contextTask.HasLauncher) {
+            taskSource.requestRemoveLauncher(url);
+        } else taskSource.requestAddLauncher(url);
+        pinUrls = Array.from(tasks.launcherList, String);
+        if (pinSettings.item) { pinSettings.item.pins = JSON.stringify(pinUrls); pinSettings.item.sync(); }
+        closeMenu();
+    }
+    function beginLaunch(row, task) {
+        const key = appKey(task);
+        launching = Object.assign({}, launching, {[key]: Date.now()});
+        taskSource.requestNewInstance(taskSource.index(row, 0));
+    }
+    Timer {
+        interval: 200; repeat: true; running: Object.keys(dock.launching).length > 0
+        onTriggered: {
+            let pending = Object.assign({}, dock.launching);
+            for (const key of Object.keys(pending)) {
+                let opened = false;
+                for (let i = 0; i < pinned.count; ++i) {
+                    const item = pinned.itemAt(i) as TaskEntry;
+                    if (item && dock.appKey(item.model) === key && !item.model.IsLauncher) opened = true;
+                }
+                if (opened || Date.now() - pending[key] >= 10000) delete pending[key];
+            }
+            dock.launching = pending;
+        }
+    }
     function newInstance() {
         if (contextRow < 0 || !contextTask || !(contextTask.IsLauncher || contextTask.IsNewInstanceable)) return;
-        taskSource.requestNewInstance(taskSource.index(contextRow, 0)); contextRow = -1;
+        if (contextTask.IsLauncher) beginLaunch(contextRow, contextTask);
+        else taskSource.requestNewInstance(taskSource.index(contextRow, 0));
+        closeMenu();
     }
     function closeTask() {
         if (contextRow < 0 || !contextTask || !contextTask.IsClosable) return;
-        taskSource.requestClose(taskSource.index(contextRow, 0)); contextRow = -1;
+        taskSource.requestClose(taskSource.index(contextRow, 0)); closeMenu();
+    }
+    function rememberActive() {
+        for (let row = 0; row < pinned.count; ++row) {
+            const item = pinned.itemAt(row) as TaskEntry;
+            if (!item || !item.model.IsActive || item.model.IsLauncher) continue;
+            const active = windows(row, item.model).find(w => w.active);
+            if (active) lastWindows[appKey(item.model)] = active.id;
+        }
     }
     Connections {
         target: dock.taskSource
         ignoreUnknownSignals: true
-        function onModelReset() { dock.contextRow = -1; }
-        function onRowsRemoved() { dock.contextRow = -1; }
-        function onLayoutChanged() { dock.contextRow = -1; }
+        function onDataChanged() { dock.rememberActive(); }
+        function onModelReset() { dock.closeMenu(); dock.lastWindows = ({}); }
+        function onRowsRemoved() { dock.closeMenu(); }
+        function onLayoutChanged() { dock.closeMenu(); }
+    }
+    function cycle(row, task, direction) {
+        hideTooltip(); closeMenu();
+        if (task.IsLauncher) return;
+        const list = windows(row, task);
+        const key = appKey(task);
+        activateWindow(row, task, DockLogic.next(list, lastWindows[key], direction));
     }
     function activate(row, task) {
-        contextRow = -1;
-        const idx = taskSource.index(row, 0);
-        if (task.IsLauncher) taskSource.requestNewInstance(idx);
-        else if (task.IsGroupParent) {
-            // Activar un grupo no hace nada en TasksModel: se activa una de sus ventanas
-            // y, si la app ya está activa, se pasa a la siguiente.
-            const count = taskSource.rowCount(idx);
-            let active = -1;
-            for (let i = 0; i < count; ++i)
-                if (taskSource.data(taskSource.makeModelIndex(row, i), TaskManager.AbstractTasksModel.IsActive)) active = i;
-            taskSource.requestActivate(taskSource.makeModelIndex(row, active < 0 ? 0 : (active + 1) % count));
+        hideTooltip(); closeMenu();
+        if (task.IsLauncher) { beginLaunch(row, task); return; }
+        const list = windows(row, task);
+        const active = !!task.IsActive || list.some(w => w.active);
+        if (active && list.length > 1) { cycle(row, task, 1); return; }
+        if (active && task.IsMinimizable) { taskSource.requestToggleMinimized(taskSource.index(row, 0)); return; }
+        const target = DockLogic.recent(list, lastWindows[appKey(task)]);
+        if (list.length && list.every(w => w.minimized)) {
+            for (const window of list) {
+                const idx = windowIndex(row, task, window.id);
+                if (idx !== null) taskSource.requestToggleMinimized(idx);
+            }
         }
-        else if (task.IsActive && task.IsMinimizable) taskSource.requestToggleMinimized(idx);
-        else taskSource.requestActivate(idx);
+        activateWindow(row, task, target);
     }
     FolderListModel {
         id: applications; folder: "file:///usr/share/applications"; showDirs: false
@@ -65,7 +214,10 @@ Rectangle {
         onStatusChanged: if (status === FolderListModel.Ready) dock.refreshPins()
         onCountChanged: dock.refreshPins()
     }
-    TaskManager.TasksModel { id: tasks; groupMode: TaskManager.TasksModel.GroupApplications; groupInline: false; sortMode: TaskManager.TasksModel.SortManual; launchInPlace: true; hideActivatedLaunchers: true; onCountChanged: dock.contextRow = -1 }
+    TaskManager.TasksModel {
+        id: tasks; groupMode: TaskManager.TasksModel.GroupApplications; groupInline: false
+        sortMode: TaskManager.TasksModel.SortManual; separateLaunchers: true; launchInPlace: true; hideActivatedLaunchers: true
+    }
     readonly property string activeAppName: {
         for (let i = 0; i < pinned.count; ++i) {
             const item = pinned.itemAt(i) as TaskEntry;
@@ -103,6 +255,10 @@ Rectangle {
                     required property int index
                     visible: !!model && !model.IsLauncher && !model.HasLauncher
                     task: model
+                    launching: dock.launching[dock.appKey(model)] !== undefined
+                    onInteracted: dock.hideTooltip()
+                    onScrolled: direction => dock.cycle(index, model, direction)
+                    onNewInstanceRequested: { if (model.IsNewInstanceable) dock.taskSource.requestNewInstance(dock.taskSource.index(index, 0)); }
                     onActivated: dock.activate(index, model)
                     onContextRequested: dock.openContext(index, model)
                 }
@@ -121,24 +277,71 @@ Rectangle {
         DockItem {
             sessionMode: dock.sessionMode; task: entry.model
             onTooltipRequested: (text, center) => dock.showTooltip(text, center)
+            launching: dock.launching[dock.appKey(entry.model)] !== undefined
+            onInteracted: dock.hideTooltip()
+            onScrolled: direction => dock.cycle(entry.index, entry.model, direction)
+            onNewInstanceRequested: {
+                if (entry.model.IsLauncher) dock.beginLaunch(entry.index, entry.model);
+                else if (entry.model.IsNewInstanceable) dock.taskSource.requestNewInstance(dock.taskSource.index(entry.index, 0));
+            }
             onActivated: dock.activate(entry.index, entry.model)
             onContextRequested: dock.openContext(entry.index, entry.model)
         }
     }
+    Controls.Popup {
+        visible: !dock.sessionMode && !!dock.tooltipText && !dock.menuOpen
+        x: dock.tooltipCenter - dock.x - width / 2; y: -height - 8; padding: 8
+        popupType: Controls.Popup.Item; closePolicy: Controls.Popup.NoAutoClose
+        background: Rectangle { radius: 8; color: "#ef191a1b"; border.color: Theme.border }
+        contentItem: UiText { text: dock.tooltipText; font.pixelSize: 12 }
+    }
     Keys.onEscapePressed: contextRow = -1
     Controls.Popup {
         parent: dock.menuHost || dock
-        visible: dock.menuOpen; x: 0; y: dock.menuHost ? 0 : -height-8; width: 224; height: 116; padding: 4; focus: true
+        visible: dock.menuOpen; x: 0; y: dock.menuHost ? 0 : -height-8
+        width: 260; height: dock.menuHeight; padding: 4; focus: true
         popupType: Controls.Popup.Item
         closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
-        onClosed: dock.contextRow = -1
+        onClosed: dock.closeMenu()
         background: Rectangle { radius: 8; color: Theme.raised; border.color: Theme.border }
-        contentItem: Column {
-            Tool { width: parent.width; height: 36; label: "Abrir nueva ventana"; enabled: !!dock.contextTask && (!!dock.contextTask.IsLauncher || !!dock.contextTask.IsNewInstanceable)
-                onClicked: dock.newInstance() }
-            Tool { width: parent.width; height: 36; label: "Cerrar"; enabled: !!dock.contextTask && !!dock.contextTask.IsClosable
-                onClicked: dock.closeTask() }
-            Tool { width: parent.width; height: 36; label: "Cancelar"; onClicked: dock.contextRow = -1 }
+        contentItem: Item {
+            id: menuContent
+            focus: true
+            Keys.onUpPressed: dock.moveMenu(-1)
+            Keys.onDownPressed: dock.moveMenu(1)
+            Keys.onReturnPressed: dock.runMenu(dock.menuIndex)
+            Keys.onEnterPressed: dock.runMenu(dock.menuIndex)
+            Keys.onEscapePressed: dock.closeMenu()
+            Column {
+                width: parent.width
+                Repeater {
+                    model: dock.menuEntries
+                    delegate: Column {
+                        id: menuRow
+                        required property var modelData
+                        required property int index
+                        width: menuContent.width
+                        Item {
+                            width: parent.width; height: menuRow.index === dock.contextWindows.length && dock.contextWindows.length > 0 ? 9 : 0
+                            Rectangle { visible: parent.height > 0; anchors.centerIn: parent; width: parent.width - 12; height: 1; color: Theme.border }
+                        }
+                        Rectangle {
+                            width: parent.width; height: 30; radius: 4
+                            color: dock.menuIndex === menuRow.index && menuRow.modelData.enabled ? "#14ffffff" : "transparent"
+                            opacity: menuRow.modelData.enabled ? 1 : 0.4
+                            Accessible.role: Accessible.MenuItem
+                            Accessible.name: menuRow.modelData.label
+                            UiText { x: 8; anchors.verticalCenter: parent.verticalCenter; width: 18; text: menuRow.modelData.active ? "✓" : ""; font.pixelSize: 13 }
+                            UiText { x: 28; width: parent.width - 36; anchors.verticalCenter: parent.verticalCenter; text: menuRow.modelData.label; font.pixelSize: 13; elide: Text.ElideRight }
+                            MouseArea {
+                                anchors.fill: parent; hoverEnabled: true
+                                onEntered: if (menuRow.modelData.enabled) dock.menuIndex = menuRow.index
+                                onClicked: dock.runMenu(menuRow.index)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

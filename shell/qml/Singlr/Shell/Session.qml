@@ -36,7 +36,7 @@ Item {
         LayerShell.Window.layer: LayerShell.Window.LayerTop  // Top: el dock queda por encima de las ventanas, como en macOS.
         LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
         LayerShell.Window.margins.bottom: 10
-        LayerShell.Window.exclusionZone: 0
+        LayerShell.Window.exclusionZone: 58
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
         LayerShell.Window.scope: "singlr-dock"
         Dock { id: dock; sessionMode: true; menuHost: dockMenuHost; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
@@ -45,7 +45,7 @@ Item {
     // Tight, independent layer surfaces: never enlarge the dock's input region.
     Window {
         id: dockMenuWindow
-        transientParent: null; visible: dock.menuOpen; width: 224; height: 116; color: "transparent"
+        transientParent: null; visible: dock.menuOpen; width: 260; height: dock.menuHeight; color: "transparent"
         LayerShell.Window.layer: LayerShell.Window.LayerTop
         LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
         LayerShell.Window.margins.bottom: dockWindow.height + 18
