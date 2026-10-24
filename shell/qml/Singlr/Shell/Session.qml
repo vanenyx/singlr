@@ -26,7 +26,7 @@ Item {
         LayerShell.Window.layer: LayerShell.Window.LayerTop
         LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
         LayerShell.Window.exclusionZone: 28
-        LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
+        LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
         LayerShell.Window.scope: "singlr-topbar"
         TopBar { id: bar; sessionMode: true; menuHost: barMenuHost; width: parent.width; height: 28; activeAppName: dock.activeAppName; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
@@ -37,7 +37,7 @@ Item {
         LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
         LayerShell.Window.margins.bottom: 10
         LayerShell.Window.exclusionZone: 58
-        LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
+        LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone  // None: un clic en el dock o la barra no debe quitar la actividad a la app de delante
         LayerShell.Window.scope: "singlr-dock"
         Dock { id: dock; sessionMode: true; menuHost: dockMenuHost; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
