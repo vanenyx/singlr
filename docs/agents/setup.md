@@ -16,6 +16,16 @@ El lanzador existente solo pide verificar la preparación. Para orientar esa ses
 
 AGENTS.md contiene reglas comunes; CLAUDE.md las importa. Los perfiles de esta carpeta definen responsabilidades y contexto breve para encargos. Las skills se versionan en `.agents/skills/` y se exponen a Claude mediante enlaces relativos en `.claude/skills/`. No mantener copias globales contradictorias.
 
+| Skill | Cuándo usarla |
+| --- | --- |
+| `singlr-ui-design` | Diseño integrado y fidelidad a la visión de Singlr |
+| `singlr-interface-refinement` | Comparar y refinar composición, jerarquía, superficies e interacción |
+| `singlr-product-craft` | Planificar o evaluar calidad de la experiencia completa y alcance de producto |
+| `singlr-qt-plasma` | Investigar o implementar integración nativa Qt/KDE |
+| `singlr-quality` | Verificar funcionamiento y calidad con evidencia reproducible |
+
+Las dos skills del paquete `singlr-skills-v0.1.zip` se añadieron conservando sus instrucciones y referencias originales. Complementan las skills existentes; no fijan decisiones de producto ni requieren cargar las cinco en cada tarea. En Claude se invocan como `/singlr-product-craft` y `/singlr-interface-refinement`; en Codex, como `$singlr-product-craft` y `$singlr-interface-refinement`.
+
 `.codex/config.toml` propone `workspace-write` y `on-request` sin fijar modelo o cuenta. Las opciones de sesión y políticas del host pueden prevalecer. Claude tiene `acceptEdits` como valor de proyecto; el lanzador solicita `auto` para esa sesión. Verifica permisos efectivos sin cambiar preferencias globales por deducción de estos documentos.
 
 ## Plugin y prueba realizada

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Singlr Interface Refinement"
+  short_description: "Refinamiento visual e interacción de Singlr"
+  default_prompt: "Usa $singlr-interface-refinement para refinar la interfaz autorizada de Singlr."

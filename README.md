@@ -22,6 +22,8 @@ python3 scripts/doctor.py
 
 Las skills están versionadas en `.agents/skills/` y compartidas con Claude mediante enlaces en `.claude/skills/`. No necesitan instalarse globalmente ni contratar servicios adicionales.
 
+También están incorporadas las skills aportadas por el creador: [Product Craft](.agents/skills/singlr-product-craft/SKILL.md) e [Interface Refinement](.agents/skills/singlr-interface-refinement/SKILL.md), con sus referencias originales. El catálogo y uso están en la [guía de agentes](docs/agents/setup.md).
+
 ## Flujo de trabajo
 
 El creador da instrucciones a Claude Code. Claude realiza arquitectura/integración, delega trabajos acotados a Codex 1 o Codex 2 mediante el plugin oficial y consolida resultados. Se trabaja habitualmente en la carpeta principal, con un único escritor por turno. Los worktrees quedan para escritura paralela justificada.

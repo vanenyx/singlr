@@ -8,7 +8,7 @@ El creador encarga el trabajo a Claude Code. Claude realiza arquitectura/integra
 
 ## Verificado
 
-- Estructura, instrucciones, skills y enlaces compartidos preparados y comprobados.
+- Estructura, instrucciones y cinco skills con enlaces compartidos preparados y comprobados; incluye `singlr-product-craft` y `singlr-interface-refinement` del ZIP aportado por el creador.
 - Identidad Git local configurada y commit inicial `f38dd34` registrado.
 - `origin` conectado a `https://github.com/vanenyx/singlr.git`; sin push realizado.
 - Plugin `codex@openai-codex` instalado y habilitado localmente en el checkout principal.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Singlr Product Craft"
+  short_description: "Criterio de producto y calidad de la experiencia"
+  default_prompt: "Usa $singlr-product-craft para evaluar la experiencia autorizada de Singlr."
