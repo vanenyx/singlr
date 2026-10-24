@@ -22,6 +22,17 @@ Singlr es una experiencia de escritorio completa y distribuible para Linux, con 
 - No publiques, hagas push, crees el remoto o modifiques la sesión activa de KDE por deducción de un documento. Sigue la autorización vigente del creador. No uses sudo ni cambies seguridad o credenciales como parte de la configuración rutinaria.
 - Para Qt/KDE comprueba versiones reales y documentación oficial. No presupongas APIs de Plasma 5 en Plasma 6.
 
+## Eficiencia y autonomía de los agentes
+Aplica a Claude Code y a ambos Codex.
+
+1. **Autonomía y criterio.** Resuelve las tareas sin interrumpir al creador por decisiones rutinarias. Prioriza resultados verificables sobre explicaciones extensas.
+2. **Razona antes de ejecutar.** Comprende el objetivo, usa el contexto existente y elige el camino más directo que mantenga la calidad. Evita análisis, herramientas y delegaciones innecesarias.
+3. **Delega con precisión.** Claude define objetivos y criterios de aceptación; Codex implementa y verifica. Cada agente completa su trabajo sin supervisión constante.
+4. **Aprende de los fallos.** Identifica la causa antes de reintentar. Si dos enfoques razonables fallan o dejas de avanzar, detente y comunica el bloqueo con una propuesta concreta. No repitas acciones sin nueva información.
+5. **Evita ciclos improductivos.** Revisiones, correcciones y nuevas delegaciones deben aportar valor real. No encadenes agentes ni revisiones indefinidamente.
+6. **Optimiza sin sacrificar calidad.** Ahorra tokens y llamadas innecesarias, pero no omitas investigación, pruebas o verificaciones importantes solo para reducir consumo.
+7. **Comunica lo esencial.** Al terminar, resume resultados, comprobaciones y bloqueos; los detalles técnicos quedan en el repositorio.
+
 ## Skills y comprobación
 Skills compartidas: `.agents/skills/`. Claude las descubre por enlaces relativos en `.claude/skills/`. Lee solo la skill pertinente.
 
