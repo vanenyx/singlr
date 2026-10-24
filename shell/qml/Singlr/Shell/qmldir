@@ -6,3 +6,5 @@ DockItem 1.0 DockItem.qml
 Launcher 1.0 Launcher.qml
 Desktop 1.0 Desktop.qml
 Session 1.0 Session.qml
+ApplicationsModel 1.0 ApplicationsModel.qml
+StatusIndicators 1.0 StatusIndicators.qml

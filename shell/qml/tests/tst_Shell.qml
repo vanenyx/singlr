@@ -17,11 +17,22 @@ Item {
     }
     Launcher { id: search; visible: false; modelOverride: fakeResults }
     DockItem { id: tile; y: 600; task: ({AppName:"Terminal", IsWindow:false, IsLauncher:true, IsActive:false, decoration:"utilities-terminal"}) }
+    ListModel {
+        id: fakeTasks
+        property string operation: ""
+        property int lastRow: -1
+        function index(row, column) { return row; }
+        function requestActivate(row) { operation = "activate"; lastRow = row; }
+        function requestToggleMinimized(row) { operation = "minimize"; lastRow = row; }
+        function requestNewInstance(row) { operation = "new"; lastRow = row; }
+        function requestClose(row) { operation = "close"; lastRow = row; }
+    }
+    Dock { id: dock; y: 640; modelOverride: fakeTasks }
     TestCase {
         name: "ShellInteraction"; when: windowShown
         SignalSpy { id: closedSpy; target: search; signalName: "closed" }
         SignalSpy { id: activatedSpy; target: tile; signalName: "activated" }
-        function init() { search.open(); fakeResults.lastRow = -1; fakeResults.lastAction = -1; fakeResults.succeed = true; closedSpy.clear(); }
+        function init() { fakeResults.querying = false; search.open(); fakeResults.lastRow = -1; fakeResults.lastAction = -1; fakeResults.succeed = true; closedSpy.clear(); }
         function cleanup() { search.close(); }
         function test_openClose() {
             verify(search.visible); compare(search.query, "");
@@ -49,6 +60,32 @@ Item {
         function test_noActionsAndFailedRun() {
             search.selectedIndex = 1; search.openActions(); verify(!search.actionsOpen);
             fakeResults.succeed = false; search.run(); verify(search.visible);
+        }
+        function test_applicationModeAndFocus() {
+            search.showApplications(); verify(search.applicationsMode);
+            tryCompare(search, "resultCount", 2);
+            keyClick(Qt.Key_K, Qt.ControlModifier); verify(!search.actionsOpen);
+            search.focusInput(); keyClick(Qt.Key_Down); keyClick(Qt.Key_Return);
+            compare(fakeResults.lastRow, 1); verify(!search.visible);
+            search.open(); verify(!search.applicationsMode);
+            keyClick(Qt.Key_Escape); verify(!search.visible);
+        }
+        function test_busyAndEmptyMessages() {
+            search.query = "missing"; fakeResults.querying = true;
+            compare(search.emptyMessage, "Buscando…");
+            fakeResults.querying = false; compare(search.emptyMessage, "Sin resultados");
+            search.query = ""; compare(search.emptyMessage, "Busca o abre Todas las aplicaciones");
+        }
+        function test_dockDispatch() {
+            dock.activate(2, {IsLauncher: true}); compare(fakeTasks.operation, "new"); compare(fakeTasks.lastRow, 2);
+            dock.activate(1, {IsWindow: true, IsActive: false}); compare(fakeTasks.operation, "activate");
+            dock.activate(1, {IsWindow: true, IsActive: true, IsMinimizable: true}); compare(fakeTasks.operation, "minimize");
+            dock.activate(1, {IsWindow: true, IsActive: true, IsMinimizable: false}); compare(fakeTasks.operation, "activate");
+            dock.openContext(3, {IsNewInstanceable: true, IsClosable: true}); verify(dock.menuOpen);
+            dock.newInstance(); compare(fakeTasks.operation, "new"); compare(fakeTasks.lastRow, 3); verify(!dock.menuOpen);
+            dock.openContext(3, {IsClosable: true}); dock.closeTask(); compare(fakeTasks.operation, "close"); verify(!dock.menuOpen);
+            dock.openContext(3, {IsLauncher: true}); dock.closeTask(); verify(dock.menuOpen);
+            keyClick(Qt.Key_Escape); verify(!dock.menuOpen);
         }
         function test_dockRoles() {
             verify(!tile.running);

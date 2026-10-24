@@ -15,8 +15,9 @@ QtObject {
         Desktop {
             capturePath: shell.argument("capture", Qt.application.arguments.indexOf("--capture") >= 0 ? decodeURIComponent(Qt.resolvedUrl("captures/desktop-dark.png").toString().replace(/^file:\/\//, "")) : "")
             captureLauncherPath: Qt.application.arguments.indexOf("--capture") >= 0 ? decodeURIComponent(Qt.resolvedUrl("captures/launcher-dark.png").toString().replace(/^file:\/\//, "")) : ""
+            captureApplications: Qt.application.arguments.indexOf("--applications") >= 0
             captureSearch: Qt.application.arguments.indexOf("--search") >= 0
-            captureQuery: shell.argument("query", "konsole")
+            captureQuery: shell.argument("query", Qt.application.arguments.indexOf("--applications") >= 0 ? "" : "konsole")
         }
     }
     property Component session: Component { Session {} }

@@ -7,7 +7,8 @@ import Singlr.Ui
 // Item contenedor (inexistente) y KWin nunca recibe la superficie layer-shell.
 Item {
     id: session
-    function openLauncher() { overlay.visible = true; launcher.open(); overlay.requestActivate(); }
+    function openLauncher(apps = false) { overlay.visible = true; launcher.open(apps); overlay.requestActivate(); focusTimer.restart(); }
+    Timer { id: focusTimer; interval: 0; onTriggered: launcher.focusInput() }
     Window {
         transientParent: null; visible: true; color: Theme.background
         LayerShell.Window.layer: LayerShell.Window.LayerBackground
@@ -28,13 +29,13 @@ Item {
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
     }
     Window {
-        transientParent: null; visible: true; width: dock.width; height: 78; color: "transparent"
+        transientParent: null; visible: true; width: dock.width; height: dock.height + 30; color: "transparent"
         LayerShell.Window.layer: LayerShell.Window.LayerBottom
         LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
         LayerShell.Window.exclusionZone: 0
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
         LayerShell.Window.scope: "singlr-dock"
-        Dock { id: dock; onLauncherRequested: session.openLauncher() }
+        Dock { id: dock; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
     }
     Window {
@@ -46,7 +47,7 @@ Item {
         LayerShell.Window.scope: "singlr-launcher"
         MouseArea { anchors.fill: parent; onClicked: launcher.close() }
         Launcher {
-            id: launcher; x: (parent.width-width)/2; y: Math.min(286,(parent.height-height)/2)
+            id: launcher; visible: false; sessionMode: true; x: (parent.width-width)/2; y: Math.min(286,(parent.height-height)/2)
             onClosed: overlay.visible = false
         }
     }
