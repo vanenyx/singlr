@@ -1,0 +1,10 @@
+module Singlr.Ui
+singleton Theme 1.0 Theme.qml
+UiText 1.0 UiText.qml
+Icon 1.0 Icon.qml
+AppIcon 1.0 AppIcon.qml
+Glass 1.0 Glass.qml
+Tool 1.0 Tool.qml
+Button 1.0 Button.qml
+ListItem 1.0 ListItem.qml
+ShortcutHint 1.0 ShortcutHint.qml
