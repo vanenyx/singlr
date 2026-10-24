@@ -41,6 +41,8 @@ def plasma(action):
 
 def restore_plasma():
     if PLASMA_MARK.exists():
+        # Un arranque/parada rápido puede dejar la unidad en «failed»; se limpia antes de arrancar.
+        plasma('reset-failed')
         plasma('start')
         PLASMA_MARK.unlink(missing_ok=True)
 
