@@ -1,117 +1,116 @@
-# T202 — sesión real aislada (solución técnica derivada)
+# Sesión anidada de Singlr — Día 1 (T202/T204)
 
-Desde la raíz del checkout:
+Desde la raíz del checkout, fuera del sandbox y dentro de una sesión Wayland:
 
 ```bash
-tools/run-singlr.sh                         # 2048×1280, Shell.qml
-tools/run-singlr.sh --size 1600x1000 --entry tests/shell/Probe.qml
+tools/run-singlr.sh                         # 2048×1280, hasta cerrar KWin o Ctrl+C
+tools/run-singlr.sh --duration 30           # cierre automático tras 30 segundos
+tools/run-singlr.sh --size 1600x1000        # tamaño lógico alternativo
 # Otra terminal, mientras viva una única sesión:
 tools/capture-session.sh /tmp/singlr-session.png
 # Con varias sesiones, seleccionar el JSON anunciado por el lanzador:
 SINGLR_SESSION_FILE=/tmp/singlr-session-XXXX/session.json tools/capture-session.sh /tmp/singlr-session.png
 ```
 
-`session-runtime.py` reutiliza el entorno XDG y el cierre de grupos de
-`prototype-runtime.py`, y el bootstrap de bus de `nested-session.sh`.
-Ejecuta KWin en ventana con bus privado, runtime/socket y config/datos/estado/caché
-temporales. Conserva las aplicaciones y los imports del sistema. No inicia
-plasmashell, systemd de usuario, KActivities, bloqueo ni atajos globales.
-Elimina DISPLAY para evitar que una app X11 termine en el escritorio anfitrión;
-este incremento ejecuta clientes Wayland, no inicia Xwayland.
+`SINGLR_DURATION_MS` sigue disponible por compatibilidad; `--duration` lo sustituye.
+Sin ambos, el supervisor espera indefinidamente. El cierre de la ventana de KWin,
+el del shell, SIGTERM y Ctrl+C ejecutan la limpieza; no es necesario buscar procesos
+por nombre. SIGKILL al supervisor no permite garantizar esa limpieza.
 
-El envoltorio `qml-shell` ejecuta `qml6 -I shell/qml <entrada>`.
-LayerShellQt configura cada ventana con attached properties; no se exporta
-`QT_WAYLAND_SHELL_INTEGRATION=layer-shell` a aplicaciones hijas. Milou/KIO y las
-activaciones D-Bus reciben el display anidado y los XDG temporales. Se fuerza
-`_KDE_APPLICATIONS_AS_FORKING=1` para evitar delegar lanzamientos al systemd del
-usuario. El controlador Linux es subreaper: adopta y termina también apps que
-se separan del grupo con setsid/doble fork. Al cerrar el shell, KWin, Ctrl+C o
-SIGTERM, limpia descendientes y temporales. SIGKILL al supervisor no permite
-esta garantía. No es un aislamiento para ejecutar aplicaciones no confiables.
+El lanzador C++ activa layer-shell únicamente para el shell y elimina esa variable
+antes de lanzar aplicaciones. KWin, bus D-Bus, socket Wayland y directorios XDG de
+configuración, datos, caché y estado son privados y temporales. No arranca
+plasmashell, systemd de usuario, KActivities, bloqueo ni atajos globales. Se elimina
+DISPLAY para evitar clientes X11 en el host; no se inicia Xwayland.
 
-Cada ejecución compara SHA-256 de los archivos k*/plasma* del directorio de
-configuración anfitrión antes/después y anuncia `SINGLR_HOST_CONFIG ... equal=True`.
-Los cambios concurrentes de la sesión anfitriona también se comunicarán como
-diferencias: no se restaura ni se escribe esa configuración.
+El supervisor Linux es subreaper y recoge descendientes separados mediante
+setsid/doble fork. Además, al cerrar recoge clientes externos cuyo entorno inicial
+contenga exactamente `SINGLR_SESSION_ID=<id de esta sesión>` en `/proc/PID/environ`.
+Por tanto, las herramientas externas deben conservar el entorno de `session.json`;
+el descriptor también incluye `LANG`, `LANGUAGE` y `LC_*`. El bus privado recibe
+esas mismas variables para activaciones D-Bus. No se usa `pkill -f`.
+La garantía cubre procesos del usuario con `/proc` accesible que conservan el marcador;
+no es una barrera de seguridad para aplicaciones no confiables.
 
-## Permisos reales, versiones y fuentes
+Antes/después se comparan SHA-256 de los archivos `k*`, `plasma*` y `dolphin*`
+(incluidos sus subdirectorios) en la configuración anfitriona. Se anuncia
+`SINGLR_HOST_CONFIG ... equal=True` o se listan diferencias, sin restaurar ni escribir
+configuración del host. Cambios concurrentes legítimos del host también pueden
+hacer fallar esta comprobación.
 
-Inventario del 24-10-2026: KWin/LayerShellQt/Milou/Plasma Workspace 6.8.1,
-Qt Declarative 6.12.0, KIO 6.31.0, Spectacle 6.8.1.
+## Compilación y checks locales
 
-En [KWin v6.8.1, KWinDisplay::allowInterface](https://github.com/KDE/kwin/blob/v6.8.1/src/wayland_server.cpp#L120-L158),
-`org_kde_plasma_window_management` se deniega a clientes clasificados como
-sandboxed; para clientes nativos ordinarios se permite. `zwlr_layer_shell_v1`
-no está en esa lista. Esta versión no consulta `X-KDE-Wayland-Interfaces` para
-autorizar esos dos protocolos. Por ello no se instala un .desktop ni se desactiva
-seguridad de KWin. La sonda debe comprobar la negociación real fuera del sandbox.
+```bash
+shell/session/build.sh
+python3 -m unittest discover -s tests/shell -p 'test_*.py' -v
+tools/check-shell.sh --output /tmp/singlr-t204-windowed.png
+python3 scripts/check_setup.py
+```
 
-Corroboración local: `/usr/lib/libkwin.so.6.8.1` no contiene la cadena
-`X-KDE-Wayland-Interfaces`. Los .desktop de otras aplicaciones aún pueden llevarla;
-su presencia no prueba que esta versión la use. No se extrapola a KWin anterior.
+`build.sh` usa Python, g++ y pkg-config; requiere cabeceras Qt6 Gui/Qml/Quick y
+LayerShellQt (`qt6-base`, `qt6-declarative`, `layer-shell-qt` en este host Arch).
+Un error conserva el último binario válido pero devuelve fallo, sin ejecutarlo.
+El resultado se publica atómicamente, con bloqueo entre compilaciones simultáneas.
+La caché registra comando, flags, compilador, fuente y cabeceras transitivas del
+sistema (`-MD`). Admite `CXX`, `CXXFLAGS`, `LDFLAGS` y `SINGLR_BUILD_DIR`.
+La salida estándar contiene solo la ruta del ejecutable; diagnósticos van a stderr.
+`build/` está ignorado por Git; no se versionan binarios.
 
-[ScreenShot2 v6.8.1](https://github.com/KDE/kwin/blob/v6.8.1/src/plugins/screenshot/screenshotdbusinterface2.cpp)
-publica `org.kde.KWin.ScreenShot2` en `/org/kde/KWin/ScreenShot2`, versión 5.
-`CaptureWorkspace` devuelve metadatos y píxeles crudos por descriptor Unix; una
-llamada gdbus sin ese transporte no produce PNG. Se reutiliza Spectacle
-`-b -n -f -o` sobre el bus privado para capturar la salida completa del compositor,
-incluidas las ventanas de apps. `grim` no está disponible. Esta vía aún requiere
-la prueba real de captura.
+`check-shell.sh` comprueba primero la compilación del lanzador, después qmllint y
+la carga/captura offscreen de `Shell.qml -- --windowed --capture=<PNG>` con XDG y
+bus deshabilitado propios. Esto no prueba KWin, Milou ni interacción real.
+Las pruebas headless simulan compositor/bus y verifican cierre normal, duración,
+SIGINT, SIGTERM, cierre de KWin, subreaper, cliente externo que ignora TERM,
+marcadores de otras sesiones y locale en descriptor/activación. La prueba de build
+usa el compilador real: caché, cambios de cabecera/flags, concurrencia y fallo.
 
-Los attached properties `anchors`, `layer`, `scope`, `exclusionZone` e interacción
-de teclado se contrastaron con `LayerShellQtQml.qmltypes` y los headers locales
-6.8.1. `Shell::useLayerShell` figura como innecesario desde Qt 6.5 en
-`/usr/include/LayerShellQt/shell.h`. TasksModel usa `AppId`, `IsWindow` e `IsMapped`
-según los headers y qmltypes locales. Milou usa `ResultsModel.run(QModelIndex)`.
-La sonda limita la búsqueda al plugin instalado `krunner_services.so`; su ID se
-deriva del nombre del binario según `KPluginMetaData::pluginId()` de KF6 local.
-
-## Verificación fuera del sandbox, a ejecutar por Claude
+## E2E real: comandos exactos para Claude
 
 ```bash
 cd /home/sunw/Projects/singlr-worktrees/codex-2
-command -v konsole
-python3 tests/shell/verify-session.py --evidence /tmp/singlr-t202-evidence
-# Tras integrar los QML de Codex 1:
-tools/check-shell.sh --output /tmp/singlr-shell-windowed.png
-tools/run-singlr.sh --size 2048x1280
+python3 tests/shell/e2e.py --duration 100 --evidence /tmp/singlr-t204-real
+# Revisar visualmente /tmp/singlr-t204-real/desktop.png y dolphin.png.
+# Prueba manual de cierre por ventana y otra por Ctrl+C, ambas sin duración:
+tools/run-singlr.sh
+tools/run-singlr.sh
 ```
 
-**Bloqueo local adicional:** `command -v konsole` no devuelve ruta,
-`pacman -Q konsole` informa paquete ausente y no hay .desktop/servicio Konsole
-bajo `/usr/share`. Paquete contrastado: [Arch extra/konsole](https://archlinux.org/packages/extra/x86_64/konsole/).
-No se instaló. El verificador falla con ese diagnóstico hasta que el entorno
-externo tenga Konsole disponible; resolver la dependencia queda con Claude/creador.
+El directorio de evidencia debe ser nuevo o estar vacío. No necesita Konsole.
+El E2E imprime PASS/FAIL por paso y devuelve 0 solo si pasan todos:
+arranque con duración, descriptor, locale, superficies en KWin por scripting,
+captura del escritorio, lanzamiento de Dolphin por Milou desde una sonda QML en
+la sesión, ventana Dolphin en KWin y en TasksModel (`IsWindow` + `IsMapped`),
+segunda captura, cierre automático, ausencia de procesos y hashes iguales.
+Además mantiene un cliente externo `sleep` para comprobar su limpieza.
+Se siguen los PID/starttime de Dolphin para detectar fugas aunque pierda el marcador.
 
-El verificador inicia la sonda con WAYLAND_DEBUG solo en el cliente, espera
-`get_layer_surface`, anuncio de window-management, primer frame, resultados
-Milou, ejecución y Konsole con `IsWindow` + `IsMapped` en TasksModel.
-Luego captura con Spectacle, termina el supervisor por SIGTERM, compara hashes y
-busca procesos residuales por el identificador único de sesión en `/proc`.
-No usa PID del host ni mata procesos preexistentes. La lectura de `/proc` queda
-limitada por los permisos del usuario.
+KWin 6.8.1 no expone el scope layer-shell como WM_CLASS: el E2E identifica las
+superficies por PID del lanzador, geometría y orden de capas (fondo, dock, barra).
+El launcher permanece oculto y no se exige una cuarta superficie.
+Se conserva el JSON de cada snapshot, logs separados y `results.json`.
+Los PNG registran su tamaño físico: en este host pueden ser 2560×1600 para
+2048×1280 lógicos; no se trata como fallo. Claude debe inspeccionar ambos PNG.
 
-Artefactos: `session.log`, `session.png`, `config-before.json`, `config-after.json`.
-Claude debe inspeccionar el PNG: panel anclado arriba y Konsole real debajo,
-además de confirmar `T202 PASS`, hashes iguales y residual vacío. Ningún resultado
-headless sustituye esta revisión visual. Si falla, devolver `session.log` completo.
+## Versiones, contratos y evidencia
 
-`tools/check-shell.sh` hace qmllint con ambos import paths, y carga `Shell.qml --
---windowed --capture=<png>` offscreen con bus deshabilitado/XDG propios. Timeout
-de 20 s y error si no hay PNG nuevo. No prueba servicios ni interacción.
-La fixture `WindowedFixture.qml` solo comprueba el transporte de ese contrato.
+Inventario local del 24-10-2026: KWin/LayerShellQt/Milou/Plasma Workspace 6.8.1,
+Qt Declarative 6.12.0, KIO 6.31.0 y Spectacle 6.8.1.
 
-## Evidencia ya ejecutada
+- [KWin scripting API](https://develop.kde.org/docs/plasma/kwin/api/):
+  `windowList`, PID, frameGeometry, layer y hidden; contrastados con headers locales.
+- [LayerShellV1Window v6.8.1](https://github.com/KDE/kwin/blob/v6.8.1/src/layershellv1window.cpp):
+  asigna DesktopLayer/BelowLayer/AboveLayer a background/bottom/top.
+- [KWinDisplay::allowInterface v6.8.1](https://github.com/KDE/kwin/blob/v6.8.1/src/wayland_server.cpp):
+  window-management se permite a clientes nativos ordinarios; no se instala un
+  .desktop ni se cambia seguridad para probarlo.
+- [ScreenShot2 v6.8.1](https://github.com/KDE/kwin/blob/v6.8.1/src/plugins/screenshot/screenshotdbusinterface2.cpp):
+  se reutiliza Spectacle `-b -n -f -o` en el bus privado para obtener PNG.
+- Los contratos de Milou `ResultsModel.run(QModelIndex)` y TasksModel `AppId`,
+  `IsWindow`, `IsMapped` se contrastaron con qmltypes/headers locales.
+- [QQmlApplicationEngine Qt 6.12](https://doc.qt.io/qt-6/qqmlapplicationengine.html):
+  el lanzador crea el motor e importa el punto de entrada QML.
 
-Ver `tools/evidence/t202.txt`. Seis pruebas headless con compositor/bus simulados
-verifican argumentos, fallos, propagación de entorno y limpieza normal/SIGTERM,
-incluido un descendiente con setsid. Lint de la sonda y captura de la fixture:
-PASS. Regresión de captura del runtime anterior: PASS con backend software.
-`check_setup.py`: PASS; no acredita escritorio.
-
-El intento real de arranque fue bloqueado al crear el bus privado:
-`Failed to bind socket ... Operation not permitted` (exit 127).
-Los 27 archivos de configuración conservaron sus hashes y no quedaron hijos.
-`Shell.qml` aún no existe aquí: check-shell retorna 2 con diagnóstico claro.
-No se ha generado una captura de sesión real ni verificado Milou/TasksModel en
-KWin real. La aceptación de integración permanece pendiente.
+Evidencia del sandbox T204 en `tools/evidence/t204.txt`. El bus D-Bus real no puede
+crear su socket aquí (`Operation not permitted`): el E2E completo y los cierres
+manuales quedan pendientes fuera del sandbox. Claude ya verificó arranque y
+captura reales antes de T204; eso no acredita los nuevos pasos E2E.

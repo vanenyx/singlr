@@ -1,0 +1,45 @@
+T204 — Codex 2 — 2026-10-24
+Rama day1/codex2-h3. Sin commit. Sin cambios en shell/qml/**.
+
+EJECUTADO EN SANDBOX
+- python3 scripts/doctor.py: inventario leído; Qt 6.12.0; g++/pkg-config presentes;
+  cmake/ninja ausentes. No se instalaron paquetes.
+- shell/session/build.sh (dos llamadas): PASS, compilación real y reutilización.
+  Warning conocido: LayerShellQt::Shell::useLayerShell deprecado desde 6.6.
+  Se conserva la llamada que Claude verificó para este lanzador.
+- python3 -m unittest discover -s tests/shell -p 'test_*.py' -v:
+  9 tests, 14.848s, OK.
+  Build real: exclusión mutua entre dos callers, caché sin recompilar, dependencia
+  de cabecera, cambios de CXXFLAGS, error de cabecera y conservación del binario.
+  Lifecycle con compositor/bus/lanzador simulados: salida normal, fallo compositor,
+  SIGTERM, SIGINT, cierre compositor, duración; hijo setsid adoptado; cliente
+  externo que ignora TERM; no matar otro marcador con sufijo; locale en descriptor
+  y en argumentos/entorno de dbus-update-activation-environment.
+- /usr/lib/qt6/bin/qmllint -I /usr/lib/qt6/qml tests/shell/DolphinProbe.qml: PASS.
+- tools/check-shell.sh --output /tmp/singlr-t204-windowed.png:
+  PASS (build + qmllint + carga offscreen + PNG). No acredita sesión real.
+- python3 scripts/check_setup.py: PASS (configuración del repositorio).
+- git diff --check; bash -n shell/session/build.sh tools/check-shell.sh tools/run-singlr.sh:
+  PASS.
+
+INTENTO E2E REAL
+python3 tests/shell/e2e.py --evidence /tmp/singlr-t204-sandbox-final
+exit=1. PASS dependencias; FAIL session.json, la sesión termina exit=127:
+dbus-daemon: Failed to bind socket /tmp/dbus-…: Operation not permitted.
+PASS procesos eliminados: residuales=[]; clientes externos vivos=[].
+PASS configuración host: 28 archivos antes / 28 después, hashes iguales.
+El snapshot incluye ahora dolphin*, además de k*/plasma*.
+Los restantes pasos figuran FAIL, no ejecutados por fallo anterior.
+No hay capturas ni prueba real de Milou/TasksModel para T204.
+
+PENDIENTE FUERA DEL SANDBOX (CLAUDE)
+cd /home/sunw/Projects/singlr-worktrees/codex-2
+python3 tests/shell/e2e.py --duration 100 --evidence /tmp/singlr-t204-real
+# Usar directorio nuevo/vacío. Revisar desktop.png y dolphin.png y results.json.
+tools/run-singlr.sh
+# Cerrar ventana KWin: comprobar SINGLR_CLEANUP remaining=[] y equal=True.
+tools/run-singlr.sh
+# Ctrl+C: comprobar SINGLR_CLEANUP remaining=[] y equal=True (exit 130 esperado).
+
+Fuentes/contratos, límites de /proc, uso y detalle del verificador:
+shell/session/README.md.
