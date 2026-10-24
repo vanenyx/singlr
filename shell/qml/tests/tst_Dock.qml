@@ -24,7 +24,8 @@ Item {
             return undefined;
         }
         function requestActivate(index) {
-            const chosen = children[index.child];
+            const chosen = children[index.child < 0 ? 0 : index.child];
+            calls.push("activate:" + chosen.id);
             activatedId = chosen.id;
             for (const child of children) child.active = child.id === chosen.id;
             chosen.time = ++clock;
@@ -38,7 +39,11 @@ Item {
             children[index.child].minimized = !children[index.child].minimized;
         }
         function requestNewInstance(index) { calls.push("new"); }
-        function requestClose(index) { calls.push("close"); }
+        function requestClose(index) {
+            const id = children[index.child < 0 ? 0 : index.child].id;
+            calls.push("close:" + id);
+            children = children.filter(w => w.id !== id);
+        }
     }
     Dock { id: dock; x: 40; y: 500; modelOverride: doubleModel }
     DockItem { id: focusTile; x: 20; y: 400; task: ({AppName: "Terminal", IsLauncher: true}) }
@@ -47,7 +52,7 @@ Item {
         name: "DockBehaviour"; when: windowShown
         function task() { return doubleModel.get(0); }
         function init() {
-            dock.closeMenu(); dock.hideTooltip(); dock.lastWindows = ({}); dock.launching = ({});
+            dock.closeMenu(); dock.hideTooltip(); dock.activationHistory = ({}); dock.observedActive = ""; dock.launching = ({});
             doubleModel.clear(); doubleModel.calls = []; doubleModel.activatedId = "";
             doubleModel.children = [
                 {id:"40", active:false, minimized:false, time:4},
@@ -61,48 +66,68 @@ Item {
         }
         function cleanup() { dock.closeMenu(); dock.hideTooltip(); }
         function test_fourWindowsReorderEveryActivation() {
-            for (const expected of ["30", "40", "10", "20", "30", "40", "10", "20"]) {
+            const size = [dock.width, dock.height, dock.visible];
+            for (let i = 0; i < 3; ++i) {
+                doubleModel.calls = [];
                 dock.activate(0, task());
-                compare(doubleModel.activatedId, expected);
-                compare(doubleModel.children[0].id, expected);
+                compare(doubleModel.calls, ["activate:10", "activate:30", "activate:40", "activate:20"]);
+                compare(doubleModel.activatedId, "20");
+                compare([dock.width, dock.height, dock.visible], size);
             }
-        }
-        function test_scrollBothDirections() {
-            dock.cycle(0, task(), -1); compare(doubleModel.activatedId,"10");
-            dock.cycle(0, task(), -1); compare(doubleModel.activatedId,"40");
-            dock.cycle(0, task(), 1); compare(doubleModel.activatedId,"10");
         }
         function test_inactiveUsesMostRecent() {
             doubleModel.setProperty(0,"IsActive",false);
             doubleModel.children.forEach(w => w.active = false);
-            dock.lastWindows = ({"applications:browser.desktop":"10"});
+            dock.activationHistory = ({"applications:browser.desktop|10":999});
             dock.activate(0, task()); compare(doubleModel.activatedId,"20");
+            compare(doubleModel.calls, ["activate:10", "activate:30", "activate:40", "activate:20"]);
         }
-        function test_allMinimizedRestoreAllThenRecent() {
+        function test_allMinimizedRestoreOnlyRecent() {
             doubleModel.setProperty(0,"IsActive",false);
             doubleModel.children.forEach(w => { w.active = false; w.minimized = true; });
             dock.activate(0, task()); compare(doubleModel.activatedId,"20");
-            compare(doubleModel.calls.length,4);
-            verify(doubleModel.children.every(w => !w.minimized));
+            compare(doubleModel.calls, ["activate:20"]);
+            compare(doubleModel.children.filter(w => w.minimized).length,3);
         }
-        function test_removedRememberedWindow() {
-            dock.cycle(0, task(), 1); compare(doubleModel.activatedId,"30");
-            doubleModel.children = doubleModel.children.filter(w => w.id !== "30");
-            doubleModel.children[0].active = true;
-            dock.cycle(0, task(), 1);
-            compare(doubleModel.activatedId,"10");
+        function test_mixedLeavesMinimizedAlone() {
+            doubleModel.children.find(w => w.id === "20").minimized = true;
+            doubleModel.children.forEach(w => w.active = false);
+            dock.activate(0, task());
+            compare(doubleModel.calls, ["activate:10", "activate:30", "activate:40"]);
+            verify(doubleModel.children.find(w => w.id === "20").minimized);
         }
-        function test_externalActivationUpdatesMemory() {
-            dock.cycle(0, task(), 1);
-            const child = doubleModel.children.findIndex(w => w.id === "10");
-            doubleModel.requestActivate({child:child});
+        function test_singleActiveNeverMinimizes() {
+            doubleModel.children = [{id:"20",active:true,minimized:false,time:8}];
+            const single = {AppName:"Browser", IsGroupParent:false, IsActive:true, IsMinimizable:true, WinIdList:["20"]};
+            dock.activate(0,single); dock.activate(0,single);
+            compare(doubleModel.calls,["activate:20","activate:20"]);
+            verify(!doubleModel.children[0].minimized);
+        }
+        function test_externalActivationFallbackAndRemovedWindow() {
+            doubleModel.children.forEach(w => w.time = 0);
             dock.rememberActive();
-            dock.cycle(0, task(), 1); compare(doubleModel.activatedId,"20");
+            doubleModel.children.forEach(w => w.active = w.id === "10");
+            dock.rememberActive();
+            doubleModel.children.forEach(w => w.active = false);
+            doubleModel.setProperty(0,"IsActive",false);
+            dock.activate(0,task()); compare(doubleModel.activatedId,"10");
+            doubleModel.children = doubleModel.children.filter(w => w.id !== "10");
+            doubleModel.children.forEach(w => { w.active = false; w.time = 0; });
+            dock.activate(0,task()); compare(doubleModel.activatedId,"20");
+        }
+        function test_quitClosesAllWindows() {
+            dock.openContext(0,task());
+            compare(dock.menuEntries.map(e => e.label).slice(-3),["Nueva ventana","Fijar en el dock","Salir"]);
+            verify(dock.menuEntries[4].separator); verify(dock.menuEntries[6].separator);
+            verify(dock.menuEntries.find(e => e.id === "20").active);
+            dock.runMenu(6);
+            compare(doubleModel.calls,["close:10","close:20","close:30","close:40"]);
+            verify(!dock.menuOpen);
         }
         function test_menuKeyboardAndWindowSelection() {
             dock.openContext(0, task());
             compare(dock.contextWindows.length,4); compare(dock.menuEntries.length,7);
-            compare(dock.menuHeight,227);
+            compare(dock.menuHeight,236);
             wait(1); keyClick(Qt.Key_Down); compare(dock.menuIndex,1);
             keyClick(Qt.Key_Return); compare(doubleModel.activatedId,"20"); verify(!dock.menuOpen);
             dock.openContext(0, task()); wait(1); keyClick(Qt.Key_Escape); verify(!dock.menuOpen);
@@ -118,16 +143,16 @@ Item {
         }
         function test_tooltipDelayWarmAndDismiss() {
             dock.tooltipWarm = false;
-            dock.showTooltip("Browser · 4 ventanas",50); compare(dock.tooltipText, "");
+            dock.showTooltip("Browser",50); compare(dock.tooltipText, "");
             wait(200); compare(dock.tooltipText, "");
-            tryCompare(dock,"tooltipText","Browser · 4 ventanas",600);
+            tryCompare(dock,"tooltipText","Browser",600);
             dock.showTooltip("",0); dock.showTooltip("Terminal",90);
             compare(dock.tooltipText,"Terminal");
             dock.openContext(0,task()); compare(dock.tooltipText, "");
             dock.showTooltip("Browser",50); compare(dock.tooltipText, "");
         }
         function test_pinsPersistAndRemoveWithoutKdeConfiguration() {
-            const path = "file:///tmp/singlr-t207-pins-" + Date.now() + ".json";
+            const path = "file:///tmp/singlr-t208-pins-" + Date.now() + ".json";
             const first = persistentDock.createObject(null, {settingsLocation:path}) as Dock;
             verify(first !== null); tryCompare(first,"pinsLoaded",true);
             const app = {AppName:"Archivos", LauncherUrlWithoutIcon:"applications:org.kde.dolphin.desktop", IsLauncher:false, HasLauncher:false};
@@ -148,15 +173,14 @@ Item {
             third.destroy();
         }
         SignalSpy { id: middleSpy; target: focusTile; signalName: "newInstanceRequested" }
-        SignalSpy { id: wheelSpy; target: focusTile; signalName: "scrolled" }
+        SignalSpy { id: activateSpy; target: focusTile; signalName: "activated" }
         function test_pointerMiddleAndWheel() {
-            middleSpy.clear(); wheelSpy.clear();
+            middleSpy.clear(); activateSpy.clear();
             mouseClick(focusTile,16,20,Qt.MiddleButton); compare(middleSpy.count,1);
             focusTile.task = ({AppName:"Browser", IsGroupParent:true, WinIdList:["a","b","c","d"]});
             mouseWheel(focusTile,16,20,0,120);
-            compare(wheelSpy.count,1); compare(wheelSpy.signalArguments[0][0],-1);
             mouseWheel(focusTile,16,20,0,-120);
-            compare(wheelSpy.count,2); compare(wheelSpy.signalArguments[1][0],1);
+            compare(activateSpy.count,0); compare(middleSpy.count,1);
             focusTile.task = ({AppName:"Terminal", IsLauncher:true});
         }
         function test_focusOnlyFromTab() {

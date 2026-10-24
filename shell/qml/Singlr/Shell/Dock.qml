@@ -34,11 +34,13 @@ Rectangle {
     property var contextWindows: []
     property var menuEntries: []
     property int menuIndex: 0
-    readonly property int menuHeight: 8 + menuEntries.length * 30 + (contextWindows.length ? 9 : 0)
+    readonly property int menuHeight: 8 + menuEntries.length * 30 + (contextWindows.length ? 9 : 0) + 9
     property var modelOverride: null
     readonly property var taskSource: modelOverride || tasks
     property alias tasksModel: tasks
-    property var lastWindows: ({})
+    property var activationHistory: ({})
+    property string observedActive: ""
+    property double activationClock: 0
     property var launching: ({})
     readonly property var candidates: ["org.kde.dolphin.desktop", "org.kde.konsole.desktop", "firefox.desktop", "org.kde.kate.desktop", "systemsettings.desktop"]
     property var pinUrls: []
@@ -83,7 +85,7 @@ Rectangle {
             result.push({id: DockLogic.identity(read(TaskManager.AbstractTasksModel.WinIdList)),
                 title: String(read(Qt.DisplayRole) || task.AppName || "Ventana"),
                 active: !!read(TaskManager.AbstractTasksModel.IsActive), minimized: !!read(TaskManager.AbstractTasksModel.IsMinimized),
-                lastActivated: Number(read(TaskManager.AbstractTasksModel.LastActivated)) || 0});
+                lastActivated: TaskManager.AbstractTasksModel.LastActivated !== undefined ? Number(read(TaskManager.AbstractTasksModel.LastActivated)) || 0 : 0});
         }
         return DockLogic.ordered(result);
     }
@@ -99,7 +101,7 @@ Rectangle {
     function activateWindow(row, task, id) {
         const idx = windowIndex(row, task, id);
         if (idx === null) return;
-        lastWindows[appKey(task)] = id;
+        recordActivation(task, id);
         taskSource.requestActivate(idx);
     }
     function closeMenu() { contextRow = -1; }
@@ -107,9 +109,9 @@ Rectangle {
         hideTooltip(); contextTask = task; contextRow = row;
         contextWindows = windows(row, task);
         menuEntries = contextWindows.map(w => ({label: w.title, id: w.id, action: "window", active: w.active, enabled: true})).concat([
-            {label: "Nueva ventana", action: "new", enabled: !!(task.IsLauncher || task.IsNewInstanceable)},
+            {label: "Nueva ventana", action: "new", separator: contextWindows.length > 0, enabled: !!(task.IsLauncher || task.IsNewInstanceable)},
             {label: task.IsLauncher || task.HasLauncher ? "Quitar del dock" : "Fijar en el dock", action: "pin", enabled: !!(task.LauncherUrlWithoutIcon || task.LauncherUrl)},
-            {label: contextWindows.length > 1 ? "Cerrar " + contextWindows.length + " ventanas" : "Cerrar ventana", action: "close", enabled: !!task.IsClosable}
+            {label: "Salir", action: "close", separator: true, enabled: !!task.IsClosable && contextWindows.length > 0}
         ]);
         menuIndex = 0;
         while (menuIndex < menuEntries.length - 1 && !menuEntries[menuIndex].enabled) ++menuIndex;
@@ -167,46 +169,50 @@ Rectangle {
     }
     function closeTask() {
         if (contextRow < 0 || !contextTask || !contextTask.IsClosable) return;
-        taskSource.requestClose(taskSource.index(contextRow, 0)); closeMenu();
+        const row = contextRow;
+        const task = contextTask;
+        const list = windows(row, task);
+        closeMenu();
+        // Resolve every identity again: closing a child can reorder the model.
+        for (const window of list) {
+            const idx = windowIndex(row, task, window.id);
+            if (idx !== null) taskSource.requestClose(idx);
+        }
+    }
+    function recordActivation(task, id) {
+        const key = appKey(task) + "|" + id;
+        if (observedActive === key) return;
+        activationClock = Math.max(Date.now(), activationClock + 1);
+        activationHistory[key] = activationClock;
+        observedActive = key;
     }
     function rememberActive() {
         for (let row = 0; row < pinned.count; ++row) {
             const item = pinned.itemAt(row) as TaskEntry;
             if (!item || !item.model.IsActive || item.model.IsLauncher) continue;
             const active = windows(row, item.model).find(w => w.active);
-            if (active) lastWindows[appKey(item.model)] = active.id;
+            if (active) { recordActivation(item.model, active.id); return; }
         }
+        observedActive = "";
     }
     Connections {
         target: dock.taskSource
         ignoreUnknownSignals: true
         function onDataChanged() { dock.rememberActive(); }
-        function onModelReset() { dock.closeMenu(); dock.lastWindows = ({}); }
+        function onModelReset() { dock.closeMenu(); dock.activationHistory = ({}); dock.observedActive = ""; }
         function onRowsRemoved() { dock.closeMenu(); }
         function onLayoutChanged() { dock.closeMenu(); }
-    }
-    function cycle(row, task, direction) {
-        hideTooltip(); closeMenu();
-        if (task.IsLauncher) return;
-        const list = windows(row, task);
-        const key = appKey(task);
-        activateWindow(row, task, DockLogic.next(list, lastWindows[key], direction));
     }
     function activate(row, task) {
         hideTooltip(); closeMenu();
         if (task.IsLauncher) { beginLaunch(row, task); return; }
-        const list = windows(row, task);
-        const active = !!task.IsActive || list.some(w => w.active);
-        if (active && list.length > 1) { cycle(row, task, 1); return; }
-        if (active && task.IsMinimizable) { taskSource.requestToggleMinimized(taskSource.index(row, 0)); return; }
-        const target = DockLogic.recent(list, lastWindows[appKey(task)]);
-        if (list.length && list.every(w => w.minimized)) {
-            for (const window of list) {
-                const idx = windowIndex(row, task, window.id);
-                if (idx !== null) taskSource.requestToggleMinimized(idx);
-            }
-        }
-        activateWindow(row, task, target);
+        rememberActive();
+        // Snapshot before activating: TasksModel may reorder children on each request.
+        const list = DockLogic.activationOrder(windows(row, task), activationHistory, appKey(task));
+        const visible = list.filter(w => !w.minimized);
+        const targets = visible.length ? visible : list.slice(-1);
+        // requestActivate restores minimized windows; never toggle minimization.
+        for (const window of targets) activateWindow(row, task, window.id);
     }
     FolderListModel {
         id: applications; folder: "file:///usr/share/applications"; showDirs: false
@@ -257,7 +263,6 @@ Rectangle {
                     task: model
                     launching: dock.launching[dock.appKey(model)] !== undefined
                     onInteracted: dock.hideTooltip()
-                    onScrolled: direction => dock.cycle(index, model, direction)
                     onNewInstanceRequested: { if (model.IsNewInstanceable) dock.taskSource.requestNewInstance(dock.taskSource.index(index, 0)); }
                     onActivated: dock.activate(index, model)
                     onContextRequested: dock.openContext(index, model)
@@ -279,7 +284,6 @@ Rectangle {
             onTooltipRequested: (text, center) => dock.showTooltip(text, center)
             launching: dock.launching[dock.appKey(entry.model)] !== undefined
             onInteracted: dock.hideTooltip()
-            onScrolled: direction => dock.cycle(entry.index, entry.model, direction)
             onNewInstanceRequested: {
                 if (entry.model.IsLauncher) dock.beginLaunch(entry.index, entry.model);
                 else if (entry.model.IsNewInstanceable) dock.taskSource.requestNewInstance(dock.taskSource.index(entry.index, 0));
@@ -322,7 +326,7 @@ Rectangle {
                         required property int index
                         width: menuContent.width
                         Item {
-                            width: parent.width; height: menuRow.index === dock.contextWindows.length && dock.contextWindows.length > 0 ? 9 : 0
+                            width: parent.width; height: menuRow.modelData.separator ? 9 : 0
                             Rectangle { visible: parent.height > 0; anchors.centerIn: parent; width: parent.width - 12; height: 1; color: Theme.border }
                         }
                         Rectangle {

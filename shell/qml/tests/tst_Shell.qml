@@ -81,7 +81,7 @@ Item {
         function test_dockDispatch() {
             dock.activate(2, {IsLauncher: true}); compare(fakeTasks.operation, "new"); compare(fakeTasks.lastRow, 2);
             dock.activate(1, {IsWindow: true, IsActive: false}); compare(fakeTasks.operation, "activate");
-            dock.activate(1, {IsWindow: true, IsActive: true, IsMinimizable: true}); compare(fakeTasks.operation, "minimize");
+            dock.activate(1, {IsWindow: true, IsActive: true, IsMinimizable: true}); compare(fakeTasks.operation, "activate");
             dock.activate(1, {IsWindow: true, IsActive: true, IsMinimizable: false}); compare(fakeTasks.operation, "activate");
             dock.openContext(3, {IsNewInstanceable: true, IsClosable: true}); verify(dock.menuOpen); compare(dock.height, 48);
             dock.newInstance(); compare(fakeTasks.operation, "new"); compare(fakeTasks.lastRow, 3); verify(!dock.menuOpen);
@@ -105,10 +105,11 @@ Item {
         SignalSpy { id: tooltipSpy; target: tile; signalName: "tooltipRequested" }
         function test_sessionTooltipHover() {
             search.close(); tile.sessionMode = true;
+            tile.task = ({AppName:"Browser", IsGroupParent:true, WinIdList:["one","two"], decoration:"utilities-terminal"});
             mouseMove(tile, -20, -20); tooltipSpy.clear();
             mouseMove(tile, 16, 20);
             tryVerify(() => tooltipSpy.count > 0);
-            compare(tooltipSpy.signalArguments[tooltipSpy.count - 1][0], tile.Accessible.name);
+            compare(tooltipSpy.signalArguments[tooltipSpy.count - 1][0], "Browser");
             mouseMove(tile, -20, -20);
             compare(tooltipSpy.signalArguments[tooltipSpy.count - 1][0], "");
             tile.sessionMode = false;

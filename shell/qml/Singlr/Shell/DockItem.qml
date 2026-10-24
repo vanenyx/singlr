@@ -10,7 +10,6 @@ Controls.Control {
     property bool launching: false
     property bool keyboardFocus: false
     signal interacted()
-    signal scrolled(int direction)
     signal newInstanceRequested()
     signal activated()
     signal contextRequested()
@@ -52,14 +51,8 @@ Controls.Control {
     }
     MouseArea { id: pointer; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton; onContainsMouseChanged: {
         const center = tile.mapToItem(null, tile.width / 2, 0).x;
-        const count = tile.task?.WinIdList?.length || 0;
-        tile.tooltipRequested(containsMouse ? tile.Accessible.name + (count > 1 ? " · " + count + " ventanas" : "") : "", center);
+        tile.tooltipRequested(containsMouse ? tile.Accessible.name : "", center);
     }
     onPressed: { tile.keyboardFocus = false; tile.interacted(); tile.tooltipRequested("", 0); }
-    onWheel: wheel => {
-        const delta = wheel.angleDelta.y || wheel.angleDelta.x;
-        if (!tile.running || !delta) { wheel.accepted = false; return; }
-        tile.interacted(); tile.scrolled(delta > 0 ? -1 : 1); wheel.accepted = true;
-    }
     onClicked: mouse => { if (mouse.button === Qt.RightButton) tile.contextRequested(); else if (mouse.button === Qt.MiddleButton) tile.newInstanceRequested(); else tile.activated(); } }
 }

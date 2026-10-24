@@ -1,3 +1,32 @@
+# T208 — Dock según P-008
+
+Decisión explícita del creador: clic trae las ventanas no minimizadas de la app,
+de antigua a reciente; si todas están minimizadas, activa/restaura solo la última.
+Nunca minimiza. Sin ciclo por clics ni rueda; clic central conserva nueva ventana.
+Menú con títulos, marca activa, separadores, nueva ventana, fijación y «Salir»
+(solicita cerrar todas las ventanas). Tooltip solo con nombre de app.
+
+Solución técnica derivada: `LastActivated` comprobado en
+`/usr/lib/qt6/qml/org/kde/taskmanager/taskmanager.qmltypes`, Plasma Workspace
+6.8.1 / Qt 6.12.0. KDE documenta el rol como
+[timestamp de la última activación](https://github.com/KDE/plasma-workspace/blob/master/libtaskmanager/abstracttasksmodel.h).
+Si el backend no entrega fechas, se usa el historial observado por identidad de
+ventana. Cada petición resuelve de nuevo el índice; la secuencia parte de una
+instantánea para soportar reordenamientos del modelo. No se modifica Session.qml:
+la ventana del dock conserva tamaño y visibilidad durante el clic.
+
+Verificado T208: qmllint sobre todo el QML, exit 0 sin avisos; qmltestrunner
+con los comandos offscreen/software documentados abajo: **33 passed, 0 failed**.
+Incluye reordenamiento por activación, clic repetido, ventanas minimizadas,
+historial alternativo, cierre de todas, menú/teclado, tooltip y rueda sin acciones.
+Preview nativo del menú revisado en `/tmp/singlr-t208-menu.png`.
+Registro vivo seguido con `tail -F`: recargas sin errores QML; persiste el aviso
+de registro del portal (`App info not found for 'singlr-shell'`).
+Pendiente: comprobar parpadeo visible al activar varias ventanas en KWin real;
+si se reproduce, el encargo permite activar solo la más reciente.
+
+---
+
 # T205 — Pulido Linear (propuesta para revisión)
 
 Solo `shell/qml/**`, sin commit. Barra de 28 px con nombre activo obtenido de los

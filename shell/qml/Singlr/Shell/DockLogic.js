@@ -7,18 +7,11 @@ function identity(ids) {
 function ordered(windows) {
     return windows.slice().sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 }
-function next(windows, last, direction) {
-    const list = ordered(windows);
-    if (!list.length) return "";
-    let current = list.findIndex(w => w.id === last);
-    if (current < 0) current = list.findIndex(w => w.active);
-    if (current < 0) return direction < 0 ? list[list.length - 1].id : list[0].id;
-    return list[(current + direction + list.length) % list.length].id;
-}
-function recent(windows, last) {
-    const active = windows.find(w => w.active);
-    if (active) return active.id;
-    const dated = windows.slice().sort((a, b) => b.lastActivated - a.lastActivated);
-    if (dated.length && dated[0].lastActivated > 0) return dated[0].id;
-    return windows.some(w => w.id === last) ? last : (windows[0]?.id || "");
+// LastActivated is exposed by Plasma 6.8's taskmanager.qmltypes. Its value is
+// a timestamp (QDateTime converts to Date). Fall back to observed activations
+// when the backend supplies no timestamps, with identities as a stable tie-break.
+function activationOrder(windows, history, app) {
+    const hasDates = windows.some(w => w.lastActivated > 0);
+    const stamp = w => hasDates ? w.lastActivated : (history[app + "|" + w.id] || 0);
+    return ordered(windows).sort((a, b) => stamp(a) - stamp(b) || Number(a.active) - Number(b.active));
 }
