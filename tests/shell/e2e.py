@@ -106,7 +106,8 @@ def shell_surfaces(windows, shell_pid):
             and w['y'] == background['y'] and w['width'] == background['width']
             and w['height'] < background['height']]
     docks = [w for w in owned if w != background and w['width'] < background['width']
-             and w['y'] + w['height'] == background['y'] + background['height']]
+             # El dock flota a pocos píxeles del borde inferior.
+             and 0 <= background['y'] + background['height'] - (w['y'] + w['height']) <= 40]
     return any(background['layer'] < d['layer'] < b['layer'] for b in bars for d in docks)
 
 
