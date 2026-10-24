@@ -10,6 +10,8 @@ Claude usa `acceptEdits` como valor de proyecto. El lanzador añade `--permissio
 
 ## Git y aislamiento
 
+En esta máquina ya están configurados `origin` con `https://github.com/vanenyx/singlr.git` y la identidad local facilitada por el creador. El commit inicial y los dos worktrees están creados. Los pasos siguientes permiten reproducir la preparación en otra instalación; no hace falta repetir la identidad en los worktrees, pues comparten la configuración Git del repo.
+
 La identidad debe ser la que el creador elija, configurada solo en este repo:
 
 ```bash
@@ -45,7 +47,7 @@ La elección de proyecto, la sesión autenticada y los permisos de la UI deben v
 
 ## Conectar GitHub después
 
-El creador crea el remoto, comparte su URL y elige visibilidad/licencia. Añadir `origin` con esa URL, verificarla con `git remote -v` y hacer push cuando esté autorizado. No inventar URL, identidad ni credenciales. Las ramas y entregas funcionan localmente mientras tanto.
+El remoto ya está conectado en esta máquina. Comprobarlo con `git remote -v`; hacer push cuando esté autorizado. En otra instalación, usar la URL facilitada por el creador. Resolver visibilidad/licencia antes de publicar; no inventar identidad ni credenciales. Las ramas y entregas funcionan localmente mientras tanto.
 
 ## Fuentes verificadas
 

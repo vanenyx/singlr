@@ -6,11 +6,12 @@ Fase: configuración. Visión original conservada en la raíz. Instrucciones, pe
 
 ## Cierre de la configuración
 
-- Verificar estructura y ejecutar inventario de herramientas.
-- Completar identidad Git con el nombre/correo elegidos por el creador y registrar commit inicial.
-- Preparar worktrees después del commit inicial y abrir cada instancia en su ruta.
+- Estructura verificada e inventario de herramientas ejecutado.
+- Identidad local de Git configurada con los datos del creador y commit inicial registrado.
+- Worktrees creados: `../singlr-worktrees/codex-1` en `codex1/setup` y `../singlr-worktrees/codex-2` en `codex2/setup`.
+- Pendiente abrir cada instancia en su ruta.
 - En cada agente, confirmar que puede leer AGENTS.md y cargar sus skills. Un enlace válido en disco no demuestra carga efectiva en una sesión.
-- Remoto GitHub pendiente de URL del creador. No se ha publicado nada.
+- `origin` conectado a `https://github.com/vanenyx/singlr.git`. El remoto estaba vacío al comprobarlo; no se ha hecho push.
 
 ## Trabajos futuros, todavía no iniciados
 

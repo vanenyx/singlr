@@ -1,10 +1,12 @@
 # Preparación inicial
 
-Agente: Codex, sesión de preparación. Rama: `main`, aún sin commit por identidad Git pendiente. Fecha: 2026-10-23, America/Lima.
+Agente: Codex, sesión de preparación. Rama: `main`. Commit inicial: `f38dd34`. Fecha: 2026-10-23, America/Lima.
 
 ## Resultado
 
-- Repositorio Git local inicializado con rama `main`; sin remoto ni publicación.
+- Repositorio Git local inicializado con rama `main`, identidad local elegida por el creador y commit inicial registrado.
+- `origin` conectado a `https://github.com/vanenyx/singlr.git`; `git ls-remote` respondió correctamente sin referencias. No se hizo push.
+- Worktrees Git creados en `../singlr-worktrees/codex-1` y `../singlr-worktrees/codex-2`, ramas `codex1/setup` y `codex2/setup`.
 - Documento original conservado, idéntico al aportado en Descargas.
 - Instrucciones compartidas, importación para Claude y perfiles de Claude/Codex 1/Codex 2.
 - Tres skills locales de diseño, Qt/Plasma y calidad; enlaces relativos para Claude y metadatos para Codex. El ZIP preliminar se inspeccionó, sin ejecutar su instalador ni importar sus instrucciones automáticamente.
@@ -31,8 +33,7 @@ No se encontraron CMake, Ninja, plasmoidviewer ni gh en las ubicaciones comproba
 
 ## Pendientes
 
-1. Nombre/correo del creador para identidad local de Git y primer commit. Los archivos están preparados en el índice. Después ejecutar el script de worktrees.
-2. Abrir cada instancia en su checkout y confirmar carga efectiva de instrucciones/skills. Los archivos y enlaces están verificados; no se iniciaron sesiones de los otros agentes.
-3. URL del remoto creado por el creador; visibilidad y licencia por decidir antes de publicar.
+1. Abrir cada instancia en su checkout y confirmar carga efectiva de instrucciones/skills. Los archivos y enlaces están verificados; no se iniciaron sesiones de los otros agentes.
+2. Publicación pendiente: no se hizo push. La licencia y la visibilidad de publicación deben quedar resueltas antes de publicar el proyecto.
 
 No hay diseño ni implementación iniciados. No se ha compilado o ejecutado Singlr ni medido su rendimiento. Los permisos de esta sesión ya abierta no fueron alterados por el archivo de configuración de proyecto.
