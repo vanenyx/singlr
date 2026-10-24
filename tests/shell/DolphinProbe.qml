@@ -1,12 +1,11 @@
 import QtQuick
-import QtQuick.Window
 import org.kde.taskmanager as TaskManager
 import org.kde.milou as Milou
 
 // External client on the private display/bus. No layer-shell surface is created.
-Window {
+// Raíz Item: con una Window invisible como raíz, qml6 no llega a ejecutar los timers en la sesión.
+Item {
     id: root
-    visible: false
     property bool attempted: false
     property bool launched: false
     property bool found: false
@@ -16,10 +15,10 @@ Window {
     }
     Milou.ResultsModel {
         id: results
-        singleRunner: "krunner_services"
-        queryString: "dolphin"
         limit: 10
     }
+    // KRunner bloquea el hilo si recibe la consulta antes de que arranque el bucle de eventos.
+    Timer { interval: 300; running: true; onTriggered: results.queryString = "dolphin" }
     Timer {
         interval: 250
         running: true

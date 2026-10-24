@@ -73,6 +73,14 @@ def marked_processes(session_id):
     return found
 
 
+def is_zombie(pid):
+    # Un zombi ya terminó: solo espera a que su padre (ajeno) lo recoja.
+    try:
+        return Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()[0] == 'Z'
+    except (OSError, IndexError):
+        return True
+
+
 def clean_children(grace=1.5, session_id=None):
     for sig, delay in ((signal.SIGTERM, grace), (signal.SIGKILL, 0.5)):
         signalled = set()
@@ -95,8 +103,10 @@ def clean_children(grace=1.5, session_id=None):
             if not remaining or time.monotonic() >= deadline:
                 break
             time.sleep(0.05)
-    remaining = descendants() | (marked_processes(session_id) if session_id else set())
-    print(f'SINGLR_CLEANUP remaining={sorted(remaining)}', flush=True)
+    remaining = {pid for pid in descendants() | (marked_processes(session_id) if session_id else set())
+                 if not is_zombie(pid)}
+    names = {pid: Path(f'/proc/{pid}/comm').read_text().strip() if Path(f'/proc/{pid}/comm').exists() else '?' for pid in remaining}
+    print(f'SINGLR_CLEANUP remaining={sorted(remaining)} {names}', flush=True)
     return not remaining
 
 
@@ -209,7 +219,15 @@ def inside(base, source, width, height):
     finally:
         descriptor.unlink(missing_ok=True)
         # All descendants belong to this private bus; includes clients that setsid().
-        if not clean_children():
+        ok = clean_children()
+        # KWin puede tardar más que el margen en salir tras SIGKILL; se espera a que termine.
+        if compositor is not None:
+            try:
+                compositor.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                pass
+            ok = ok or not {pid for pid in descendants() if not is_zombie(pid)}
+        if not ok:
             result = 1
     return result
 

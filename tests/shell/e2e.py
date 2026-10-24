@@ -63,7 +63,16 @@ def kwin_snapshot(env, base, session_log):
         if result.returncode:
             raise RuntimeError('KWin scripting: ' + result.stderr.strip())
         return result.stdout.strip()
-    number = call('/Scripting', 'org.kde.kwin.Scripting.loadScript', str(script), marker)
+    # KWin publica /Scripting en el bus privado algo después de crear su socket.
+    deadline = time.monotonic() + 15
+    while True:
+        try:
+            number = call('/Scripting', 'org.kde.kwin.Scripting.loadScript', str(script), marker)
+            break
+        except RuntimeError:
+            if time.monotonic() > deadline:
+                raise
+            time.sleep(0.5)
     if not number.isdigit():
         raise RuntimeError('loadScript no devolvió un ID: ' + number)
     try:
@@ -194,8 +203,9 @@ def main():
             # Additional external client outside the supervisor's ancestry. Must
             # be collected by the environment marker, even though it has no GUI.
             external = subprocess.Popen(['sleep', '300'], env=env, start_new_session=True)
+            # Sin terminal, console.log de QML va al journal salvo que se fuerce stderr.
             probe = subprocess.Popen(['qml6', str(ROOT / 'tests/shell/DolphinProbe.qml')],
-                                     env=env, stdout=probe_log, stderr=subprocess.STDOUT, start_new_session=True)
+                                     env={**env, 'QT_FORCE_STDERR_LOGGING': '1'}, stdout=probe_log, stderr=subprocess.STDOUT, start_new_session=True)
             step = 'Milou lanza Dolphin'
             wait_for(lambda: 'T204_MILOU_LAUNCH true' in (evidence / 'probe.log').read_text(), process)
             report(step, True)
