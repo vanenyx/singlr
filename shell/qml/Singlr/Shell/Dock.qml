@@ -47,6 +47,15 @@ Rectangle {
         contextRow = -1;
         const idx = taskSource.index(row, 0);
         if (task.IsLauncher) taskSource.requestNewInstance(idx);
+        else if (task.IsGroupParent) {
+            // Activar un grupo no hace nada en TasksModel: se activa una de sus ventanas
+            // y, si la app ya está activa, se pasa a la siguiente.
+            const count = taskSource.rowCount(idx);
+            let active = -1;
+            for (let i = 0; i < count; ++i)
+                if (taskSource.data(taskSource.makeModelIndex(row, i), TaskManager.AbstractTasksModel.IsActive)) active = i;
+            taskSource.requestActivate(taskSource.makeModelIndex(row, active < 0 ? 0 : (active + 1) % count));
+        }
         else if (task.IsActive && task.IsMinimizable) taskSource.requestToggleMinimized(idx);
         else taskSource.requestActivate(idx);
     }
