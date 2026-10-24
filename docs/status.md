@@ -1,22 +1,30 @@
 # Estado de Singlr
 
-Fecha de preparación: 2026-10-23, America/Lima.
+Fase: configuración del proyecto y de la coordinación. Todavía no hay producto implementado. La visión original permanece conservada en la raíz.
 
-Fase: configuración. Visión original conservada en la raíz. Instrucciones, perfiles y skills compartidas preparados; todavía no hay producto implementado.
+## Flujo vigente
 
-## Cierre de la configuración
+El creador encarga el trabajo a Claude Code. Claude realiza arquitectura/integración, delega tareas acotadas a Codex 1 y Codex 2 mediante el plugin oficial y consolida los resultados. Modo habitual: carpeta principal y un solo escritor a la vez. Ver [workflow.md](workflow.md).
 
-- Estructura verificada e inventario de herramientas ejecutado.
-- Identidad local de Git configurada con los datos del creador y commit inicial registrado.
-- Worktrees creados: `../singlr-worktrees/codex-1` en `codex1/setup` y `../singlr-worktrees/codex-2` en `codex2/setup`.
-- Pendiente abrir cada instancia en su ruta.
-- En cada agente, confirmar que puede leer AGENTS.md y cargar sus skills. Un enlace válido en disco no demuestra carga efectiva en una sesión.
-- `origin` conectado a `https://github.com/vanenyx/singlr.git`. El remoto estaba vacío al comprobarlo; no se ha hecho push.
+## Verificado
 
-## Trabajos futuros, todavía no iniciados
+- Estructura, instrucciones, skills y enlaces compartidos preparados y comprobados.
+- Identidad Git local configurada y commit inicial `f38dd34` registrado.
+- `origin` conectado a `https://github.com/vanenyx/singlr.git`; sin push realizado.
+- Plugin `codex@openai-codex` instalado y habilitado localmente en el checkout principal.
+- Prueba breve del script del plugin: respuestas `SINGLR_OK_1` y `SINGLR_OK_2` desde los dos entornos de cuenta existentes.
+- Worktrees anteriores conservados como opción para escritura paralela, no como flujo habitual. Sus instrucciones requieren sincronización antes de reutilizarlos.
 
-- Codex 1: explorar escenarios integrados del escritorio y variantes visuales, cuando el creador lo encargue.
-- Claude: estudiar la arquitectura que soporte la dirección visual elegida.
-- Codex 2: validar cadena Qt/KDE, entorno aislado y criterios de calidad antes de instalar dependencias o construir componentes.
+## Pendientes de coordinación
 
-Los resultados reales de esta preparación quedan en `docs/handoffs/setup.md`. No confundir checks de preparación con pruebas de ejecución de Plasma.
+- Selector explícito del entorno de cuenta por encargo, sin cambiar credenciales globales.
+- Validación del uso cotidiano del plugin, con asignación de roles y recuperación/continuación de las sesiones correctas; `/codex:rescue` todavía no se ha probado.
+- Confirmación de Node/CLI y carga de skills desde la sesión de Claude que se vaya a usar. El Markdown no configura estos mecanismos por sí solo.
+
+No es necesario abrir tres sesiones Desktop para cerrar esta preparación. No repetir llamadas de prueba a modelos salvo que una tarea de configuración lo necesite.
+
+## Trabajo de producto futuro
+
+Cuando el creador lo encargue: Codex 1 explorará escenarios visuales integrados, Claude estudiará su viabilidad/arquitectura y Codex 2 preparará herramientas y verificación. No se inicia desarrollo con esta actualización documental.
+
+La licencia y visibilidad de publicación siguen pendientes. La entrega inicial está en [handoffs/setup.md](handoffs/setup.md); la actualización del flujo, en [handoffs/coordination.md](handoffs/coordination.md). Los checks de preparación no prueban una experiencia Plasma ejecutable.

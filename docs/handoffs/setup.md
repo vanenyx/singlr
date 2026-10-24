@@ -2,6 +2,8 @@
 
 Agente: Codex, sesión de preparación. Rama: `main`. Commit inicial: `f38dd34`. Fecha: 2026-10-23, America/Lima.
 
+Registro histórico de la preparación inicial. Los pasos de abrir tres sesiones y asignar worktrees obligatorios quedaron sustituidos por el [flujo coordinado desde Claude](../workflow.md). Consultar el [estado vigente](../status.md) y la [entrega de actualización](coordination.md) para los pendientes actuales.
+
 ## Resultado
 
 - Repositorio Git local inicializado con rama `main`, identidad local elegida por el creador y commit inicial registrado.

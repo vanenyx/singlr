@@ -1,60 +1,60 @@
-# Preparar y abrir los tres agentes
+# Preparar el flujo coordinado desde Claude
 
-## Qué está configurado por repositorio
+## Punto de entrada
 
-AGENTS.md contiene las instrucciones comunes. CLAUDE.md las importa. Los perfiles de esta carpeta definen responsabilidades y mensajes de arranque. Las tres skills se versionan en `.agents/skills/` y se exponen a Claude mediante enlaces relativos en `.claude/skills/`, conservados por Git en Linux.
+El creador trabaja habitualmente desde Claude Code en `/home/sunw/Projects/singlr`. Claude coordina sus tareas y las de Codex 1/Codex 2 según [el flujo compartido](../workflow.md). Una carpeta con escritura por turnos es el modo habitual; las dos aplicaciones Desktop quedan disponibles para revisar o continuar trabajos de forma explícita.
 
-`.codex/config.toml` propone `workspace-write` y `on-request` sin fijar modelo ni cuenta. Las opciones de la sesión/app o políticas del host pueden prevalecer; comprueba los permisos efectivos en cada instancia. Esta preparación no cambia preferencias globales de las dos cuentas.
-
-Claude usa `acceptEdits` como valor de proyecto. El lanzador añade `--permission-mode auto` para esa sesión: `auto` no se activa mediante settings de proyecto en la versión actual. Su disponibilidad depende de la cuenta; si no está disponible, inicia con `--permission-mode acceptEdits` y conserva el resto de la configuración.
-
-## Git y aislamiento
-
-En esta máquina ya están configurados `origin` con `https://github.com/vanenyx/singlr.git` y la identidad local facilitada por el creador. El commit inicial y los dos worktrees están creados. Los pasos siguientes permiten reproducir la preparación en otra instalación; no hace falta repetir la identidad en los worktrees, pues comparten la configuración Git del repo.
-
-La identidad debe ser la que el creador elija, configurada solo en este repo:
+Desde la carpeta principal:
 
 ```bash
-git config --local user.name 'TU NOMBRE'
-git config --local user.email 'TU CORREO'
+bash scripts/start-claude.sh
 ```
 
-Después del commit inicial, `bash scripts/prepare-worktrees.sh` crea, si no existen:
+El lanzador existente solo pide verificar la preparación. Para orientar esa sesión hacia la coordinación, usa el mensaje de [su perfil](claude.md). Ese mensaje tampoco inicia desarrollo. No es necesario abrir las dos apps Codex ni crear nuevos worktrees para este flujo.
 
-| Agente | Ruta respecto del directorio Projects | Rama |
+## Instrucciones y skills
+
+AGENTS.md contiene reglas comunes; CLAUDE.md las importa. Los perfiles de esta carpeta definen responsabilidades y contexto breve para encargos. Las skills se versionan en `.agents/skills/` y se exponen a Claude mediante enlaces relativos en `.claude/skills/`. No mantener copias globales contradictorias.
+
+`.codex/config.toml` propone `workspace-write` y `on-request` sin fijar modelo o cuenta. Las opciones de sesión y políticas del host pueden prevalecer. Claude tiene `acceptEdits` como valor de proyecto; el lanzador solicita `auto` para esa sesión. Verifica permisos efectivos sin cambiar preferencias globales por deducción de estos documentos.
+
+## Plugin y prueba realizada
+
+El plugin oficial [Codex para Claude Code](https://github.com/openai/codex-plugin-cc), versión 1.0.6 en la prueba, está instalado y habilitado con alcance local para el checkout principal. Usa el CLI/servicio local de Codex; no controla automáticamente las dos ventanas Desktop.
+
+Se usó la entrada `codex-companion.mjs task` desde un directorio temporal vacío con cada entorno. Resultados observados:
+
+| Alias operativo | CODEX_HOME local | Respuesta |
 | --- | --- | --- |
-| Claude | `singlr/` | `main` para integración; rama de tarea al cambiar código |
-| Codex 1 | `singlr-worktrees/codex-1/` | `codex1/setup` |
-| Codex 2 | `singlr-worktrees/codex-2/` | `codex2/setup` |
+| Cuenta 1 | `/home/sunw/.codex` | `SINGLR_OK_1` |
+| Cuenta 2 | `/home/sunw/.local/share/chatgpt-cuenta2/codex` | `SINGLR_OK_2` |
 
-El script nunca reinicia un checkout existente. Repetirlo verifica rutas y ramas. Para nuevas tareas se crean nuevas ramas sin reutilizar una rama ya integrada.
+Son los entornos existentes de las dos aplicaciones. La prueba acredita respuestas desde ambos entornos, sin certificar identidades por correo. No se cambiaron credenciales. Hubo tres solicitudes en total: una adicional accidental al intentar consultar ayuda y las dos confirmaciones. No repetir esos pings como requisito rutinario de arranque.
 
-## Abrir Claude
+La configuración local del plugin y la evidencia en `.local/integration-smoke/` no se versionan; un clon nuevo no hereda esa instalación. El Node disponible para la prueba provenía del runtime incluido con la app; no asumir que `node` esté en el PATH de una terminal nueva.
 
-Desde `singlr/`, ejecutar `bash scripts/start-claude.sh`. Localiza Claude también en `~/.local/bin`, de modo que no depende del PATH de esta terminal. Abre una sesión interactiva, con el mensaje de verificación de su perfil. No lanza desarrollo por sí mismo desde este chat.
+## Pendiente antes de delegar desarrollo
 
-Confirmar en la sesión `/status`, `/permissions` y que aparecen `/singlr-ui-design`, `/singlr-qt-plasma` y `/singlr-quality`. `claude doctor` puede comprobar la instalación; esta comprobación no acredita por sí sola la carga de todas las skills.
+- Preparar una manera explícita de seleccionar cada entorno por proceso, sin cambiar globalmente la cuenta de las apps ni copiar credenciales al repo. No asumir que el plugin ofrece un selector de dos cuentas por tarea.
+- Validar el punto de entrada de uso cotidiano, por ejemplo `/codex:rescue`, con rol, carpeta, modo de acceso y recuperación/continuación de la sesión correcta. El script funcionó; ese ciclo completo aún no se ha probado.
+- Verificar que Claude dispone del CLI y Node en su entorno y que las skills pertinentes se cargan en cada encargo real.
+- Asociar el rol al encargo y registrar entorno e identificador de trabajo/sesión. Codex 1 se especializa en diseño/implementación y Codex 2 en herramientas/calidad; una cuenta no asigna el rol por sí sola.
 
-## Abrir cada Codex Desktop
+Esta actualización de Markdown documenta el flujo; no implementa un selector ni autoriza llamadas adicionales o desarrollo. Si se encarga configurar la conexión restante, usar pruebas mínimas, sin review gates ni reintentos de modelos innecesarios.
 
-En la primera instancia, añadir/abrir como proyecto la ruta de `codex-1`; en la segunda, la de `codex-2`. Son worktrees Git ya creados: trabajar en modo local sobre esas rutas. Crear un chat en cada instancia y usar el mensaje de su perfil.
+## Git y worktrees opcionales
 
-Alternativamente, abrir `singlr/` en ambas apps y crear un Worktree administrado por cada app desde `main`. En ese caso, no utilizar a la vez los worktrees manuales para esas mismas tareas.
+Identidad Git local y `origin` ya están configurados. Claude registra commits en puntos coherentes y gestiona Git; no hace falta commit/PR/push para pasar cada tarea al colaborador en la misma carpeta.
 
-Comprobar en cada instancia que lee AGENTS.md, encuentra las tres skills y muestra una rama propia. Si las skills no aparecen, iniciar un chat nuevo o reiniciar esa instancia. No es necesario copiarlas al directorio global de cada cuenta. Se conserva el modelo seleccionado por cada usuario.
+Se conservan `../singlr-worktrees/codex-1` y `../singlr-worktrees/codex-2` para escritura paralela futura, junto con `scripts/prepare-worktrees.sh`. No son el arranque habitual. Si se reutilizan, comprobar tareas activas, estado limpio y sincronizar sus instrucciones desde `main` antes de dar un nuevo encargo. No crear otro worktree encima de uno existente.
 
-La elección de proyecto, la sesión autenticada y los permisos de la UI deben verificarse en cada aplicación. Los perfiles en Markdown no cambian esos controles ni crean automáticamente sesiones en otra instancia.
+No se ha hecho push. La licencia y la visibilidad de publicación quedan por resolver antes de publicar el proyecto.
 
-## Conectar GitHub después
+## Referencias
 
-El remoto ya está conectado en esta máquina. Comprobarlo con `git remote -v`; hacer push cuando esté autorizado. En otra instalación, usar la URL facilitada por el creador. Resolver visibilidad/licencia antes de publicar; no inventar identidad ni credenciales. Las ramas y entregas funcionan localmente mientras tanto.
-
-## Fuentes verificadas
-
-Consultadas el 2026-10-23:
-
-- [Skills locales de Codex y enlaces simbólicos](https://learn.chatgpt.com/docs/build-skills)
-- [Configuración por proyecto de Codex](https://learn.chatgpt.com/docs/config-file/config-basic)
-- [Skills de Claude y enlaces simbólicos](https://code.claude.com/docs/en/skills)
-- [Precedencia y límites de settings de Claude](https://code.claude.com/docs/en/settings)
+- [Plugin oficial de Codex para Claude Code](https://github.com/openai/codex-plugin-cc)
+- [Estado y configuración de Codex mediante CODEX_HOME](https://learn.chatgpt.com/docs/config-file/config-advanced#config-and-state-locations)
+- [Autenticación de Codex](https://learn.chatgpt.com/docs/auth)
+- [Skills locales de Codex](https://learn.chatgpt.com/docs/build-skills)
+- [Skills de Claude](https://code.claude.com/docs/en/skills)
 - [Permisos de Claude](https://code.claude.com/docs/en/permissions)
