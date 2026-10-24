@@ -3,11 +3,13 @@ import QtQuick
 import QtQuick.Window
 import org.kde.layershell as LayerShell
 import Singlr.Ui
+// transientParent: null es imprescindible: si no, Qt ata cada Window a la ventana del
+// Item contenedor (inexistente) y KWin nunca recibe la superficie layer-shell.
 Item {
     id: session
     function openLauncher() { overlay.visible = true; launcher.open(); overlay.requestActivate(); }
     Window {
-        visible: true; color: Theme.background
+        transientParent: null; visible: true; color: Theme.background
         LayerShell.Window.layer: LayerShell.Window.LayerBackground
         LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
         LayerShell.Window.exclusionZone: -1
@@ -16,7 +18,7 @@ Item {
         Background { anchors.fill: parent }
     }
     Window {
-        visible: true; height: bar.menuOpen ? 90 : 38; color: "transparent"
+        transientParent: null; visible: true; height: bar.menuOpen ? 90 : 38; color: "transparent"
         LayerShell.Window.layer: LayerShell.Window.LayerTop
         LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
         LayerShell.Window.exclusionZone: 38
@@ -26,7 +28,7 @@ Item {
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
     }
     Window {
-        visible: true; width: dock.width; height: 78; color: "transparent"
+        transientParent: null; visible: true; width: dock.width; height: 78; color: "transparent"
         LayerShell.Window.layer: LayerShell.Window.LayerBottom
         LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
         LayerShell.Window.exclusionZone: 0
@@ -36,7 +38,7 @@ Item {
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
     }
     Window {
-        id: overlay; visible: false; color: "transparent"
+        id: overlay; transientParent: null; visible: false; color: "transparent"
         LayerShell.Window.layer: LayerShell.Window.LayerOverlay
         LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
         LayerShell.Window.exclusionZone: -1

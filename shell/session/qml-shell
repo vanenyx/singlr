@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# No global layer-shell environment: apps launched by Milou must use xdg-shell.
-exec qml6 -I "$(dirname "$(dirname "$(realpath "$0")")")/qml" "$@"
+# El binario activa layer-shell solo para el shell; las apps lanzadas usan xdg-shell.
+here="$(dirname "$(realpath "$0")")"
+bin="$("$here/build.sh")"
+exec "$bin" "$(dirname "$here")/qml" "$@"
