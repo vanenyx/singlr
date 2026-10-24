@@ -7,7 +7,7 @@ Rectangle {
     property bool selected: false
     property var resultActions: []
     signal clicked()
-    implicitHeight: 44
+    implicitHeight: 36
     radius: 6
     color: selected ? Theme.selection : hover.containsMouse ? Theme.hover : "transparent"
     border.color: activeFocus ? Theme.accentText : "transparent"
@@ -17,7 +17,7 @@ Rectangle {
     Accessible.selected: selected
     Keys.onReturnPressed: clicked()
     AppIcon { x: 14; anchors.verticalCenter: parent.verticalCenter; source: row.iconSource; width: 20; height: 20 }
-    UiText { x: 48; y: row.subtitle ? 4 : 0; height: row.subtitle ? 20 : parent.height; width: parent.width-64; text: row.title; weight: 510 }
-    UiText { x: 48; y: 24; height: 15; width: parent.width-64; text: row.subtitle; font.pixelSize: 11; color: Theme.muted }
+    UiText { x: 48; y: 0; height: parent.height; width: row.subtitle ? parent.width*0.58-48 : parent.width-64; text: row.title; weight: 510 }
+    UiText { x: parent.width*0.58; y: 0; height: parent.height; width: parent.width*0.42-16; text: row.subtitle; font.pixelSize: 13; color: Theme.muted }
     MouseArea { id: hover; anchors.fill: parent; hoverEnabled: true; onClicked: row.clicked() }
 }

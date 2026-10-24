@@ -1,25 +1,36 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls as Controls
 import Singlr.Ui
 Rectangle {
     id: bar
+    property bool sessionMode: false
     signal launcherRequested()
-    property bool menuOpen: false
+    signal applicationsRequested()
+    property string activeAppName: "Escritorio"
+    readonly property bool menuOpen: menu.visible
     property date now: new Date()
-    Keys.onEscapePressed: menuOpen = false
-    implicitHeight: 38
-    color: Theme.panel
+    implicitHeight: 28
+    color: "#b3161718"
+    Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: "#0fffffff" }
     Timer { interval: 1000; running: true; repeat: true; onTriggered: bar.now = new Date() }
-    Row { x: 24; height: 38; spacing: 16
-        Tool { y: 5; icon: "circle"; label: "Singlr"; onClicked: { bar.menuOpen = !bar.menuOpen; if (bar.menuOpen) bar.forceActiveFocus(); } }
-        Tool { y: 5; icon: "magnifying-glass"; label: "Buscar"; onClicked: bar.launcherRequested() }
+    Row { x: 16; height: 28; spacing: 8
+        Tool { y: 3; width: 24; height: 22; icon: "circle"; iconSize: 14; description: "Menú Singlr"; onClicked: menu.visible ? menu.close() : menu.open() }
+        UiText { height: 28; width: Math.min(360, bar.width-trailing.width-100); text: bar.activeAppName; weight: 590 }
     }
-    UiText { anchors.centerIn: parent; text: bar.now.toLocaleString(Qt.locale("es_ES"), "ddd d MMM    HH:mm"); font.pixelSize: 12; color: Theme.muted }
-    StatusIndicators { anchors.right: parent.right; anchors.rightMargin: 24; anchors.verticalCenter: parent.verticalCenter }
-    Rectangle {
-        visible: bar.menuOpen; x: 24; y: 38; width: 206; height: 44; radius: 6
-        color: Theme.raised; border.color: Theme.border; z: 10
-        Tool { anchors.centerIn: parent; width: 190; icon: "power"; label: "Salir de Singlr"; onClicked: Qt.quit() }
-        Keys.onEscapePressed: bar.menuOpen = false
+    Row {
+        id: trailing; anchors.right: parent.right; anchors.rightMargin: 16; height: 28; spacing: 14
+        Tool { y: 3; width: 24; height: 22; icon: "magnifying-glass"; iconSize: 15; description: "Buscar"; onClicked: bar.launcherRequested() }
+        StatusIndicators { anchors.verticalCenter: parent.verticalCenter }
+        UiText { height: 28; text: bar.now.toLocaleString(Qt.locale("es_ES"), "ddd d MMM  HH:mm"); weight: 510; color: Theme.secondary }
+    }
+    Controls.Popup {
+        id: menu; x: 16; y: 32; width: 220; height: 80; padding: 4; focus: true
+        popupType: bar.sessionMode ? Controls.Popup.Window : Controls.Popup.Item
+        background: Rectangle { radius: 8; color: Theme.raised; border.color: Theme.border }
+        contentItem: Column {
+            Tool { width: parent.width; height: 36; icon: "squares-four"; label: "Todas las aplicaciones"; onClicked: { menu.close(); bar.applicationsRequested(); } }
+            Tool { width: parent.width; height: 36; icon: "power"; label: "Salir de Singlr"; onClicked: Qt.quit() }
+        }
     }
 }
