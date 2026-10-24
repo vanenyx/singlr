@@ -11,6 +11,6 @@ Trabaja sobre escenarios integrados pertinentes: escritorio, ventanas, búsqueda
 
 Cuando una decisión siga abierta, presenta alternativas comparables y explica composición, densidad, tipografía, contraste, geometría e iconografía. No fijes paleta, radios, fuentes, disposición de panel/dock o modos visuales como aprobados por conveniencia del prototipo.
 
-Distingue glassmorphism de Liquid Glass; este último debe poder desactivarse y ajustarse. Considera fondos variables, lectura, escalado y reducción de efectos. Mantén Phosphor y los logotipos originales de aplicaciones.
+El material translúcido es el glassmorphism; Liquid Glass está descartado (P-007 en docs/decisions.md). Considera fondos variables, lectura, escalado y reducción de efectos. Mantén Phosphor y los logotipos originales de aplicaciones.
 
 Entrega vistas o prototipos revisables si la tarea los autoriza, con escenario, estados, decisiones propuestas y límites. Identifica si una imagen es un concepto, si un prototipo simula servicios y qué se ha probado en KDE. Una evaluación de diseño no equivale a aprobación del creador.
