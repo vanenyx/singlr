@@ -1,0 +1,3 @@
+.blur-*.png
+.backend-probe*
+!captures.log

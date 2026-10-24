@@ -1,0 +1,28 @@
+Phosphor: regular=1530, light=1530, fill=1530
+Diagnóstico GPU: no se pudo inicializar RHI (opengl).
+AVISO: GPU no disponible en este entorno; se usa software con desenfoque CPU real.
+qml: CAPTURE /home/sunw/Projects/singlr-worktrees/codex-1/prototypes/directions/captures/a-desktop-dark.png desktop dark material 1 fonts ready true backend 1
+qml: CAPTURE /home/sunw/Projects/singlr-worktrees/codex-1/prototypes/directions/captures/a-search-dark.png search dark material 1 fonts ready true backend 1
+qml: CAPTURE /home/sunw/Projects/singlr-worktrees/codex-1/prototypes/directions/captures/a-multitask-dark.png multitask dark material 1 fonts ready true backend 1
+qml: CAPTURE /home/sunw/Projects/singlr-worktrees/codex-1/prototypes/directions/captures/a-controls-dark.png controls dark material 1 fonts ready true backend 1
+qml: CAPTURE /home/sunw/Projects/singlr-worktrees/codex-1/prototypes/directions/captures/a-desktop-light.png desktop light material 1 fonts ready true backend 1
+qml: CAPTURE /home/sunw/Projects/singlr-worktrees/codex-1/prototypes/directions/captures/a-controls-liquid-dark.png controls dark material 2 fonts ready true backend 1
+qml: CAPTURE /home/sunw/Projects/singlr-worktrees/codex-1/prototypes/directions/captures/b-desktop-dark.png desktop dark material 1 fonts ready true backend 1
+qml: CAPTURE /home/sunw/Projects/singlr-worktrees/codex-1/prototypes/directions/captures/b-search-dark.png search dark material 1 fonts ready true backend 1
+qml: CAPTURE /home/sunw/Projects/singlr-worktrees/codex-1/prototypes/directions/captures/b-multitask-dark.png multitask dark material 1 fonts ready true backend 1
+qml: CAPTURE /home/sunw/Projects/singlr-worktrees/codex-1/prototypes/directions/captures/b-controls-dark.png controls dark material 1 fonts ready true backend 1
+qml: CAPTURE /home/sunw/Projects/singlr-worktrees/codex-1/prototypes/directions/captures/b-desktop-light.png desktop light material 1 fonts ready true backend 1
+qml: CAPTURE /home/sunw/Projects/singlr-worktrees/codex-1/prototypes/directions/captures/b-controls-liquid-dark.png controls dark material 2 fonts ready true backend 1
+a-controls-dark.png 2048×1280 229367 bytes
+a-controls-liquid-dark.png 2048×1280 231745 bytes
+a-desktop-dark.png 2048×1280 197374 bytes
+a-desktop-light.png 2048×1280 188141 bytes
+a-multitask-dark.png 2048×1280 244115 bytes
+a-search-dark.png 2048×1280 206125 bytes
+b-controls-dark.png 2048×1280 240521 bytes
+b-controls-liquid-dark.png 2048×1280 247026 bytes
+b-desktop-dark.png 2048×1280 216706 bytes
+b-desktop-light.png 2048×1280 203551 bytes
+b-multitask-dark.png 2048×1280 304799 bytes
+b-search-dark.png 2048×1280 208047 bytes
+12 capturas verificadas.
