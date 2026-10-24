@@ -12,6 +12,36 @@ import Singlr.Ui
 
 Controls.Control {
     id: panel
+
+    // Controles al estilo Linear: pista tenue, relleno y tirador blancos (Theme.control).
+    component SinglrSwitch: Controls.Switch {
+        id: sw
+        indicator: Rectangle {
+            implicitWidth: 34; implicitHeight: 20; radius: 10
+            x: sw.width - width - sw.rightPadding; y: (sw.height - height) / 2
+            color: sw.checked ? Theme.control : "#ffffff1f"
+            Behavior on color { ColorAnimation { duration: 120 } }
+            Rectangle {
+                width: 16; height: 16; radius: 8; y: 2
+                x: sw.checked ? parent.width - width - 2 : 2
+                color: sw.checked ? "#16171a" : "#d0d6e0"
+                Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+            }
+        }
+    }
+    component SinglrSlider: Controls.Slider {
+        id: sl
+        background: Rectangle {
+            x: sl.leftPadding; y: sl.topPadding + sl.availableHeight / 2 - height / 2
+            width: sl.availableWidth; height: 4; radius: 2; color: "#ffffff1f"
+            Rectangle { width: sl.visualPosition * parent.width; height: parent.height; radius: 2; color: Theme.control }
+        }
+        handle: Rectangle {
+            x: sl.leftPadding + sl.visualPosition * (sl.availableWidth - width); y: sl.topPadding + sl.availableHeight / 2 - height / 2
+            width: 14; height: 14; radius: 7; color: Theme.control
+            border.color: "#00000033"
+        }
+    }
     required property SystemControls audio
     required property var notifications
     signal closed()
@@ -27,7 +57,7 @@ Controls.Control {
     palette.button: Theme.hover
     palette.buttonText: Theme.text
     palette.base: Theme.panel
-    palette.highlight: Theme.accent
+    palette.highlight: Theme.control
     onOpenedChanged: {
         if (opened) networkHandler.requestScan();
         else { pendingWifi = null; wifiPassword.clear(); errorText = ""; }
@@ -59,7 +89,7 @@ Controls.Control {
                 UiText { width: parent.width - 28; height: 28; text: "Centro de control"; weight: 600 }
                 Tool { icon: "x"; description: "Cerrar"; onClicked: panel.closed() }
             }
-            Controls.Switch {
+            SinglrSwitch {
                 width: parent.width; text: "Wi-Fi"; checked: enabledConnections.wirelessEnabled
                 enabled: enabledConnections.wirelessHwEnabled
                 onToggled: networkHandler.enableWireless(checked)
@@ -121,7 +151,7 @@ Controls.Control {
                     Controls.Button { text: "Cancelar"; onClicked: { wifiPassword.clear(); panel.pendingWifi = null; } }
                 }
             }
-            Controls.Switch {
+            SinglrSwitch {
                 id: bluetoothToggle; width: parent.width; text: "Bluetooth"
                 visible: Bluetooth.Manager.adapters.length > 0
                 checked: !Bluetooth.Manager.bluetoothBlocked && Bluetooth.Manager.adapters.some(adapter => adapter.powered)
@@ -155,7 +185,7 @@ Controls.Control {
                     Tool { icon: panel.audio.sink && panel.audio.sink.muted ? "speaker-slash" : "speaker-high"; description: "Silenciar salida"; onClicked: panel.audio.toggleMute(panel.audio.sink) }
                     UiText { width: parent.width - 28; height: 28; text: panel.audio.sink ? panel.audio.sink.description : ""; elide: Text.ElideRight }
                 }
-                Controls.Slider {
+                SinglrSlider {
                     width: parent.width; from: 0; to: 100; stepSize: 1
                     value: panel.audio.percent(panel.audio.sink)
                     enabled: !!panel.audio.sink && panel.audio.sink.volumeWritable
@@ -180,7 +210,7 @@ Controls.Control {
                     Tool { icon: panel.audio.source && panel.audio.source.muted ? "microphone-slash" : "microphone"; description: "Silenciar micrófono"; onClicked: panel.audio.toggleMute(panel.audio.source, true) }
                     UiText { width: parent.width - 28; height: 28; text: "Micrófono"; color: Theme.secondary }
                 }
-                Controls.Slider {
+                SinglrSlider {
                     width: parent.width; from: 0; to: 100; stepSize: 1
                     value: panel.audio.percent(panel.audio.source)
                     enabled: !!panel.audio.source && panel.audio.source.volumeWritable
@@ -195,7 +225,7 @@ Controls.Control {
                     required property var model
                     width: content.width; visible: brightness.isBrightnessAvailable
                     UiText { width: parent.width; height: 26; text: "Brillo · " + brightnessDisplay.model.label; elide: Text.ElideRight }
-                    Controls.Slider {
+                    SinglrSlider {
                         width: parent.width; from: 0; to: brightnessDisplay.model.maxBrightness; stepSize: 1
                         value: brightnessDisplay.model.brightness; Accessible.name: "Brillo de " + brightnessDisplay.model.label
                         onMoved: brightness.setBrightness(brightnessDisplay.model.displayName, Math.round(value))
@@ -214,7 +244,7 @@ Controls.Control {
                 onActivated: power.setProfile(currentText)
             }
             UiText { width: parent.width; height: visible ? 32 : 0; visible: !!power.profileError; text: power.profileError; wrapMode: Text.Wrap }
-            Controls.Switch {
+            SinglrSwitch {
                 width: parent.width; text: "No molestar"; checked: panel.notifications.inhibited
                 onToggled: panel.notifications.setInhibited(checked)
             }

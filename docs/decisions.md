@@ -18,5 +18,6 @@ La fuente de producto es [la recuperación original](../SINGLR_recuperacion_desd
 | P-006 | Explícita del creador | Vigente | Fase 1 iniciada (2026-10-24): dirección visual y prototipo integrado, en entorno aislado que no altera la sesión KDE. |
 | P-008 | Explícita del creador | Modificada por P-009 | Dock con el modelo de macOS (2026-10-24): un icono por app. El clic trae la app al frente (todas sus ventanas, la última usada encima) y nunca minimiza. La ventana concreta se elige con el menú contextual o con Alt+` de KWin. Sin ciclo por clics ni rueda. |
 | P-009 | Explícita del creador | Vigente | Dock (2026-10-24): un icono por app; el clic trae la app al frente con su ventana más reciente y nunca minimiza. Con la app ya activa, cada clic pasa a la siguiente ventana en orden estable y cíclico. El menú contextual sigue listando las ventanas. |
+| P-010 | Explícita del creador | Vigente | Controles (deslizadores, interruptores, barras del OSD) en blanco neutro, no en el acento. Sin sonido al cambiar el volumen (AudioFeedback=false en plasmaparc, ajuste estándar de KDE). |
 
 Para nuevas entradas: ID, clase, estado, motivo, evidencia/autor y consecuencias. Una decisión técnica no aprueba decisiones perceptibles de producto.

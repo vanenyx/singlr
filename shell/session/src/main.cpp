@@ -90,15 +90,12 @@ private:
     QObject *m_target;
 };
 
-// Atajos globales de volumen y multimedia que registraba plasmashell («kmix» y «mediacontrol»).
+// Atajos multimedia que registraba plasmashell («mediacontrol»). El volumen («kmix») lo atiende
+// el módulo kded audioshortcutsservice de KDE, que además pide el OSD a org.kde.osdService.
 // Se registran las mismas acciones cargando el atajo guardado, sin modificarlo.
 void registerGlobalActions(QObject *parent, QObject *session)
 {
     const QList<std::pair<QString, QStringList>> components = {
-        {QStringLiteral("kmix"),
-         {QStringLiteral("increase_volume"), QStringLiteral("decrease_volume"), QStringLiteral("increase_volume_small"),
-          QStringLiteral("decrease_volume_small"), QStringLiteral("mute"), QStringLiteral("increase_microphone_volume"),
-          QStringLiteral("decrease_microphone_volume"), QStringLiteral("mic_mute")}},
         {QStringLiteral("mediacontrol"),
          {QStringLiteral("playpausemedia"), QStringLiteral("playmedia"), QStringLiteral("pausemedia"), QStringLiteral("stopmedia"),
           QStringLiteral("nextmedia"), QStringLiteral("previousmedia"), QStringLiteral("seekforwardmedia"),

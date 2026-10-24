@@ -6,6 +6,8 @@ Item {
     property bool dark: true
     property color base: dark ? "#08090a" : "#f8f8f8"
     property color accent: "#7170ff"
+    // Controles (deslizadores, interruptores, barras): blanco neutro por decisión del creador.
+    readonly property color control: text
     property real contrast: 1.0
     readonly property color background: Palette.level(base,0,contrast)
     readonly property color panel: Palette.level(base,dark?2.1:-1.5,contrast)

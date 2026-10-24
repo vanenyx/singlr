@@ -141,7 +141,7 @@ Item {
                 indicator: Rectangle {
                     x: dnd.width - width; y: (dnd.height - height) / 2
                     width: 32; height: 18; radius: 9
-                    color: dnd.checked ? Theme.accent : Theme.hover
+                    color: dnd.checked ? Theme.control : Theme.hover
                     border.color: dnd.activeFocus ? Theme.accentText : Theme.focusBorder
                     Rectangle { x: dnd.checked ? 16 : 3; y: 3; width: 12; height: 12; radius: 6; color: Theme.secondary; Behavior on x { NumberAnimation { duration: 160 } } }
                 }

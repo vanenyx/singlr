@@ -46,7 +46,7 @@ Item {
     Rectangle {
         x: 50; anchors.verticalCenter: parent.verticalCenter; width: 120; height: 4; radius: 2
         visible: osd.percent >= 0; color: Theme.hover
-        Rectangle { width: parent.width * Math.max(0, Math.min(100, osd.percent)) / 100; height: 4; radius: 2; color: Theme.accent }
+        Rectangle { width: parent.width * Math.max(0, Math.min(100, osd.percent)) / 100; height: 4; radius: 2; color: Theme.control }
     }
     UiText {
         x: osd.percent >= 0 ? 178 : 50; width: osd.percent >= 0 ? 50 : 174; height: parent.height
