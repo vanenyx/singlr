@@ -15,6 +15,7 @@ for name in (
     "docs/agents/setup.md", "docs/agents/claude.md",
     "docs/agents/codex-1.md", "docs/agents/codex-2.md",
     "SINGLR_recuperacion_desde_mensajes_originales.md",
+    "scripts/codex-route.sh", "scripts/codex-accounts.example",
 ):
     if not (ROOT / name).is_file():
         errors.append(f"Falta {name}")

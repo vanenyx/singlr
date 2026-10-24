@@ -26,8 +26,8 @@ También están incorporadas las skills aportadas por el creador: [Product Craft
 
 ## Flujo de trabajo
 
-El creador da instrucciones a Claude Code. Claude realiza arquitectura/integración, delega trabajos acotados a Codex 1 o Codex 2 mediante el plugin oficial y consolida resultados. Se trabaja habitualmente en la carpeta principal, con un único escritor por turno. Los worktrees quedan para escritura paralela justificada.
+El creador da instrucciones a Claude Code (Opus 5.5), arquitecto principal y orquestador. Claude delega encargos autocontenidos en Codex 1 (interfaz y QML) o Codex 2 (integración, herramientas y calidad) mediante el plugin oficial, y consolida los resultados. Se trabaja habitualmente en la carpeta principal, con un único escritor por turno. Los worktrees quedan para escritura paralela justificada.
 
-La prueba breve obtuvo respuesta de ambos entornos de Codex; todavía falta configurar la elección de cuenta por tarea y validar el flujo completo. Las ventanas Codex Desktop son opcionales para revisar o continuar trabajos, no agentes automáticamente controlados por Claude.
+`scripts/codex-route.sh` selecciona la cuenta, el modelo y el esfuerzo de cada rol. Las ventanas Codex Desktop son opcionales para revisar o continuar trabajos, no agentes controlados por Claude.
 
 `origin` está conectado al remoto proporcionado por el creador; no se ha hecho push. No se ha elegido una licencia de distribución; decidirla antes de publicar el proyecto.

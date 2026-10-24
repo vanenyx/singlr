@@ -1,0 +1,7 @@
+# Copiar a .local/codex-accounts.env (no versionado) y ajustar a esta máquina.
+# Solo rutas de CODEX_HOME; nunca credenciales.
+SINGLR_CODEX1_HOME="$HOME/.codex"
+SINGLR_CODEX2_HOME="$HOME/.local/share/chatgpt-cuenta2/codex"
+# Opcionales: si no se definen, codex-route.sh los detecta.
+# SINGLR_CODEX_BIN_DIR=/usr/lib/chatgpt/resources
+# SINGLR_NODE=/usr/lib/chatgpt/resources/cua_node/bin/node

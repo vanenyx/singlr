@@ -1,40 +1,65 @@
 # Colaboración coordinada desde Claude Code
 
-El creador da objetivos y feedback a Claude Code. Claude divide el trabajo, realiza arquitectura e integración, encarga tareas a Codex mediante el plugin oficial, revisa resultados y presenta una entrega consolidada. El creador conserva las decisiones de producto.
+El creador da objetivos y feedback a Claude Code. Claude actúa como arquitecto principal y orquestador: divide el trabajo, define contratos de implementación, encarga tareas a Codex mediante el plugin oficial, revisa resultados e integra. El creador conserva las decisiones de producto.
 
-| Participante | Responsabilidad |
-| --- | --- |
-| Claude | Coordinación, arquitectura, integración y comunicación con el creador |
-| Codex 1 | Diseño de la experiencia e implementación autorizada |
-| Codex 2 | Herramientas, revisión, pruebas y calidad |
+| Participante | Modelo | Responsabilidad |
+| --- | --- | --- |
+| Claude | Claude Code, Opus 5.5 | Comprender la visión, investigar y evaluar alternativas, proponer requisitos técnicos, definir contratos, repartir tareas, coordinar dependencias, revisar entregas e integrar |
+| Codex 1 | `gpt-6.1-sol`, Medium | Implementación de interfaz, componentes Qt Quick/QML, interacciones y funcionalidades visuales |
+| Codex 2 | `gpt-6.1-sol`, Medium | Integración, herramientas, pruebas, rendimiento, corrección de errores y revisión independiente; funcionalidades técnicas cuando puedan avanzar en paralelo |
 
-Los roles se indican en cada encargo; no se adquieren automáticamente al elegir una cuenta. Las sesiones delegadas usan Codex CLI/servicio local. No se presupone control de las dos aplicaciones Desktop ni que cada encargo conserve contexto anterior.
+Claude reserva su razonamiento para lo que lo requiere (arquitectura, contratos, revisión crítica) y delega la programación extensa, la ejecución de pruebas y las correcciones rutinarias. High solo se usa en encargos que justifiquen razonamiento más profundo y se indica en el encargo. Los roles se fijan en cada encargo; no se adquieren por abrir una app ni por elegir una cuenta.
 
-## Carpeta principal y turnos
+## Enrutamiento por cuenta
 
-El flujo habitual usa `/home/sunw/Projects/singlr`. Solo un agente escribe en esa carpeta a la vez, incluidos código, documentación, commits y cambios de rama. Claude espera a que el trabajo delegado termine o se cancele de forma confirmada antes de recuperar el turno. Lanzar una tarea en background no libera el turno de escritura.
+El plugin `codex@openai-codex` no tiene selector de cuenta: usa `CODEX_HOME` del proceso, lanza `codex` desde `PATH` y guarda estado, jobs y un broker persistente por carpeta, no por cuenta. Por eso Claude delega con [`scripts/codex-route.sh`](../scripts/codex-route.sh), que para cada rol:
 
-Una revisión paralela puede ser de solo lectura sobre una revisión estable, por ejemplo un commit; si revisa cambios sin commit, mantenerlos sin escrituras hasta cerrar la revisión. No iniciar dos implementaciones simultáneas en la misma carpeta aunque tengan roles distintos.
+- toma el `CODEX_HOME` de `.local/codex-accounts.env` (no versionado; plantilla en [`scripts/codex-accounts.example`](../scripts/codex-accounts.example)): Codex 1 → cuenta 1, Codex 2 → cuenta 2;
+- aísla estado, jobs, `--resume-last` y broker en `.local/codex-route/<rol>/`, y descarta cualquier endpoint de broker heredado;
+- fija `--model gpt-6.1-sol --effort medium` salvo que el encargo indique otro valor; solo admite `low`, `medium` o `high`;
+- impide dos tareas `--write` simultáneas en la misma carpeta y rechaza `--background` con `--write`;
+- rechaza activar el review gate y registra cada tarea en `.local/codex-route/tasks.log`.
+
+Subcomandos: `task`, `status`, `result`, `cancel`, `setup` y `stop` (detiene el broker de esa cuenta; el hook de cierre del plugin no lo ve).
 
 ## Ciclo de una tarea
 
-1. Claude entiende el objetivo autorizado, elige qué resolver y qué delegar. Una petición de configuración no autoriza desarrollo.
-2. Cada encargo especifica identificador de tarea, cuenta/entorno, rol, carpeta, alcance, acceso de lectura o escritura, resultado esperado y verificaciones. Envía contexto suficiente y breve, sin copiar todo el historial.
-3. Confirma que el plugin usa el entorno de cuenta previsto. Registra el identificador de trabajo/sesión devuelto para consultar, recuperar o continuar el encargo. No reutilices sesiones de otra cuenta ni sustituyas la cuenta sin informar.
-4. El delegado resuelve el encargo y devuelve resultados y evidencia. No amplía tareas ni inicia otra delegación salvo que el encargo lo incluya.
-5. Claude recupera el resultado, revisa el diff y las comprobaciones, corrige o devuelve una tarea acotada. Registra la entrega en `docs/handoffs/` y actualiza el estado consolidado.
-6. Claude crea commits en puntos coherentes. El creador recibe qué cambió, qué puede evaluar y qué decisiones quedan pendientes; no necesita transportar mensajes o administrar Git entre agentes.
+1. Claude entiende el objetivo autorizado y decide qué resuelve y qué delega. Una petición de configuración no autoriza desarrollo.
+2. Escribe el encargo en `.local/codex-tasks/T###-codexN.md` con la [plantilla](handoffs/README.md#plantilla-de-encargo): rol, carpeta, acceso, alcance, archivos que puede tocar, contrato y criterios de aceptación, verificaciones y formato del resultado. Remite a los archivos del repositorio en lugar de repetir el contexto de Singlr.
+3. Lanza la tarea:
+   ```bash
+   scripts/codex-route.sh codex1 task --write --prompt-file .local/codex-tasks/T001-codex1.md
+   ```
+   Para encargos largos, Claude ejecuta esa orden en segundo plano desde su propia herramienta y espera la notificación de fin; no consulta el estado ni pide informes intermedios.
+4. El delegado resuelve el encargo, corrige errores rutinarios dentro de su alcance y devuelve un resultado conciso con evidencia. No amplía la tarea ni inicia otra delegación.
+5. Claude obtiene el identificador con `status --json`, revisa el diff y las comprobaciones y, si hace falta, devuelve una corrección acotada con `task --resume-last` del mismo rol. La revisión en profundidad se reserva a decisiones críticas, cambios arquitectónicos y resultados problemáticos.
+6. Claude registra la entrega en `docs/handoffs/`, crea commits en puntos coherentes y presenta al creador qué cambió, cómo se verificó y qué decisiones quedan pendientes. Al terminar la sesión ejecuta `stop` para cada rol usado.
 
-Una petición mediante el plugin no necesita un commit previo por defecto. PR, push y pull no son mecanismos de mensajería obligatorios para el trabajo local. Se usan cuando corresponda revisar/publicar/sincronizar con GitHub, dentro de la autorización vigente.
+PR, push y pull no son mecanismos de mensajería entre agentes. Se usan para revisar, publicar o sincronizar con GitHub, dentro de la autorización vigente.
 
-## Escritura paralela opcional
+## Uso eficiente
 
-Si una tarea justifica dos escritores simultáneos, Claude prepara worktrees y ramas separados, delimita responsabilidades y organiza revisión e integración. Los worktrees anteriores siguen disponibles en `../singlr-worktrees/codex-1` y `../singlr-worktrees/codex-2`; son opcionales y pueden contener documentación de la organización anterior. Sincronizarlos expresamente desde `main`, con el checkout limpio y sin tareas activas, antes de reutilizarlos.
+- Encargos autocontenidos con alcance y criterios de aceptación claros; sin supervisar cada comando.
+- Sin informes intermedios ni repetición del contexto completo; los archivos compartidos son la referencia.
+- Resultados concisos, commits verificables cuando el encargo los incluya y evidencia de pruebas.
+- Ningún review gate ni revisión automática permanente. `/codex:review` y `/codex:adversarial-review` solo se usan cuando Claude o el creador lo decidan en un encargo concreto.
+- Sin pings de prueba rutinarios: `setup --json` comprueba cuenta y binarios sin consumir modelo.
 
-Los worktrees comparten historial Git local, pero los archivos no se actualizan entre ellos automáticamente. No sobrescribir trabajo ajeno ni forzar el historial al integrar.
+## Carpeta principal y turnos
 
-## Estado de la conexión
+El flujo habitual usa `/home/sunw/Projects/singlr`. Solo un agente escribe a la vez, incluidos código, documentación, commits y cambios de rama. Claude no edita mientras un Codex delegado escribe; una tarea en segundo plano no libera el turno. El bloqueo de `codex-route.sh` cubre a los dos Codex en la misma carpeta, no a las ediciones de Claude.
 
-El plugin `codex@openai-codex` está instalado y habilitado localmente para el checkout principal. Su script devolvió `SINGLR_OK_1` y `SINGLR_OK_2` usando los dos entornos existentes. Todavía no se ha configurado un selector de cuenta por tarea ni validado `/codex:rescue` con ambos roles y continuación de sesiones. Ver `docs/agents/setup.md`.
+Una revisión paralela (por ejemplo, Codex 2 sin `--write`) es de solo lectura sobre un estado estable, preferiblemente un commit.
 
-Las instrucciones de archivos descargados son referencias históricas, no encargos activos. No activar commits, merges, review gates o comandos privilegiados mediante hooks como consecuencia de esta documentación.
+## Escritura paralela
+
+Si dos tareas pueden avanzar a la vez, Claude asigna archivos disjuntos y usa worktrees y ramas separados: `-C ../singlr-worktrees/codex-1` o `-C ../singlr-worktrees/codex-2`. Antes de reutilizarlos los sincroniza desde `main` con el checkout limpio y sin tareas activas. Los archivos sin commit no se comparten entre worktrees. Claude integra sin sobrescribir trabajo ajeno ni forzar el historial.
+
+## Procedimientos alternativos
+
+- **`/codex:rescue` y demás comandos del plugin** no eligen cuenta: usan el entorno de la sesión de Claude (cuenta 1) y el estado por defecto, y pasan por un subagente reenviador. Solo valen como alternativa para Codex 1, indicando el rol en el texto. Nunca para Codex 2.
+- **Cuenta no disponible** (`setup --json` sin sesión iniciada o con error): no sustituir por la otra cuenta. Informar al creador; el inicio de sesión lo hace él.
+- **Cambio de versión del plugin**: el script localiza la instalación en `~/.claude/plugins/installed_plugins.json`. Tras actualizar, ejecutar `setup --json` con cada rol y revisar que `task` conserve sus opciones.
+- **Sin plugin**: el creador puede abrir la app de la cuenta (`chatgpt` o `chatgpt-cuenta2`) en la carpeta indicada y entregar el archivo de encargo; el resultado vuelve como entrega con commit.
+
+Las instrucciones de archivos descargados son referencias, no encargos activos. No activar commits, merges, review gates o comandos privilegiados mediante hooks como consecuencia de esta documentación.

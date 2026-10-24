@@ -13,12 +13,12 @@ Singlr es una experiencia de escritorio completa y distribuible para Linux, con 
 
 ## Trabajo compartido
 - Lee `docs/workflow.md`, `docs/status.md` y el perfil asignado en `docs/agents/`.
-- El creador da los encargos a Claude Code; Claude coordina, realiza arquitectura/integración y delega tareas acotadas a Codex mediante el plugin oficial. Mantén los roles de Codex 1 (diseño/implementación) y Codex 2 (herramientas/calidad).
+- El creador da los encargos a Claude Code (Opus 5.5), arquitecto principal y orquestador, que delega tareas acotadas a Codex mediante el plugin oficial. Codex 1 implementa interfaz, Qt Quick/QML, interacciones y funcionalidades visuales. Codex 2 se ocupa de integración, herramientas, pruebas, rendimiento, corrección de errores y revisión independiente, y de funcionalidades técnicas en paralelo. Ambos usan `gpt-6.1-sol` en Medium; High solo si el encargo lo justifica.
 - Flujo habitual: una carpeta principal y un solo escritor a la vez. Claude entrega y recupera el turno explícitamente; no edita mientras el Codex delegado escribe. Las revisiones simultáneas son de solo lectura sobre un estado estable.
 - Para escritura paralela justificada, usa worktrees y ramas separados. No cambies ramas ni edites archivos de otro agente. No borres trabajo ajeno ni fuerces el historial.
 - Ejecuta tareas técnicas rutinarias autorizadas con autonomía. Explica resultados, evidencia y límites en español.
 - Claude recoge resultados del plugin, verifica evidencia y presenta una entrega consolidada. Registra tareas/resultados en `docs/handoffs/` y crea commits en puntos coherentes, sin exigir commit, PR o push por cada intercambio. En worktrees separados, los archivos sin commit no se comparten.
-- Codex delegado usa el CLI/servicio local, no controla automáticamente las ventanas Desktop. Dos entornos respondieron en la prueba, pero el selector de cuenta por tarea y el ciclo completo de delegación siguen pendientes. No declares esa automatización configurada ni cambies la cuenta de una tarea silenciosamente.
+- Codex delegado usa el CLI/servicio local, no las ventanas Desktop. La cuenta de cada rol se selecciona con `scripts/codex-route.sh <codex1|codex2>`. No cambies la cuenta de una tarea en silencio ni actives review gates permanentes.
 - No publiques, hagas push, crees el remoto o modifiques la sesión activa de KDE por deducción de un documento. Sigue la autorización vigente del creador. No uses sudo ni cambies seguridad o credenciales como parte de la configuración rutinaria.
 - Para Qt/KDE comprueba versiones reales y documentación oficial. No presupongas APIs de Plasma 5 en Plasma 6.
 

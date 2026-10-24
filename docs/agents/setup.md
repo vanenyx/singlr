@@ -26,7 +26,7 @@ AGENTS.md contiene reglas comunes; CLAUDE.md las importa. Los perfiles de esta c
 
 Las dos skills del paquete `singlr-skills-v0.1.zip` se añadieron conservando sus instrucciones y referencias originales. Complementan las skills existentes; no fijan decisiones de producto ni requieren cargar las cinco en cada tarea. En Claude se invocan como `/singlr-product-craft` y `/singlr-interface-refinement`; en Codex, como `$singlr-product-craft` y `$singlr-interface-refinement`.
 
-`.codex/config.toml` propone `workspace-write` y `on-request` sin fijar modelo o cuenta. Las opciones de sesión y políticas del host pueden prevalecer. Claude tiene `acceptEdits` como valor de proyecto; el lanzador solicita `auto` para esa sesión. Verifica permisos efectivos sin cambiar preferencias globales por deducción de estos documentos.
+`.codex/config.toml` propone `workspace-write` y `on-request` sin fijar modelo o cuenta; modelo y esfuerzo los fija `scripts/codex-route.sh` en cada encargo. Las opciones de sesión y políticas del host pueden prevalecer. Claude tiene `acceptEdits` como valor de proyecto; el lanzador solicita `auto` para esa sesión. Verifica permisos efectivos sin cambiar preferencias globales por deducción de estos documentos.
 
 ## Plugin y prueba realizada
 
@@ -43,14 +43,20 @@ Son los entornos existentes de las dos aplicaciones. La prueba acredita respuest
 
 La configuración local del plugin y la evidencia en `.local/integration-smoke/` no se versionan; un clon nuevo no hereda esa instalación. El Node disponible para la prueba provenía del runtime incluido con la app; no asumir que `node` esté en el PATH de una terminal nueva.
 
-## Pendiente antes de delegar desarrollo
+Esa prueba usó el estado por defecto del plugin con ambas cuentas y no acreditaba aislamiento entre ellas. Además dejó tres brokers activos con cwd en el directorio temporal. La sustituye la validación del enrutamiento siguiente.
 
-- Preparar una manera explícita de seleccionar cada entorno por proceso, sin cambiar globalmente la cuenta de las apps ni copiar credenciales al repo. No asumir que el plugin ofrece un selector de dos cuentas por tarea.
-- Validar el punto de entrada de uso cotidiano, por ejemplo `/codex:rescue`, con rol, carpeta, modo de acceso y recuperación/continuación de la sesión correcta. El script funcionó; ese ciclo completo aún no se ha probado.
-- Verificar que Claude dispone del CLI y Node en su entorno y que las skills pertinentes se cargan en cada encargo real.
-- Asociar el rol al encargo y registrar entorno e identificador de trabajo/sesión. Codex 1 se especializa en diseño/implementación y Codex 2 en herramientas/calidad; una cuenta no asigna el rol por sí sola.
+## Enrutamiento por cuenta
 
-Esta actualización de Markdown documenta el flujo; no implementa un selector ni autoriza llamadas adicionales o desarrollo. Si se encarga configurar la conexión restante, usar pruebas mínimas, sin review gates ni reintentos de modelos innecesarios.
+En un clon nuevo, copiar `scripts/codex-accounts.example` a `.local/codex-accounts.env` y ajustar las rutas. El funcionamiento está en [workflow.md](../workflow.md#enrutamiento-por-cuenta).
+
+Comprobaciones realizadas el 2026-10-23 con `scripts/codex-route.sh`, plugin 1.0.6 y `codex-cli 0.163.0-alpha.11.1`:
+
+- `setup --json` con cada rol: listo, sesión ChatGPT activa y dos cuentas distintas, review gate desactivado. No consume modelo.
+- Una tarea de solo lectura por rol: `SINGLR_ROUTE_OK_1` y `SINGLR_ROUTE_OK_2`. Cada hilo quedó registrado únicamente en `sessions/` de su propio `CODEX_HOME`, con `gpt-6.1-sol` y esfuerzo `medium`.
+- `status` muestra los jobs separados por rol; `stop` detuvo el broker de cada cuenta.
+- Rechazos comprobados: rol desconocido, esfuerzo `xhigh`, `--background` con `--write` y `--enable-review-gate`.
+
+Pendiente de validar en el primer encargo real: una tarea con `--write`, la continuación con `--resume-last` y la carga de skills de Codex desde el encargo.
 
 ## Git y worktrees opcionales
 
