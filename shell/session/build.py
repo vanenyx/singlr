@@ -24,7 +24,7 @@ def main():
     if not compiler or not shutil.which(compiler[0]) or not shutil.which('pkg-config'):
         raise RuntimeError('Se requieren g++ (o CXX) y pkg-config; no se instalan automáticamente')
     compiler[0] = shutil.which(compiler[0])
-    flags = subprocess.run(['pkg-config', '--cflags', '--libs', 'Qt6Gui', 'Qt6Qml', 'Qt6Quick', 'KF6WindowSystem'],
+    flags = subprocess.run(['pkg-config', '--cflags', '--libs', 'Qt6Gui', 'Qt6Qml', 'Qt6Quick', 'Qt6DBus', 'KF6WindowSystem'],
                            capture_output=True, text=True)
     if flags.returncode:
         raise RuntimeError('Faltan cabeceras/metadatos de Qt6 Gui/Qml/Quick (qt6-base, qt6-declarative):\n' + flags.stderr)

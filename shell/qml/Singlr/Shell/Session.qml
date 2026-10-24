@@ -8,6 +8,8 @@ import Singlr.Ui
 Item {
     id: session
     function closeMenus() { bar.closeMenu(); dock.closeMenu(); }
+    // Invocado desde C++ (tecla Meta, Alt+Espacio) a través de D-Bus.
+    function toggleLauncher() { if (overlay.visible) launcher.close(); else openLauncher(false); }
     function openLauncher(apps = false) { closeMenus(); overlay.visible = true; launcher.open(apps); overlay.requestActivate(); focusTimer.restart(); }
     Timer { id: focusTimer; interval: 0; onTriggered: launcher.focusInput() }
     // --no-background: sobre una sesión Plasma real se conserva el fondo del usuario.

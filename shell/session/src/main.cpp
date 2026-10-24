@@ -2,6 +2,9 @@
 // el desenfoque de fondo para las ventanas QML que lo declaran.
 #include <KWindowEffects>
 #include <LayerShellQt/Shell>
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusVirtualObject>
 #include <QGuiApplication>
 #include <QIcon>
 #include <QQmlApplicationEngine>
@@ -30,6 +33,33 @@ QRegion roundedRegion(const QSize &size, int radius)
         region -= QRegion(corners[i]).subtracted(QRegion(ellipses[i], QRegion::Ellipse));
     return region;
 }
+
+// Recibe la tecla Meta (KWin llama a org.kde.plasmashell activateLauncherMenu) y Alt+Espacio
+// (KRunner) mientras Singlr sustituye a Plasma, y abre el lanzador de Singlr.
+class LauncherBridge : public QDBusVirtualObject
+{
+public:
+    explicit LauncherBridge(QObject *target)
+        : m_target(target)
+    {
+    }
+    bool handleMessage(const QDBusMessage &message, const QDBusConnection &connection) override
+    {
+        if (message.type() != QDBusMessage::MethodCallMessage || message.interface() == QLatin1String("org.freedesktop.DBus.Introspectable")
+            || message.interface() == QLatin1String("org.freedesktop.DBus.Properties"))
+            return false;
+        QMetaObject::invokeMethod(m_target, "toggleLauncher", Qt::QueuedConnection);
+        connection.send(message.createReply());
+        return true;
+    }
+    QString introspect(const QString &) const override
+    {
+        return {};
+    }
+
+private:
+    QObject *m_target;
+};
 
 void applyBlur(QQuickWindow *window)
 {
@@ -72,6 +102,19 @@ int main(int argc, char *argv[])
     engine.load(QUrl::fromLocalFile(QString::fromLocal8Bit(argv[2])));
     if (engine.rootObjects().isEmpty())
         return 1;
+    // Solo en modo sesión: el objeto raíz expone la sesión en su propiedad «surface».
+    QObject *session = engine.rootObjects().constFirst()->property("surface").value<QObject *>();
+    if (session && session->metaObject()->indexOfMethod("toggleLauncher()") >= 0) {
+        auto bus = QDBusConnection::sessionBus();
+        auto *bridge = new LauncherBridge(session);
+        // Los nombres solo están libres si plasmashell y krunner no se ejecutan.
+        if (bus.registerService(QStringLiteral("org.kde.plasmashell")))
+            bus.registerVirtualObject(QStringLiteral("/PlasmaShell"), bridge);
+        if (bus.registerService(QStringLiteral("org.kde.krunner"))) {
+            bus.registerVirtualObject(QStringLiteral("/App"), bridge);
+            bus.registerVirtualObject(QStringLiteral("/org/kde/krunner"), bridge);
+        }
+    }
     for (QWindow *window : QGuiApplication::allWindows())
         if (auto *quick = qobject_cast<QQuickWindow *>(window))
             trackBlur(quick);

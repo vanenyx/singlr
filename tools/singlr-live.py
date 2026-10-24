@@ -103,6 +103,10 @@ def main():
         if takeover and plasma('is-active').stdout.strip() == 'active':
             PLASMA_MARK.write_text('1')
             plasma('stop')
+        if takeover:
+            # KRunner se retira para que Singlr reciba su nombre de D-Bus (Alt+Espacio);
+            # vuelve solo por activación D-Bus cuando Singlr se detiene.
+            subprocess.run(['kquitapp6', 'krunner'], capture_output=True)
         if os.fork():
             time.sleep(1.5)
             print(f'Singlr en vivo activo. Registro: {LOG}. Para quitarlo: tools/singlr-live.sh stop')
