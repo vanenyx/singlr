@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# No global layer-shell environment: apps launched by Milou must use xdg-shell.
+exec qml6 -I "$(dirname "$(dirname "$(realpath "$0")")")/qml" "$@"

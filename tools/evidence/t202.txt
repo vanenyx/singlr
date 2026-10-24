@@ -1,0 +1,85 @@
+T202 — 2026-10-24 — Codex 2 — sandbox
+Rama: day1/codex2-session. Sin commit. Sin cambios en shell/qml ni docs.
+Resultados registrados de ejecuciones reales; no son prueba de integración KDE.
+
+python3 scripts/doctor.py
+PASS inventario: Qt 6.12.0; qml6/qmllint y kwin_wayland disponibles.
+pacman -Q kwin layer-shell-qt milou plasma-workspace qt6-declarative
+kwin 6.8.1-2
+layer-shell-qt 6.8.1-1
+milou 6.8.1-1
+plasma-workspace 6.8.1-1
+qt6-declarative 6.12.0-2
+pacman -Q spectacle kio
+spectacle 1:6.8.1-1
+kio 6.31.0-1
+command -v konsole: sin salida, ausente.
+pacman -Q konsole: error: package 'konsole' was not found.
+Sin .desktop/servicio Konsole en /usr/share/applications ni /usr/share/dbus-1/services.
+
+python3 scripts/check_setup.py
+exit 0: OK: documentos, JSON/TOML, 5 skills y enlaces compartidos.
+
+python3 -m unittest discover -s tests/shell -p 'test_*.py' -v
+exit 0: Ran 6 tests in 1.497s; OK.
+test_capture_rejects_no_live_session ... ok
+test_compositor_failure ... ok
+test_invalid_size ... ok
+test_isolation_and_detached_cleanup ... ok
+test_missing_entry ... ok
+test_sigterm_cleanup ... ok
+Compositor, qml6 y bus simulados: pruebas de supervisor, no de KDE.
+
+/usr/lib/qt6/bin/qmllint -I /usr/lib/qt6/qml -I shell/qml tests/shell/Probe.qml tests/shell/WindowedFixture.qml
+exit 0, sin diagnósticos (incluye corrección del ID krunner_services).
+
+bash -n tools/run-singlr.sh tools/capture-session.sh tools/check-shell.sh tools/nested-session.sh shell/session/qml-shell
+exit 0.
+python3 -m py_compile tools/session-runtime.py tools/check-shell.py tools/prototype-runtime.py tests/shell/test_session.py tests/shell/verify-session.py
+exit 0.
+git diff --check
+exit 0.
+
+tools/check-shell.sh --entry tests/shell/WindowedFixture.qml --output /tmp/singlr-t202-windowed.png
+exit 0: qmllint + carga offscreen + PNG PASS.
+PNG comprobado por cabecera IHDR: 640x360.
+Prueba negativa adicional, fixture temporal que termina sin captura:
+check-shell --entry <NoCapture.qml> --output <PNG preexistente>
+exit 1: CHECK NoCapture.qml: FAIL (lint pasó; carga/captura falló).
+Salida preexistente intacta; no se acepta como captura nueva.
+
+tools/check-shell.sh
+exit 2: No existe .../shell/qml/Shell.qml; integrar el punto de entrada de Codex 1 antes de verificarlo.
+
+python3 tools/prototype-runtime.py prototypes/runtime-check/Main.qml --capture /tmp/singlr-t202-regression.png --size 2048x1280
+exit 0:
+qt.scenegraph.general: Loading backend software
+qml: SINGLR_LOADED file:///home/sunw/Projects/singlr-worktrees/codex-2/prototypes/runtime-check/Main.qml
+qml: SINGLR_CAPTURE /tmp/singlr-t202-regression.png
+SINGLR_NOTICE software renderer: shader effects unavailable
+
+SINGLR_DURATION_MS=2000 tools/run-singlr.sh --entry tests/shell/Probe.qml
+exit 127:
+dbus-daemon[6]: Failed to start message bus: Failed to bind socket "/tmp/dbus-6OE4ByadHH": Operation not permitted
+dbus-run-session: EOF reading address from bus daemon
+SINGLR_CLEANUP remaining=[]
+SINGLR_HOST_CONFIG files_before=27 files_after=27 equal=True
+
+python3 tests/shell/verify-session.py --evidence /tmp/singlr-t202-evidence
+exit 2: Falta konsole (paquete Arch extra/konsole); no se instala en este encargo.
+No session.png real producido. No Milou, TasksModel ni layer-shell real verificados.
+
+QT_QPA_PLATFORM=offscreen kwin_wayland --help
+exit 0; opciones reales --wayland-display, --socket, --width, --height, --scale,
+--no-lockscreen, --no-global-shortcuts, --no-kactivities presentes.
+QT_QPA_PLATFORM=offscreen spectacle --help
+exit 0; -b -n -f -o presentes. command -v grim: sin ruta.
+strings /usr/lib/libkwin.so.6.8.1 | rg X-KDE-Wayland
+sin coincidencias. Fuente oficial v6.8.1 contrastada; ver shell/session/README.md.
+
+Comandos externos exactos, con Konsole disponible y fuera del sandbox:
+cd /home/sunw/Projects/singlr-worktrees/codex-2
+python3 tests/shell/verify-session.py --evidence /tmp/singlr-t202-evidence
+# Tras integrar Shell.qml:
+tools/check-shell.sh --output /tmp/singlr-shell-windowed.png
+tools/run-singlr.sh --size 2048x1280
