@@ -17,5 +17,6 @@ La fuente de producto es [la recuperación original](../SINGLR_recuperacion_desd
 | P-005 | Explícita del creador | Vigente | Dirección visual (2026-10-24): se descartan A y B. Base: filosofía, estilo y diseño de Linear en UI y UX. Sobre ella, identidades de macOS (glassmorphism, no Liquid Glass) y de Raycast (superficies de comando, listas, acciones, teclado). Fondos sobrios al estilo de Linear. Ver [brief v2](phase1/brief.md). |
 | P-007 | Explícita del creador | Vigente | Liquid Glass queda descartado también como opción futura (2026-10-24). Sustituye a la preferencia de la visión original de mantenerlo opcional y ajustable. El material translúcido de Singlr es el glassmorphism. |
 | P-006 | Explícita del creador | Vigente | Fase 1 iniciada (2026-10-24): dirección visual y prototipo integrado, en entorno aislado que no altera la sesión KDE. |
+| P-008 | Explícita del creador | Vigente | Dock con el modelo de macOS (2026-10-24): un icono por app. El clic trae la app al frente (todas sus ventanas, la última usada encima) y nunca minimiza. La ventana concreta se elige con el menú contextual o con Alt+` de KWin. Sin ciclo por clics ni rueda. |
 
 Para nuevas entradas: ID, clase, estado, motivo, evidencia/autor y consecuencias. Una decisión técnica no aprueba decisiones perceptibles de producto.
