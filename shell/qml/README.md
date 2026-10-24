@@ -1,3 +1,75 @@
+# T212 — Audio, multimedia, OSD y centro de control
+
+Encargo explícito del creador; cambios propios solo en `shell/qml/**`, sin
+commit. `Session.globalAction(component, name)` y `Session.osdRequest(method,
+args)` cumplen el contrato con el lanzador C++ de Claude.
+
+- Audio real con `Volume.PreferredDevice.sink/source`: pasos de 5 %/1 %,
+  límite 0–100 %, silencio de salida y micrófono y OSD tras cada operación.
+  Dispositivos sin volumen escribible no se modifican.
+- `Mpris2Model.currentPlayer`, respetando capacidades: Play/Pause/PlayPause,
+  Stop/Next/Previous, Seek ±5 s (microsegundos MPRIS), volumen del reproductor.
+- OSD independiente Overlay, 240×44, sin entrada, foco ni zona exclusiva,
+  `transientParent: null`, `singlrBlur`/radio 12, entrada/salida 120 ms y
+  caducidad reiniciable de 1,5 s. Traduce brillo de pantalla/teclado, audio,
+  micrófono, reproductor, conectividad, distribución de teclado, escritorio,
+  perfil energético, inhibición y texto; miembros desconocidos se ignoran.
+- Los indicadores de red, volumen y batería abren el centro de control de
+  340 px bajo la barra a la derecha. Layer-shell Overlay OnDemand únicamente
+  mientras se abre; Esc, pérdida de activación o clic en el fondo lo cierran.
+  No se añade una superficie de entrada que cubra las aplicaciones.
+- NetworkManager: activar Wi-Fi, conexión actual, redes desplegables,
+  conexiones guardadas y nuevas redes abiertas/OWE o con contraseña
+  WEP/WPA/WPA2/WPA3 personal mediante `Handler`. Escaneo al abrir y cada 15 s
+  mientras permanece abierto; errores de activación visibles.
+- BluezQt: activar adaptadores y conectar/desconectar dispositivos emparejados.
+  Audio: deslizadores de salida/micrófono y selección del dispositivo por defecto.
+  Brillo por pantalla desde `ScreenBrightnessControl.displays`; batería desde
+  `BatteryControlModel`, perfiles reales desde `PowerProfilesControl`.
+  No molestar usa la misma instancia de NotificationCenter. Configuración
+  se lanza desde `Kicker.SimpleFavoritesModel` con `systemsettings.desktop`.
+
+**Límites deliberados:** la configuración empresarial EAP/certificados y el
+emparejamiento de dispositivos nuevos quedan en Configuración del sistema.
+Sin adaptadores Bluetooth, salidas/fuentes de audio, pantallas regulables,
+batería interna o perfiles disponibles, los respectivos controles se omiten.
+No hay datos de demostración en estos componentes. La integración conserva
+el alcance de pantalla predeterminada del shell. La lista de redes procede
+del modelo real; no se declara que un intento de conexión haya tenido éxito.
+
+Contratos contrastados con qmltypes/bibliotecas locales de Plasma 6.8.1,
+Qt 6.12.0 y KF6PulseAudioQt 1.9.0. El applet de volumen no está instalado en
+`/usr/share/plasma/plasmoids/org.kde.plasma.volume/`.
+Referencias oficiales: [contrato OSD de KDE](https://github.com/KDE/plasma-workspace/blob/master/shell/osd.h),
+[unidades y capacidades MPRIS](https://specifications.freedesktop.org/mpris/latest/Player_Interface.html).
+La selección de salida usa los roles `PulseObject`/`Default` de PulseAudioQt;
+brillo usa `displayName`, `label`, `brightness`, `maxBrightness` del modelo local.
+
+**Verificado:** lint completo sin avisos (exit 0, comando inferior);
+qmltestrunner offscreen/software **54 passed / 0 failed**, incluyendo pasos,
+límites, silencio, separación del micrófono, capacidades multimedia, Seek,
+reinicio/caducidad del OSD y carga/Esc del panel. Captura offscreen inspeccionada
+en `/tmp/t212-preview.png` (servicios no accesibles: muestra su ausencia real).
+El log vivo registra recargas hasta las 15:06 sin errores QML nuevos; permanece
+el aviso previo del portal sobre `singlr-shell`.
+El sandbox deniega el bus de sesión (`busctl --user status
+org.kde.Solid.PowerManagement`: Operation not permitted), PulseAudio, UPower,
+brillo y rfkill. Pendientes de prueba física: teclas globales con el nuevo
+lanzador C++, dispositivos/redes reales, blur, clic fuera y devolución de foco
+entre aplicaciones en KWin. El lint y los dobles de las pruebas no acreditan
+esas operaciones.
+
+```bash
+/usr/lib/qt6/bin/qmllint -I shell/qml -i shell/qml/Singlr/Ui/qmldir \
+  shell/qml/Shell.qml shell/qml/Singlr/Ui/*.qml \
+  shell/qml/Singlr/Shell/*.qml shell/qml/tests/*.qml
+XDG_CACHE_HOME=/tmp/singlr-t203-cache QT_QPA_PLATFORM=offscreen \
+QT_QUICK_BACKEND=software QT_FORCE_STDERR_LOGGING=1 \
+  /usr/lib/qt6/bin/qmltestrunner -import shell/qml -input shell/qml/tests
+```
+
+---
+
 # T210 — Notificaciones del sistema
 
 Implementación del encargo explícito del creador, limitada a `shell/qml/**`, sin

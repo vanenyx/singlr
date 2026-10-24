@@ -7,11 +7,54 @@ import Singlr.Ui
 // Item contenedor (inexistente) y KWin nunca recibe la superficie layer-shell.
 Item {
     id: session
-    function closeMenus() { bar.closeMenu(); dock.closeMenu(); notifications.historyOpen = false; }
+    readonly property var notificationCenter: notifications
+    function closeMenus() { bar.closeMenu(); dock.closeMenu(); notifications.historyOpen = false; controlWindow.visible = false; }
     // Invocado desde C++ (tecla Meta, Alt+Espacio) a través de D-Bus.
     function toggleLauncher() { if (overlay.visible) launcher.close(); else openLauncher(false); }
     function openLauncher(apps = false) { closeMenus(); overlay.visible = true; launcher.open(apps); overlay.requestActivate(); focusTimer.restart(); }
     Timer { id: focusTimer; interval: 0; onTriggered: launcher.focusInput() }
+    function globalAction(component, name) { systemControls.globalAction(component, name); }
+    function osdRequest(method, args) { osd.request(method, args); }
+    function toggleControlCenter() {
+        if (controlWindow.visible) { controlWindow.visible = false; return; }
+        closeMenus(); launcher.close(); overlay.visible = false;
+        controlWindow.visible = true;
+        controlWindow.requestActivate();
+        controlFocus.restart();
+    }
+    SystemControls { id: systemControls; onFeedback: (icon, percent, text) => osd.show(icon, percent, text) }
+    Timer { id: controlFocus; interval: 0; onTriggered: controlPanel.forceActiveFocus() }
+    Window {
+        id: osdWindow
+        transientParent: null; visible: osd.surfaceVisible; width: 240; height: 44; color: "transparent"
+        property bool singlrBlur: true
+        property int singlrBlurRadius: 12
+        flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowTransparentForInput
+        LayerShell.Window.layer: LayerShell.Window.LayerOverlay
+        LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
+        LayerShell.Window.margins.bottom: dockWindow.height + 30
+        LayerShell.Window.exclusionZone: 0
+        LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
+        LayerShell.Window.scope: "singlr-osd"
+        OnScreenDisplay { id: osd; anchors.fill: parent }
+    }
+    Window {
+        id: controlWindow
+        transientParent: null; visible: false; width: 340
+        height: Math.min(screen.height - 64, controlPanel.implicitHeight); color: "transparent"
+        property bool singlrBlur: true
+        property int singlrBlurRadius: 12
+        LayerShell.Window.layer: LayerShell.Window.LayerOverlay
+        LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorRight
+        LayerShell.Window.margins.top: 8
+        LayerShell.Window.margins.right: 16
+        LayerShell.Window.exclusionZone: 0
+        LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
+        LayerShell.Window.activateOnShow: true
+        LayerShell.Window.scope: "singlr-control-center"
+        onActiveChanged: if (!active && visible) visible = false
+        ControlCenter { id: controlPanel; anchors.fill: parent; audio: systemControls; opened: controlWindow.visible; notifications: session.notificationCenter; onClosed: controlWindow.visible = false }
+    }
     // --no-background: sobre una sesión Plasma real se conserva el fondo del usuario.
     readonly property bool showBackground: Qt.application.arguments.indexOf("--no-background") < 0
     Window {
@@ -30,7 +73,7 @@ Item {
         LayerShell.Window.exclusionZone: 28
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
         LayerShell.Window.scope: "singlr-topbar"
-        TopBar { id: bar; notificationsUnread: notifications.unread; onNotificationsRequested: { bar.closeMenu(); dock.closeMenu(); notifications.toggle(); } sessionMode: true; menuHost: barMenuHost; width: parent.width; height: 28; activeAppName: dock.activeAppName; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
+        TopBar { id: bar; notificationsUnread: notifications.unread; onControlCenterRequested: session.toggleControlCenter(); onNotificationsRequested: { controlWindow.visible = false; bar.closeMenu(); dock.closeMenu(); notifications.toggle(); } sessionMode: true; menuHost: barMenuHost; width: parent.width; height: 28; activeAppName: dock.activeAppName; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
     }
     Window {

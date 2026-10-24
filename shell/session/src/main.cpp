@@ -64,6 +64,61 @@ private:
     QObject *m_target;
 };
 
+// org.kde.osdService: PowerDevil y otros servicios piden aquí el indicador en pantalla
+// (brillo, volumen…). Lo atendía plasmashell; Singlr lo reenvía a Session.osdRequest().
+class OsdBridge : public QDBusVirtualObject
+{
+public:
+    explicit OsdBridge(QObject *target)
+        : m_target(target)
+    {
+    }
+    bool handleMessage(const QDBusMessage &message, const QDBusConnection &connection) override
+    {
+        if (message.type() != QDBusMessage::MethodCallMessage || message.interface().startsWith(QLatin1String("org.freedesktop.DBus.")))
+            return false;
+        QMetaObject::invokeMethod(m_target, "osdRequest", Qt::QueuedConnection, Q_ARG(QVariant, message.member()), Q_ARG(QVariant, message.arguments()));
+        connection.send(message.createReply());
+        return true;
+    }
+    QString introspect(const QString &) const override
+    {
+        return {};
+    }
+
+private:
+    QObject *m_target;
+};
+
+// Atajos globales de volumen y multimedia que registraba plasmashell («kmix» y «mediacontrol»).
+// Se registran las mismas acciones cargando el atajo guardado, sin modificarlo.
+void registerGlobalActions(QObject *parent, QObject *session)
+{
+    const QList<std::pair<QString, QStringList>> components = {
+        {QStringLiteral("kmix"),
+         {QStringLiteral("increase_volume"), QStringLiteral("decrease_volume"), QStringLiteral("increase_volume_small"),
+          QStringLiteral("decrease_volume_small"), QStringLiteral("mute"), QStringLiteral("increase_microphone_volume"),
+          QStringLiteral("decrease_microphone_volume"), QStringLiteral("mic_mute")}},
+        {QStringLiteral("mediacontrol"),
+         {QStringLiteral("playpausemedia"), QStringLiteral("playmedia"), QStringLiteral("pausemedia"), QStringLiteral("stopmedia"),
+          QStringLiteral("nextmedia"), QStringLiteral("previousmedia"), QStringLiteral("seekforwardmedia"),
+          QStringLiteral("seekbackwardmedia"), QStringLiteral("mediavolumeup"), QStringLiteral("mediavolumedown")}},
+    };
+    const bool handles = session->metaObject()->indexOfMethod("globalAction(QVariant,QVariant)") >= 0;
+    for (const auto &[component, names] : components) {
+        for (const QString &name : names) {
+            auto *action = new QAction(parent);
+            action->setObjectName(name);
+            action->setProperty("componentName", component);
+            KGlobalAccel::self()->setShortcut(action, {}, KGlobalAccel::Autoloading);
+            if (handles)
+                QObject::connect(action, &QAction::triggered, session, [session, component, name] {
+                    QMetaObject::invokeMethod(session, "globalAction", Q_ARG(QVariant, component), Q_ARG(QVariant, name));
+                });
+        }
+    }
+}
+
 void applyBlur(QQuickWindow *window)
 {
     const bool enabled = window->property("singlrBlur").toBool();
@@ -123,7 +178,10 @@ int main(int argc, char *argv[])
             action->setText(QStringLiteral("Activar el lanzador de aplicaciones"));
             KGlobalAccel::self()->setShortcut(action, {QKeySequence(Qt::META), QKeySequence(Qt::ALT | Qt::Key_F1)}, KGlobalAccel::Autoloading);
             QObject::connect(action, &QAction::triggered, session, [session] { QMetaObject::invokeMethod(session, "toggleLauncher"); });
+            registerGlobalActions(&app, session);
         }
+        if (session->metaObject()->indexOfMethod("osdRequest(QVariant,QVariant)") >= 0 && bus.registerService(QStringLiteral("org.kde.osdService")))
+            bus.registerVirtualObject(QStringLiteral("/org/kde/osdService"), new OsdBridge(session));
         if (bus.registerService(QStringLiteral("org.kde.krunner"))) {
             bus.registerVirtualObject(QStringLiteral("/App"), bridge);
             bus.registerVirtualObject(QStringLiteral("/org/kde/krunner"), bridge);

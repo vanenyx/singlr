@@ -8,6 +8,7 @@ Rectangle {
     property Item menuHost: null
     function closeMenu() { menu.close(); }
     property bool notificationsUnread: false
+    signal controlCenterRequested()
     signal notificationsRequested()
     signal launcherRequested()
     signal applicationsRequested()
@@ -30,7 +31,7 @@ Rectangle {
             Rectangle { x: 18; y: 3; width: 4; height: 4; radius: 2; color: Theme.secondary; visible: bar.notificationsUnread }
         }
         Tool { y: 3; width: 24; height: 22; icon: "magnifying-glass"; iconSize: 15; description: "Buscar"; onClicked: bar.launcherRequested() }
-        StatusIndicators { anchors.verticalCenter: parent.verticalCenter }
+        StatusIndicators { anchors.verticalCenter: parent.verticalCenter; onControlCenterRequested: bar.controlCenterRequested() }
         UiText { height: 28; text: bar.now.toLocaleString(Qt.locale("es_ES"), "ddd d MMM  HH:mm"); weight: 510; color: Theme.secondary }
     }
     Controls.Popup {

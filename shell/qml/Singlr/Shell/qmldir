@@ -11,3 +11,6 @@ StatusIndicators 1.0 StatusIndicators.qml
 NotificationsBackend 1.0 NotificationsBackend.qml
 NotificationCard 1.0 NotificationCard.qml
 NotificationCenter 1.0 NotificationCenter.qml
+SystemControls 1.0 SystemControls.qml
+OnScreenDisplay 1.0 OnScreenDisplay.qml
+ControlCenter 1.0 ControlCenter.qml
