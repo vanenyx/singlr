@@ -28,6 +28,7 @@ Item {
         function requestClose(row) { operation = "close"; lastRow = row; }
     }
     Dock { id: dock; y: 640; modelOverride: fakeTasks }
+    TopBar { id: topbar; activeAppName: dock.activeAppName }
     TestCase {
         name: "ShellInteraction"; when: windowShown
         SignalSpy { id: closedSpy; target: search; signalName: "closed" }
@@ -81,11 +82,24 @@ Item {
             dock.activate(1, {IsWindow: true, IsActive: false}); compare(fakeTasks.operation, "activate");
             dock.activate(1, {IsWindow: true, IsActive: true, IsMinimizable: true}); compare(fakeTasks.operation, "minimize");
             dock.activate(1, {IsWindow: true, IsActive: true, IsMinimizable: false}); compare(fakeTasks.operation, "activate");
-            dock.openContext(3, {IsNewInstanceable: true, IsClosable: true}); verify(dock.menuOpen);
+            dock.openContext(3, {IsNewInstanceable: true, IsClosable: true}); verify(dock.menuOpen); compare(dock.height, 48);
             dock.newInstance(); compare(fakeTasks.operation, "new"); compare(fakeTasks.lastRow, 3); verify(!dock.menuOpen);
             dock.openContext(3, {IsClosable: true}); dock.closeTask(); compare(fakeTasks.operation, "close"); verify(!dock.menuOpen);
             dock.openContext(3, {IsLauncher: true}); dock.closeTask(); verify(dock.menuOpen);
             keyClick(Qt.Key_Escape); verify(!dock.menuOpen);
+        }
+        function test_dockLivePresentation() {
+            compare(dock.height, 48); compare(topbar.implicitHeight, 28);
+            fakeTasks.append({AppName: "Editor", IsLauncher: false, HasLauncher: false, IsActive: true, IsWindow: true, decoration: "utilities-terminal"});
+            fakeTasks.append({AppName: "Archivos", IsLauncher: true, HasLauncher: true, IsActive: false, IsWindow: false, decoration: "system-file-manager"});
+            tryCompare(topbar, "activeAppName", "Editor");
+            tryCompare(dock, "width", 138);
+            fakeTasks.setProperty(0, "IsActive", false);
+            fakeTasks.setProperty(1, "IsActive", true);
+            tryCompare(topbar, "activeAppName", "Archivos");
+            fakeTasks.clear();
+            tryCompare(topbar, "activeAppName", "Escritorio");
+            compare(dock.height, 48);
         }
         function test_dockRoles() {
             verify(!tile.running);

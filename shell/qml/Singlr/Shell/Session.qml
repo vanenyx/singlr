@@ -19,23 +19,24 @@ Item {
         Background { anchors.fill: parent }
     }
     Window {
-        transientParent: null; visible: true; height: bar.menuOpen ? 90 : 38; color: "transparent"
+        transientParent: null; visible: true; height: 28; property bool singlrBlur: true; property int singlrBlurRadius: 0; color: "transparent"
         LayerShell.Window.layer: LayerShell.Window.LayerTop
         LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
-        LayerShell.Window.exclusionZone: 38
+        LayerShell.Window.exclusionZone: 28
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
         LayerShell.Window.scope: "singlr-topbar"
-        TopBar { id: bar; width: parent.width; height: 38; onLauncherRequested: session.openLauncher() }
+        TopBar { id: bar; sessionMode: true; width: parent.width; height: 28; activeAppName: dock.activeAppName; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
     }
     Window {
-        transientParent: null; visible: true; width: dock.width; height: dock.height + 30; color: "transparent"
+        transientParent: null; visible: true; width: dock.width; height: dock.height; property bool singlrBlur: true; property int singlrBlurRadius: 14; color: "transparent"
         LayerShell.Window.layer: LayerShell.Window.LayerBottom
         LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
+        LayerShell.Window.margins.bottom: 10
         LayerShell.Window.exclusionZone: 0
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
         LayerShell.Window.scope: "singlr-dock"
-        Dock { id: dock; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
+        Dock { id: dock; sessionMode: true; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
     }
     Window {

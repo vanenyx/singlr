@@ -1,25 +1,38 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls as Controls
 import Singlr.Ui
 Rectangle {
     id: tile
+    property bool sessionMode: false
     required property var task
     signal activated()
     signal contextRequested()
-    readonly property bool running: !!task.IsWindow || !!task.IsGroupParent
-    width: Math.min(150, Math.max(48, caption.implicitWidth + 46)); height: 34; radius: 6
-    color: task.IsActive ? Theme.raised : pointer.containsMouse || activeFocus ? Theme.hover : "transparent"
+    readonly property bool running: !!task?.IsWindow || !!task?.IsGroupParent
+    width: 32; height: 48; radius: 6
+    color: "transparent"
     border.color: activeFocus ? Theme.accentText : "transparent"
     activeFocusOnTab: true
     Accessible.role: Accessible.Button
-    Accessible.name: String(task.AppName || task.display || "Aplicación")
+    Accessible.name: String(task?.AppName || task?.display || "Aplicación")
     Keys.onMenuPressed: contextRequested()
     Keys.onReturnPressed: activated()
     Keys.onSpacePressed: activated()
-    Row { anchors.centerIn: parent; spacing: 7
-        AppIcon { source: tile.task.decoration; width: 20; height: 20 }
-        UiText { id: caption; text: String(tile.task.AppName || tile.task.display || ""); width: Math.min(104, implicitWidth); height: 20; font.pixelSize: 12; color: Theme.muted }
+    Item {
+        anchors.horizontalCenter: parent.horizontalCenter; y: 5; width: 32; height: 32
+        scale: pointer.pressed ? 0.94 : pointer.containsMouse ? 1.1 : 1
+        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+        AppIcon { visible: !tile.task?.singlrGrid; anchors.fill: parent; source: tile.task?.decoration }
+        Icon { anchors.centerIn: parent; visible: !!tile.task?.singlrGrid; name: "squares-four"; width: 24; height: 24; font.pixelSize: 24; color: Theme.secondary }
     }
-    Rectangle { visible: tile.running; anchors.horizontalCenter: parent.horizontalCenter; y: 37; width: tile.task.IsActive ? 12 : 3; height: 2; radius: 1; color: tile.task.IsActive ? Theme.accentText : Theme.faint }
-    MouseArea { id: pointer; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton; onClicked: mouse => { if (mouse.button === Qt.RightButton) tile.contextRequested(); else tile.activated(); } }
+    Rectangle { visible: tile.running; anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 3; width: 4; height: 4; radius: 2; color: "#f7f8f8"; opacity: tile.task?.IsActive ? 1 : 0.7 }
+    MouseArea { id: pointer; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton; onClicked: mouse => { tile.forceActiveFocus(); if (mouse.button === Qt.RightButton) tile.contextRequested(); else tile.activated(); } }
+    Controls.Popup {
+        visible: pointer.containsMouse && !pointer.pressed
+        popupType: tile.sessionMode ? Controls.Popup.Window : Controls.Popup.Item
+        x: (tile.width-width)/2; y: -height-8; padding: 8
+        closePolicy: Controls.Popup.NoAutoClose
+        background: Rectangle { radius: 8; color: "#ef191a1b"; border.color: Theme.border }
+        contentItem: UiText { text: tile.Accessible.name; font.pixelSize: 12 }
+    }
 }

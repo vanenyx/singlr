@@ -16,8 +16,8 @@ Window {
     Item {
         id: canvas; anchors.fill: parent
         Background { id: background; anchors.fill: parent }
-        TopBar { anchors.top: parent.top; width: parent.width; z: 2; onLauncherRequested: searchPanel.open() }
-        Dock { anchors.bottom: parent.bottom; anchors.bottomMargin: 30; anchors.horizontalCenter: parent.horizontalCenter; onLauncherRequested: searchPanel.open(); onApplicationsRequested: searchPanel.open(true) }
+        TopBar { anchors.top: parent.top; width: parent.width; z: 2; activeAppName: dock.activeAppName; onLauncherRequested: searchPanel.open(); onApplicationsRequested: searchPanel.open(true) }
+        Dock { id: dock; anchors.bottom: parent.bottom; anchors.bottomMargin: 10; anchors.horizontalCenter: parent.horizontalCenter; onLauncherRequested: searchPanel.open(); onApplicationsRequested: searchPanel.open(true) }
         Rectangle { anchors.fill: parent; visible: searchPanel.visible; color: "#38000000"; z: 3
             MouseArea { anchors.fill: parent; onClicked: searchPanel.close() }
         }

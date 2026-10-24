@@ -1,3 +1,36 @@
+# T205 — Pulido Linear (propuesta para revisión)
+
+Solo `shell/qml/**`, sin commit. Barra de 28 px con nombre activo obtenido de los
+roles de TasksModel; estado y búsqueda a la derecha. Dock de 48 px, iconos de
+32 px separados 6 px, padding 8, sin etiquetas y a 10 px del borde. Fijaciones y
+ventanas no fijadas se presentan en grupos conservando los índices originales
+para clic y menú. Tooltip de 12 px, escalas 1.1/0.94 y puntos de actividad de 4 px.
+Lanzador y catálogo comparten texto de 13 px, filas de 36 e iconos de 20.
+
+Las ventanas de barra y dock declaran `singlrBlur: true`, radios 0/14 y geometría
+sin márgenes transparentes. Los menús/tooltip usan Popup.Window en sesión y
+Popup.Item en preview; no expanden la superficie del panel. Toda Window explícita
+conserva `transientParent: null`. KRunner sigue recibiendo la consulta desde Timer.
+El contrato de blur queda preparado para C++ de Claude; este cambio no implementa
+el desenfoque de KWin. RectangularShadow aporta sombra de 24 px desplazada 8 px en
+preview con RHI; software la omite. En sesión, el tamaño exacto de la Window recorta
+la sombra exterior: para conservarla se necesita sombra del compositor en C++.
+APIs contrastadas con Qt 6.12 local y documentación oficial de
+[Popup](https://doc.qt.io/qt-6/qml-qtquick-controls-popup.html) y los qmltypes instalados
+de QtQuick.Effects, TaskManager y LayerShellQt.
+
+Verificación T205: `qmllint -W 0` con los imports del comando inferior, exit 0 sin
+advertencias. `qmltestrunner` con el entorno offscreen/software inferior: **16
+passed, 0 failed**, incluidos cambio de app activa, separación de grupos, tamaño
+estable al abrir menú, navegación y despacho de acciones. Las tres capturas de
+`captures/` se regeneraron con `--windowed --capture` y `--applications --capture=…`
+y se revisaron visualmente a 2048×1280. Catálogo: 30 aplicaciones. Sin errores QML;
+persisten avisos de servicios restringidos y algunos iconos de apps no resueltos
+en offscreen. Blur, sombra exterior, popups y dispositivos reales pendientes de
+verificación en KWin anidado. Las cifras visuales siguen siendo propuesta T205.
+
+---
+
 # Shell QML — T203 / H3 Día 1
 
 Cambios limitados a `shell/qml/**`, sin commit. Soluciones técnicas derivadas del

@@ -68,12 +68,12 @@ FocusScope {
     Glass { anchors.fill: parent; backdrop: launcher.backdrop; visible: !launcher.sessionMode }
     Rectangle { anchors.fill: parent; visible: launcher.sessionMode; radius: 12; color: "#f018181b"; border.color: Theme.focusBorder }
     MouseArea { anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton; onPressed: launcher.focusInput() }
-    Icon { x: 24; y: 25; width: 24; height: 24; font.pixelSize: 24; name: "magnifying-glass" }
+    Icon { x: 24; y: 25; width: 20; height: 20; font.pixelSize: 20; name: "magnifying-glass" }
     TextInput {
         id: input; objectName: "launcherInput"
         x: 62; y: 18; width: parent.width-124; height: 40
         color: Theme.text; selectionColor: Theme.selection; selectedTextColor: Theme.text
-        font.family: Theme.family; font.pixelSize: 21; clip: true; focus: true
+        font.family: Theme.family; font.pixelSize: 13; clip: true; focus: true
         verticalAlignment: TextInput.AlignVCenter
         Accessible.name: launcher.applicationsMode ? "Buscar en todas las aplicaciones" : "Buscar aplicaciones, archivos y comandos"
         Keys.onUpPressed: launcher.move(-1)
@@ -84,7 +84,7 @@ FocusScope {
         Keys.onPressed: event => {
             if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_K) { launcher.openActions(); event.accepted = true; }
         }
-        UiText { anchors.fill: parent; text: launcher.applicationsMode ? "Buscar en todas las aplicaciones…" : "Buscar aplicaciones, archivos, comandos…"; font.pixelSize: 21; color: Theme.faint; visible: !input.text }
+        UiText { anchors.fill: parent; text: launcher.applicationsMode ? "Buscar en todas las aplicaciones…" : "Buscar aplicaciones, archivos, comandos…"; font.pixelSize: 13; color: Theme.faint; visible: !input.text }
     }
     ShortcutHint { x: parent.width-47; y: 27; text: "esc" }
     Rectangle { y: 76; width: parent.width; height: 1; color: Theme.border }
@@ -101,7 +101,7 @@ FocusScope {
             resultActions: launcher.actionArray(model.actions)
             width: ListView.view.width
             title: String(model.display || "")
-            subtitle: launcher.applicationsMode ? "Aplicación" : String(model.subtext || "")
+            subtitle: launcher.applicationsMode ? "" : String(model.subtext || "")
             iconSource: model.decoration
             selected: launcher.selectedIndex === index
             onClicked: { launcher.selectedIndex = index; launcher.run(); }
