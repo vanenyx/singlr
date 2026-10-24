@@ -1,3 +1,38 @@
+# T210 — Notificaciones del sistema
+
+Implementación del encargo explícito del creador, limitada a `shell/qml/**`, sin
+commit. `NotificationsBackend` usa los roles y métodos del qmltypes instalado de
+NotificationManager (Plasma Workspace 6.8.1, Qt 6.12.0). Crear `Notifications`
+inicializa el servidor: [fuente oficial 6.8](https://github.com/KDE/plasma-workspace/blob/Plasma/6.8/libnotificationmanager/notificationsmodel.cpp).
+`Server.init()` no está expuesto a QML en esta versión. La inhibición usa
+`Server.inhibited`, como [Plasma 6.8](https://github.com/KDE/plasma-workspace/blob/Plasma/6.8/applets/notifications/global/Globals.qml).
+
+Emergentes de 360 px en Overlay independiente, sin padre transitorio, teclado ni
+zona exclusiva. `singlrBlur` aprovecha el soporte C++ existente. Máximo tres
+visibles, resto en cola; tiempos positivos del emisor, 5 s para el predeterminado,
+0 persistente y críticas sin caducidad. Se detiene el timeout interno de KDE y el
+shell administra el tiempo visible y la pausa por hover. Caducar conserva el
+historial; × descarta. Acciones y acción predeterminada resuelven nuevamente el
+índice por id antes de invocar KDE. El historial se agrupa por aplicación e incluye
+borrado total, inhibición y marca de lectura al abrir. La campana solo muestra el
+punto si hay sin leer. `--windowed` crea un backend de demostración independiente;
+no instancia el modelo ni el singleton servidor de KDE.
+
+Verificado: qmllint completo sin avisos, qmltestrunner offscreen/software **47
+passed, 0 failed** (9 checks de notificaciones, incluyendo init/cleanup). Se
+revisaron las capturas `/tmp/t210-demo.png` y `/tmp/t210-history.png`. El log vivo
+`/run/user/1000/singlr-live/shell.log` confirma `NOTIFICATIONS_SERVER valid=true`
+tras recargar, sin errores QML; persiste el aviso previo del portal sobre el ID
+de aplicación. `notify-send "Singlr" "Prueba de notificación" -a Singlr` no pudo
+conectar al bus del escritorio (`Operation not permitted` del sandbox). También
+se bloqueó crear un bus con `dbus-run-session`; no se intentó sortear el sandbox.
+Pendiente: recepción visible real, acciones D-Bus y blur sobre ventanas reales.
+
+Los comandos de lint y suite se conservan más abajo. El historial es de sesión,
+sin persistencia en disco. Alcance de pantalla: la predeterminada, como el shell.
+
+---
+
 # T209 — Ciclo fiable del dock (P-009)
 
 Sustituye el comportamiento T208: app inactiva → solo la ventana con mayor

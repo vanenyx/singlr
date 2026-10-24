@@ -7,7 +7,7 @@ import Singlr.Ui
 // Item contenedor (inexistente) y KWin nunca recibe la superficie layer-shell.
 Item {
     id: session
-    function closeMenus() { bar.closeMenu(); dock.closeMenu(); }
+    function closeMenus() { bar.closeMenu(); dock.closeMenu(); notifications.historyOpen = false; }
     // Invocado desde C++ (tecla Meta, Alt+Espacio) a través de D-Bus.
     function toggleLauncher() { if (overlay.visible) launcher.close(); else openLauncher(false); }
     function openLauncher(apps = false) { closeMenus(); overlay.visible = true; launcher.open(apps); overlay.requestActivate(); focusTimer.restart(); }
@@ -30,7 +30,7 @@ Item {
         LayerShell.Window.exclusionZone: 28
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
         LayerShell.Window.scope: "singlr-topbar"
-        TopBar { id: bar; sessionMode: true; menuHost: barMenuHost; width: parent.width; height: 28; activeAppName: dock.activeAppName; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
+        TopBar { id: bar; notificationsUnread: notifications.unread; onNotificationsRequested: { bar.closeMenu(); dock.closeMenu(); notifications.toggle(); } sessionMode: true; menuHost: barMenuHost; width: parent.width; height: 28; activeAppName: dock.activeAppName; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
     }
     Window {
@@ -43,6 +43,21 @@ Item {
         LayerShell.Window.scope: "singlr-dock"
         Dock { id: dock; sessionMode: true; menuHost: dockMenuHost; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
+    }
+    Window {
+        id: notificationsWindow
+        transientParent: null; visible: notifications.historyOpen || notifications.popups.length > 0
+        width: 360; height: Math.max(1, notifications.height); color: "transparent"
+        property bool singlrBlur: true
+        property int singlrBlurRadius: 10
+        LayerShell.Window.layer: LayerShell.Window.LayerOverlay
+        LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorRight
+        LayerShell.Window.margins.top: 12
+        LayerShell.Window.margins.right: 16
+        LayerShell.Window.exclusionZone: 0
+        LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
+        LayerShell.Window.scope: "singlr-notifications"
+        NotificationCenter { id: notifications; live: true; sessionMode: true }
     }
     // Tight, independent layer surfaces: never enlarge the dock's input region.
     Window {

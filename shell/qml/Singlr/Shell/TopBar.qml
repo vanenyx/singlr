@@ -7,6 +7,8 @@ Rectangle {
     property bool sessionMode: false
     property Item menuHost: null
     function closeMenu() { menu.close(); }
+    property bool notificationsUnread: false
+    signal notificationsRequested()
     signal launcherRequested()
     signal applicationsRequested()
     property string activeAppName: "Escritorio"
@@ -22,6 +24,11 @@ Rectangle {
     }
     Row {
         id: trailing; anchors.right: parent.right; anchors.rightMargin: 16; height: 28; spacing: 14
+        Tool {
+            y: 3; width: 24; height: 22; icon: "bell"; iconSize: 15; description: "Notificaciones"
+            onClicked: bar.notificationsRequested()
+            Rectangle { x: 18; y: 3; width: 4; height: 4; radius: 2; color: Theme.secondary; visible: bar.notificationsUnread }
+        }
         Tool { y: 3; width: 24; height: 22; icon: "magnifying-glass"; iconSize: 15; description: "Buscar"; onClicked: bar.launcherRequested() }
         StatusIndicators { anchors.verticalCenter: parent.verticalCenter }
         UiText { height: 28; text: bar.now.toLocaleString(Qt.locale("es_ES"), "ddd d MMM  HH:mm"); weight: 510; color: Theme.secondary }

@@ -8,3 +8,6 @@ Desktop 1.0 Desktop.qml
 Session 1.0 Session.qml
 ApplicationsModel 1.0 ApplicationsModel.qml
 StatusIndicators 1.0 StatusIndicators.qml
+NotificationsBackend 1.0 NotificationsBackend.qml
+NotificationCard 1.0 NotificationCard.qml
+NotificationCenter 1.0 NotificationCenter.qml
