@@ -1,0 +1,4 @@
+interface:
+  display_name: "Singlr Qt / Plasma"
+  short_description: "Integración nativa de Qt, Plasma y KWin"
+  default_prompt: "Usa $singlr-qt-plasma para la tarea autorizada de Singlr."

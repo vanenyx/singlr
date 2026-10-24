@@ -1,0 +1,4 @@
+# Valores de proyecto; las políticas del host y la sesión tienen precedencia.
+# No fija modelo, cuenta ni preferencias globales de ninguna instancia.
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"

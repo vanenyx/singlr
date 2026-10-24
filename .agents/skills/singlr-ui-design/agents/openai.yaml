@@ -1,0 +1,4 @@
+interface:
+  display_name: "Singlr UI Design"
+  short_description: "Diseño visual integrado del escritorio Singlr"
+  default_prompt: "Usa $singlr-ui-design para la tarea autorizada de Singlr."

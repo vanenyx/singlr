@@ -1,0 +1,17 @@
+# Credenciales y ajustes personales
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.claude/settings.local.json
+.codex/config.local.toml
+
+# Salidas locales
+.local/
+.worktrees/
+build/
+__pycache__/
+*.pyc
+*.log
+.DS_Store

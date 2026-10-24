@@ -1,0 +1,3 @@
+* text=auto eol=lf
+# Markdown usa dos espacios finales como salto de línea explícito.
+*.md whitespace=-blank-at-eol

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Singlr Quality"
+  short_description: "Verificación con evidencia y resultados reales"
+  default_prompt: "Usa $singlr-quality para la tarea autorizada de Singlr."
