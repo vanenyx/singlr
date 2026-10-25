@@ -14,8 +14,12 @@
 #include <cstring>
 #include <vector>
 #include <wayland/surface.h>
+#include <wayland/clientconnection.h>
 #include <KSharedConfig>
 #include <QVector2D>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 namespace KWin {
 bool LiquidGlassEffect::supported() {
@@ -57,6 +61,28 @@ bool LiquidGlassEffect::accepts(EffectWindow *w) const {
     return w && w->surface() && SinglrGlass::eligible(w->window()->resourceClass(),
         w->window()->inherits("KWin::LayerShellV1Window"), !w->surface()->blurRegion().isEmpty());
 }
+QString LiquidGlassEffect::debug(const QString &) const {
+    const auto desktop = effects->virtualScreenGeometry();
+    QJsonArray windows;
+    for (const auto &[w, surface] : m_surfaces) {
+        const auto bounds = w->surface()->blurRegion().boundingRect();
+        windows.append(QJsonObject{
+            {"id", w->internalId().toString()}, {"pid", int(w->pid())},
+            {"executable", w->surface()->client()->executablePath()},
+            {"resourceClass", w->window()->resourceClass()}, {"visible", w->isVisible()},
+            {"eligible", accepts(w)}, {"backgroundItem", bool(surface.item)},
+            {"region", QJsonArray{bounds.x(), bounds.y(), bounds.width(), bounds.height()}},
+            {"position", QJsonArray{w->pos().x(), w->pos().y()}},
+            {"draws", qint64(surface.draws)}, {"lastResult", QString::fromLatin1(surface.lastResult)}});
+    }
+    return QString::fromUtf8(QJsonDocument(QJsonObject{
+        {"shader", bool(m_shader)}, {"enabled", m_settings.enabled},
+        {"intensity", m_settings.intensity}, {"active", isActive()},
+        {"diagnosticOverlay", m_diagnosticOverlay}, {"chainPosition", requestedEffectChainPosition()},
+        {"virtualGeometry", QJsonArray{desktop.x(), desktop.y(), desktop.width(), desktop.height()}},
+        {"screenCount", effects->screens().size()},
+        {"windows", windows}}).toJson(QJsonDocument::Compact));
+}
 bool LiquidGlassEffect::isActive() const {
     if (!m_shader || !m_settings.active() || effects->isScreenLocked()) return false;
     for (const auto &[w, surface] : m_surfaces) if (surface.item && w->isVisible()) return true;
@@ -66,25 +92,29 @@ void LiquidGlassEffect::reconfigure(ReconfigureFlags) {
     auto config = effects->config();
     config->reparseConfiguration();
     m_settings = SinglrGlass::Settings::read(config->group(QStringLiteral("Effect-singlrliquidglass")));
+    m_diagnosticOverlay = config->group(QStringLiteral("Effect-singlrliquidglass")).readEntry("DiagnosticOverlay", false);
     for (auto &[w, surface] : m_surfaces) update(w);
     // One repaint for a settings change; never a timer or postPaint repaint loop.
     effects->addRepaintFull();
 }
 void LiquidGlassEffect::watch(EffectWindow *w) {
     if (!w->surface() || !w->window()->inherits("KWin::LayerShellV1Window") || m_surfaces.contains(w)) return;
-    auto &[connection, item, buffers] = m_surfaces[w];
     connect(w->window(), &Window::windowClassChanged, this, [this,w] { update(w); });
-    connection = connect(w->surface(), &SurfaceInterface::blurChanged, this, [this,w] { update(w); });
+    auto &surface = m_surfaces[w];
+    surface.blurConnection = connect(w->surface(), &SurfaceInterface::blurChanged, this, [this,w] { update(w); });
     update(w);
 }
 void LiquidGlassEffect::update(EffectWindow *w) {
     auto &surface = m_surfaces.at(w);
+    surface.draws = 0;
     if (!m_shader || !m_settings.active() || !accepts(w)) {
+        surface.lastResult = !m_shader ? "no-shader" : !m_settings.active() ? "disabled" : "ineligible-client-or-region";
         effects->makeOpenGLContextCurrent();
         surface.item.reset(); surface.buffers.clear();
         return;
     }
     if (!surface.item) surface.item = std::make_unique<BackgroundEffectItem>(w->windowItem());
+    surface.lastResult = "waiting-for-draw";
     surface.item->setEffectBoundingRect(w->surface()->blurRegion().boundingRect());
     surface.item->setPixelsToExpandRepaintsBelowOpaqueRegions(24);
 }
@@ -94,18 +124,23 @@ void LiquidGlassEffect::prePaintScreen(ScreenPrePaintData &data) {
 }
 bool LiquidGlassEffect::drawWindow(const RenderTarget &target, const RenderViewport &viewport,
         EffectWindow *w, int mask, const Region &region, WindowPaintData &data) {
-    if (m_shader && m_settings.active() && accepts(w) && !effects->activeFullScreenEffect()
+    if (m_shader && m_settings.active() && m_surfaces.contains(w) && accepts(w) && !effects->activeFullScreenEffect()
         && !(mask & PAINT_WINDOW_TRANSFORMED) && data.xScale() == 1.0 && data.yScale() == 1.0
         && data.xTranslation() == 0 && data.yTranslation() == 0 && data.opacity() == 1.0 && w->opacity() == 1.0)
         render(target, viewport, w, region);
+    else if (m_settings.active() && m_surfaces.contains(w) && accepts(w))
+        m_surfaces.at(w).lastResult = "skipped-transform-opacity-or-fullscreen-effect";
     return effects->drawWindow(target, viewport, w, mask, region, data);
 }
 void LiquidGlassEffect::render(const RenderTarget &target, const RenderViewport &viewport,
         EffectWindow *w, const Region &deviceRegion) {
     const auto shape = w->surface()->blurRegion().translated(w->pos());
     const auto bounds = shape.boundingRect().rounded();
+    auto &surface = m_surfaces.at(w);
+    surface.lastResult = "outside-viewport";
     if (bounds.isEmpty() || !bounds.intersects(viewport.renderRect().rounded())) return;
     auto &buffer = m_surfaces.at(w).buffers[m_view];
+    surface.lastResult = "texture-or-framebuffer-failed";
     const GLenum format = target.texture() ? target.texture()->internalFormat() : GL_RGBA8;
     if (!buffer.texture || buffer.bounds != bounds || buffer.texture->internalFormat() != format) {
         buffer.framebuffer.reset();
@@ -121,6 +156,7 @@ void LiquidGlassEffect::render(const RenderTarget &target, const RenderViewport 
         GLFramebuffer::popFramebuffer();
     }
     const Region dirty = viewport.mapFromDeviceCoordinatesContained(deviceRegion) & bounds;
+    surface.lastResult = "blit-failed";
     for (const Rect &rect : dirty.rects())
         if (!buffer.framebuffer->blitFromRenderTarget(target, viewport, rect, rect.translated(-bounds.topLeft()))) return;
     // Estimate the corner radius from the first scanline of the standard rounded blur region.
@@ -137,6 +173,7 @@ void LiquidGlassEffect::render(const RenderTarget &target, const RenderViewport 
     m_shader->setUniform("extent", QVector2D(bounds.width(), bounds.height()));
     m_shader->setUniform("radius", float(radius));
     m_shader->setUniform("strength", float(m_settings.intensity / 100.0));
+    m_shader->setUniform("diagnosticOverlay", m_diagnosticOverlay ? 1.0f : 0.0f);
     const bool blend = glIsEnabled(GL_BLEND);
     glDisable(GL_BLEND);
     buffer.texture->bind();
@@ -155,11 +192,14 @@ void LiquidGlassEffect::render(const RenderTarget &target, const RenderViewport 
             {QVector2D(x1,y0), QVector2D(u1,v0)}, {QVector2D(x1,y1), QVector2D(u1,v1)}});
     }
     auto *vbo = GLVertexBuffer::streamingBuffer();
+    surface.lastResult = vertices.empty() ? "empty-damage-clip" : "vertex-map-failed";
     vbo->reset(); vbo->setAttribLayout(std::span(GLVertexBuffer::GLVertex2DLayout), sizeof(GLVertex2D));
     if (!vertices.empty()) {
         if (auto mapped = vbo->map<GLVertex2D>(vertices.size())) {
             std::memcpy(mapped->data(), vertices.data(), vertices.size() * sizeof(GLVertex2D));
             vbo->unmap(); vbo->bindArrays(); vbo->draw(GL_TRIANGLES, 0, vertices.size()); vbo->unbindArrays();
+            ++surface.draws;
+            surface.lastResult = "drawn";
         }
     }
     buffer.texture->unbind();

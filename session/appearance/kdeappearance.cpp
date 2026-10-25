@@ -108,8 +108,10 @@ void KDEAppearance::applyMaterial() {
     group.writeEntry("Enabled", enabled, KConfig::Notify);
     group.writeEntry("Intensity", intensity(), KConfig::Notify);
     config->sync();
-    const auto message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"),
-        QStringLiteral("org.kde.KWin"), QStringLiteral("reconfigure"));
+    // As KDE's effect KCMs do: KWin::reconfigure() does not re-read a loaded effect's settings.
+    auto message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"),
+        QStringLiteral("org.kde.kwin.Effects"), QStringLiteral("reconfigureEffect"));
+    message << QStringLiteral("singlr-liquidglass");
     QDBusConnection::sessionBus().asyncCall(message);
 }
 void KDEAppearance::checkLiquid() {

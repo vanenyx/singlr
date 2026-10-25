@@ -1,4 +1,8 @@
-# T248 — revisión y medición en la laptop AMD + NVIDIA
+# T248 / T249 — revisión y medición en la laptop AMD + NVIDIA
+
+**Corrección T249:** usar el [procedimiento actualizado](../handoffs/T249-liquidglass-fix.md#revisión-de-claude-fuera-del-sandbox)
+para abrir ambos paneles, comparar los tres materiales y guardar recortes QImage a 4×
+y diagnósticos de ejecución. Incluye la ruta Vulkan existente sin instalar paquetes.
 
 **Procedimiento preparado, no ejecutado en hardware.** El plugin compila y su factory
 carga. La sesión anidada está bloqueada aquí por el bind de sockets del bus privado. No integrar hasta tener esa evidencia y las
@@ -64,16 +68,15 @@ renderer confirma. No cambiar `KWIN_DRM_DEVICES` ni la sesión habitual para med
 
 ## 2. Seis capturas comparables y respaldo
 
-Mantener el mismo wallpaper, escala, posición del puntero y ventanas. Abrir el lanzador
-(o centro de control) dentro de la sesión anidada; conservar el mismo estado para las seis
-imágenes. El helper recarga preferencias sin cambiar la geometría de los paneles.
+Mantener el mismo wallpaper, escala, posición del puntero y ventanas. Construir el
+helper Qt con `cmake --build build --target singlr-material-image`. La suite abre
+centro de control y lanzador y conserva su geometría entre materiales; guarda también
+el borde ampliado y un JSON con región recibida y contador de pases del shader.
 
 ```sh
 shots=$(mktemp -d /tmp/singlr-material-shots.XXXXXX)
 for mode in dark light; do
-    for material in solid glass liquid; do
-        python3 tools/material-review.py "$SINGLR_SESSION_FILE" --mode "$mode" --material "$material" --intensity 65 --capture "$shots/$material-$mode.png"
-    done
+    python3 tools/material-review.py "$SINGLR_SESSION_FILE" --mode "$mode" --intensity 65 --suite "$shots/$mode"
 done
 python3 tools/material-review.py "$SINGLR_SESSION_FILE" --mode dark --material liquid --without-effect --capture "$shots/liquid-fallback-dark.png"
 ```

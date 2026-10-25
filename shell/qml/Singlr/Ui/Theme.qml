@@ -22,9 +22,9 @@ Item {
     readonly property bool translucent: Appearance.effectiveMaterial !== "solid" && !softwareRendering
     readonly property real materialStrength: translucent ? Appearance.intensity / 100 : 0
     readonly property real blurRadius: materialStrength * 64
-    readonly property color surface: Palette.alpha(raised, 1 - materialStrength * (dark ? .108 : .046))
-    readonly property color barSurface: Palette.alpha(panel, 1 - materialStrength * (dark ? .154 : .062))
-    readonly property color dockSurface: Palette.alpha(panel, 1 - materialStrength * (dark ? .308 : .092))
+    readonly property color surface: Palette.alpha(raised, Palette.materialOpacity(materialStrength))
+    readonly property color barSurface: Palette.alpha(panel, Palette.materialOpacity(materialStrength))
+    readonly property color dockSurface: Palette.alpha(panel, Palette.materialOpacity(materialStrength))
     readonly property color sheen: Palette.alpha(text, .04)
     readonly property color wallpaperDefault: "#08090a"
     readonly property color wallpaperGlow: "#17191d"
@@ -46,12 +46,12 @@ Item {
     readonly property color faintBorder: Palette.alpha(dark?Qt.color("white"):Qt.color("black"),.05*contrast)
     readonly property color focusBorder: Palette.alpha(dark?Qt.color("white"):Qt.color("black"),.20*contrast)
     readonly property color text: dark ? "#f7f8f8" : Palette.ink(base,17,contrast)
-    readonly property color secondary: dark ? "#d0d6e0" : Palette.ink(base,35,contrast)
+    readonly property color secondary: Palette.materialInk(base,dark,"secondary",materialStrength,contrast)
     // Small text, placeholders and shortcuts retain AA on translucent surfaces.
-    readonly property color muted: Palette.ink(base,dark?72:39,contrast)
-    readonly property color faint: Palette.ink(base,dark?71:39,contrast)
+    readonly property color muted: Palette.materialInk(base,dark,"muted",materialStrength,contrast)
+    readonly property color faint: Palette.materialInk(base,dark,"faint",materialStrength,contrast)
     readonly property color selection: Palette.alpha(accent,(dark?.14:.11)*contrast)
-    readonly property color accentText: Palette.accentInk(accent,dark,contrast)
+    readonly property color accentText: Palette.accentInk(accent,dark,contrast,materialStrength)
     readonly property string family: inter.name
     readonly property string icons: phosphor.name
     readonly property bool ready: inter.status === FontLoader.Ready && phosphor.status === FontLoader.Ready

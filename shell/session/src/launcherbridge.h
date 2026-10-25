@@ -35,6 +35,7 @@ public:
                    : message.member() == QLatin1String("toggleControlCenter") ? "toggleControlCenter"
                    : message.member() == QLatin1String("toggleNotifications") ? "toggleNotifications"
                    : message.member() == QLatin1String("singlrReloadSettings") ? "reloadSettings"
+                   : message.member() == QLatin1String("singlrClosePanels") ? "closePanels"
                    : message.member() == QLatin1String("singlrShowApplications") ? "showApplications" : "toggleLauncher")
                 : "toggleLauncher";
         const QByteArray signature = QByteArray(method) + "()";

@@ -1,0 +1,58 @@
+T249 — verificación local, 2026-10-25
+KWin 6.8.1-2 / Qt 6.12.0-3 / Vulkan_INCLUDE_DIR=/tmp/claude-1000/vulkan-headers/include
+Sin instalar paquetes, sin commit, sin lanzar compositor ni tocar sesión activa.
+
+qml-dark:
+QINFO  : qmltestrunner::Materials::test_transparencyAndWorstBackdropAA() info qml: Material SDR worst-backdrop AA minimum: 4.748310282834636
+Totals: 185 passed, 0 failed, 1 skipped, 0 blacklisted, 23239ms
+Totals: 8 passed, 0 failed, 0 skipped, 0 blacklisted, 210ms
+
+qml-light:
+QINFO  : qmltestrunner::Materials::test_transparencyAndWorstBackdropAA() info qml: Material SDR worst-backdrop AA minimum: 4.748310282834636
+Totals: 185 passed, 0 failed, 1 skipped, 0 blacklisted, 23322ms
+Totals: 8 passed, 0 failed, 0 skipped, 0 blacklisted, 211ms
+
+helper:
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.120s
+
+OK
+
+kwin:
+.............
+----------------------------------------------------------------------
+Ran 13 tests in 0.349s
+
+OK
+
+factory:
+********* Start testing of GlassTest *********
+Config: Using QtTest library 6.12.0, Qt 6.12.0 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 16.2.1 20260810), arch unknown
+PASS   : GlassTest::initTestCase()
+PASS   : GlassTest::defaultsAndReload()
+PASS   : GlassTest::scope()
+PASS   : GlassTest::pluginFactoryLoads()
+PASS   : GlassTest::cleanupTestCase()
+Totals: 5 passed, 0 failed, 0 skipped, 0 blacklisted, 2ms
+********* Finished testing of GlassTest *********
+
+config:
+********* Start testing of GlassTest *********
+Config: Using QtTest library 6.12.0, Qt 6.12.0 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 16.2.1 20260810), arch unknown
+PASS   : GlassTest::initTestCase()
+PASS   : GlassTest::defaultsAndReload()
+PASS   : GlassTest::scope()
+PASS   : GlassTest::cleanupTestCase()
+Totals: 4 passed, 0 failed, 0 skipped, 0 blacklisted, 1ms
+********* Finished testing of GlassTest *********
+
+staging:
+-- Installing: /tmp/singlr-cmake.GLuz42/usr/lib/qt6/plugins/kwin/effects/plugins/singlr-liquidglass.so
+PASS staged payload, executable modes, fonts and session paths
+CMake: plugin externo Liquid Glass incluido en staging.
+CMake: compilación e instalación DESTDIR verificadas (staging temporal eliminado).
+
+GLSL 140: glslangValidator -S frag /tmp/t249-glass.frag, exit 0.
+scripts/check_setup.py: OK. git diff --check: OK.
+Pendiente: revisión visual/nuevas capturas de compositor y medición P-016; procedimiento en docs/handoffs/T249-liquidglass-fix.md.
