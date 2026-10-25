@@ -7,6 +7,7 @@ Rectangle {
     readonly property real menuHeight: menu ? menu.entriesHeight : 249
     readonly property real menuWidth: 292
     property bool sessionMode: false
+    property var closeController: null
     property Item menuHost: null
     function closeMenu() { menuOpen = false; systemTray.close(); }
     property alias tray: systemTray
@@ -29,7 +30,7 @@ Rectangle {
         onTriggered: { bar.now = new Date(); interval = 60000 - (Date.now() % 60000); restart(); }
     }
     Row { x: 16; height: 28; spacing: 8
-        Tool { y: 3; width: 24; height: 22; icon: "circle"; iconSize: 14; description: "Menú Singlr"; onClicked: bar.menuOpen = !bar.menuOpen }
+        Tool { objectName: "sessionRing"; y: 3; width: 24; height: 22; icon: "circle"; iconSize: 14; description: "Menú Singlr"; onClicked: bar.menuOpen = !bar.menuOpen }
         UiText { height: 28; width: Math.min(360, bar.width-trailing.width-100); text: bar.activeAppName; weight: 590 }
     }
     Row {
@@ -51,6 +52,8 @@ Rectangle {
             SessionMenu {
                 id: menu
                 sessionMode: bar.sessionMode
+                closeController: bar.closeController || localCloseController
+                SessionCloseController { id: localCloseController; sessionMode: bar.sessionMode && !bar.closeController }
                 visible: bar.menuOpen
                 onClosed: bar.menuOpen = false
                 onAboutToShow: systemTray.close()

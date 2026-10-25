@@ -47,6 +47,8 @@ Item {
         }
     }
     readonly property var notificationCenter: notifications
+    readonly property var closeController: sessionClose
+    SessionCloseController { id: sessionClose; sessionMode: true; notificationCenter: notifications }
     property bool launcherOpen: false
     property bool controlOpen: false
     property bool controlMapped: false

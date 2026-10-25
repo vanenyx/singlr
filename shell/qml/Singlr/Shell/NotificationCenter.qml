@@ -11,7 +11,19 @@ Item {
     property bool live: false
     property bool sessionMode: false
     property bool historyOpen: false
-    property var entries: backendObject ? backendObject.entries : []
+    property var localEntries: []
+    property var localActions: ({})
+    property int localId: -1
+    property var entries: (backendObject ? backendObject.entries : []).concat(localEntries)
+    function notifyLocal(message, forceAction) {
+        const id = localId--;
+        localActions[id] = forceAction;
+        localEntries = localEntries.concat([{id: id, local: true, app: "Singlr", icon: "dialog-warning",
+            title: message, body: "", time: new Date(), timeout: 0, critical: true,
+            expired: false, dismissed: false, suppressed: false, defaultAction: false,
+            actionNames: ["force"], actionLabels: ["Forzar"]}]);
+        return id;
+    }
     property var popups: []
     property var seen: ({})
     property var hovered: ({})
@@ -51,7 +63,12 @@ Item {
     function setInhibited(value) { if (backendObject) backendObject.setInhibited(value); }
     function dispatch(id, action) {
         popups = popups.filter(p => p.entry.id !== id);
-        if (backendObject) backendObject.dispatch(id, action);
+        if (localEntries.some(e => e.id === id)) {
+            const callback = localActions[id];
+            delete localActions[id];
+            localEntries = localEntries.filter(e => e.id !== id);
+            if (action === "force" && callback) callback();
+        } else if (backendObject) backendObject.dispatch(id, action);
     }
     function clearAll() { for (const e of entries.slice()) dispatch(e.id, "close"); unread = false; }
     function ingest() {
@@ -67,7 +84,7 @@ Item {
             known[e.id] = stamp;
             next = next.filter(p => p.entry.id !== e.id);
             if (!historyOpen) unread = true;
-            if (!e.expired && !e.dismissed && !e.suppressed && (!backendObject.popupAllowed || backendObject.popupAllowed(e)) && (!inhibited || e.critical)) {
+            if (!e.expired && !e.dismissed && !e.suppressed && (e.local || !backendObject || !backendObject.popupAllowed || backendObject.popupAllowed(e)) && (!inhibited || e.critical)) {
                 next.push({entry: e, remaining: e.critical || e.timeout === 0 ? -1 : e.timeout > 0 ? e.timeout : 5000});
                 console.log("NOTIFICATION_POPUP " + e.app + ": " + e.title);
             }
