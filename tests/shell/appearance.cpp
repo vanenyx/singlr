@@ -104,18 +104,31 @@ private Q_SLOTS:
         QVERIFY(settings.contains("Appearance/mode"));
         QVERIFY(!settings.value("Config/kdeAppearanceMigrated").toBool());
     }
+    void liquidPreferenceMigratesOnce() {
+        auto config = KSharedConfig::openConfig("singlr/singlr.conf", KConfig::SimpleConfig);
+        config->group("Appearance").writeEntry("material", "liquid");
+        config->group("Appearance").writeEntry("unrelated", "keep"); config->sync();
+        KDEAppearance appearance;
+        QCOMPARE(appearance.material(), QString("glass"));
+        config->reparseConfiguration();
+        QCOMPARE(config->group("Appearance").readEntry("material", QString()), QString("glass"));
+        QCOMPARE(config->group("Appearance").readEntry("unrelated", QString()), QString("keep"));
+        appearance.setMaterial("solid"); appearance.setMaterial("liquid");
+        QCOMPARE(appearance.material(), QString("solid"));
+        appearance.refreshMaterials(); QCOMPARE(appearance.material(), QString("solid"));
+    }
     void materialsPersistClampAndPreserveKDE() {
         QFile kwin(m_temp.filePath("kwinrc"));
         QVERIFY(kwin.open(QIODevice::WriteOnly)); kwin.write("[Plugins]\nblurEnabled=true\n"); kwin.close();
         KDEAppearance appearance;
         QCOMPARE(appearance.material(), QString("glass")); QCOMPARE(appearance.intensity(), 65);
-        appearance.setMaterial("liquid"); appearance.setIntensity(140); appearance.setReduceTransparency(true);
-        QCOMPARE(appearance.material(), QString("liquid")); QCOMPARE(appearance.intensity(), 100);
+        appearance.setMaterial("glass"); appearance.setIntensity(140); appearance.setReduceTransparency(true);
+        QCOMPARE(appearance.material(), QString("glass")); QCOMPARE(appearance.intensity(), 100);
         QVERIFY(appearance.reduceTransparency());
-        appearance.setMaterial("invalid"); QCOMPARE(appearance.material(), QString("liquid"));
+        appearance.setMaterial("invalid"); QCOMPARE(appearance.material(), QString("glass"));
         appearance.setIntensity(-1); QCOMPARE(appearance.intensity(), 0);
         KDEAppearance second;
-        QCOMPARE(second.material(), QString("liquid")); QVERIFY(second.reduceTransparency());
+        QCOMPARE(second.material(), QString("glass")); QVERIFY(second.reduceTransparency());
         QVERIFY(kwin.open(QIODevice::ReadOnly)); QCOMPARE(kwin.readAll(), QByteArray("[Plugins]\nblurEnabled=true\n"));
         kwin.close(); QFile::remove(kwin.fileName());
     }
@@ -128,7 +141,7 @@ private Q_SLOTS:
         QFile journal(journalPath); QVERIFY(journal.open(QIODevice::WriteOnly)); journal.write("[]"); journal.close();
         const auto removeJournal = qScopeGuard([journalPath] { QFile::remove(journalPath); });
         KDEAppearance appearance;
-        appearance.setMaterial("liquid"); appearance.setIntensity(42);
+        appearance.setMaterial("glass"); appearance.setIntensity(42);
         auto config = KSharedConfig::openConfig("kwinrc"); config->reparseConfiguration();
         auto group = config->group("Effect-singlrliquidglass");
         QVERIFY(group.readEntry("Enabled", false)); QCOMPARE(group.readEntry("Intensity", -1), 42);

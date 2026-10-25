@@ -10,11 +10,11 @@
 #include <KConfigWatcher>
 
 namespace KWin {
-class LiquidGlassEffect : public Effect {
+class GlassEffect : public Effect {
     Q_OBJECT
 public:
-    LiquidGlassEffect();
-    ~LiquidGlassEffect() override;
+    GlassEffect();
+    ~GlassEffect() override;
     static bool supported();
     bool valid() const { return bool(m_shader); }
     bool isActive() const override;
@@ -35,6 +35,7 @@ private:
         std::unique_ptr<BackgroundEffectItem> item;
         std::map<RenderView *, Buffer> buffers;
         quint64 draws = 0;
+        double radius = -1;
         const char *lastResult = "not-drawn";
     };
     void watch(EffectWindow *);

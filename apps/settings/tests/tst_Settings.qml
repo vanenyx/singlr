@@ -20,7 +20,7 @@ Item {
         }
         function test_materialControlsKeepGeometry() {
             const app = createTemporaryObject(appFactory, fixture); verify(app);
-            mouseClick(findChild(app.contentItem, "material-liquid")); compare(Ui.Appearance.material, "liquid");
+            mouseClick(findChild(app.contentItem, "material-glass")); compare(Ui.Appearance.material, "glass");
             const slider = findChild(app.contentItem, "materialIntensity"); verify(slider.enabled);
             mouseClick(slider, slider.width * 0.8, slider.height / 2);
             tryVerify(() => Ui.Appearance.intensity > 65);

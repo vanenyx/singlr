@@ -1,4 +1,9 @@
-# T252 — matriz ampliada
+# Materiales vigentes — P-020/P-021, T253
+
+Solo Sólido y Vidrio. Para esquinas a escala 1/2 y recortes a 8×, ver
+[T253](../handoffs/T253-glass-aa.md). Los IDs técnicos antiguos se conservan para la reversión.
+
+## Matriz ampliada
 
 Ver [corrección y límites actuales](../handoffs/T252-material-correction.md).
 `--matrix DIR --wallpaper PNG` ejecuta ambos temas, fondo cálido/blanco/negro y las tres
@@ -9,11 +14,9 @@ EGL independiente, marcada como tal, que no necesita descriptor ni bus. Vidrio a
 usa el pase Singlr: para carga inactiva medir **Sólido**, para fallback Vidrio descargado.
 Build normal con `vulkan-headers` instalado, sin rutas temporales de cabeceras.
 
-# T248 / T249 — revisión y medición en la laptop AMD + NVIDIA
+## Revisión y medición en la laptop AMD + NVIDIA
 
-**Corrección T249:** usar el [procedimiento actualizado](../handoffs/T249-liquidglass-fix.md#revisión-de-claude-fuera-del-sandbox)
-para abrir ambos paneles, comparar los tres materiales y guardar recortes QImage a 4×
-y diagnósticos de ejecución. Incluye la ruta Vulkan existente sin instalar paquetes.
+El helper compara los dos materiales y guarda recortes QImage y diagnósticos de ejecución.
 
 **Procedimiento preparado, no ejecutado en hardware.** El plugin compila y su factory
 carga. La sesión anidada está bloqueada aquí por el bind de sockets del bus privado. No integrar hasta tener esa evidencia y las
@@ -51,11 +54,11 @@ En otra terminal del mismo checkout, copiar **esa ruta exacta**:
 
 ```sh
 export SINGLR_SESSION_FILE=/tmp/singlr-session-REEMPLAZAR/session.json
-python3 tools/material-review.py "$SINGLR_SESSION_FILE" --mode dark --material liquid
+python3 tools/material-review.py "$SINGLR_SESSION_FILE" --mode dark --material glass
 ```
 
 El helper valida propietario/permisos/marcador y que config/state/runtime estén bajo el
-perfil privado, aplica el journal allí y exige `pluginLoaded=true` para Liquid. No usar
+perfil privado, aplica el journal allí y exige `pluginLoaded=true` para Vidrio con pase. No usar
 qdbus/kwriteconfig directamente en el bus habitual. Revisar el log si la carga devuelve
 false o aparece `shader unavailable`: esa sesión solo demuestra el respaldo Vidrio.
 
@@ -77,7 +80,7 @@ energía, resolución, escala y Hz del monitor padre. Guardar también `lspci -n
 NVIDIA presente no significa que componga: esta primera comparación usa la GPU que el
 renderer confirma. No cambiar `KWIN_DRM_DEVICES` ni la sesión habitual para medir.
 
-## 2. Seis capturas comparables y respaldo
+## 2. Capturas comparables y respaldo
 
 Mantener el mismo wallpaper, escala, posición del puntero y ventanas. Construir el
 helper Qt con `cmake --build build --target singlr-material-image`. La suite abre
@@ -89,15 +92,15 @@ shots=$(mktemp -d /tmp/singlr-material-shots.XXXXXX)
 for mode in dark light; do
     python3 tools/material-review.py "$SINGLR_SESSION_FILE" --mode "$mode" --intensity 65 --suite "$shots/$mode"
 done
-python3 tools/material-review.py "$SINGLR_SESSION_FILE" --mode dark --material liquid --without-effect --capture "$shots/liquid-fallback-dark.png"
+python3 tools/material-review.py "$SINGLR_SESSION_FILE" --mode dark --material glass --without-effect --capture "$shots/glass-fallback-dark.png"
 ```
 
-Liquid sin plugin debe verse como Vidrio. Volver a Liquid sin `--without-effect` debe cargarlo.
+Vidrio sin plugin usa blur nativo y tinte conservador. Volver a Vidrio sin `--without-effect` debe cargar el pase.
 Probar también intensidad 0/100 y reducir transparencia desde Ajustes de la sesión privada.
 Abrir/cerrar y recrear lanzador, menús, notificaciones y OSD: comprueba ventanas diferidas,
 recortes y que no queda una región de blur fullscreen detrás del lanzador.
 
-Para inspeccionar refracción con una referencia rica en bordes, abrir el fixture dentro
+Para inspeccionar difusión y esquinas con una referencia rica en bordes, abrir el fixture dentro
 del perfil privado (sin `--animate` para capturas):
 
 ```sh
@@ -117,8 +120,8 @@ bordes de alto contraste, tema claro/oscuro y escalas 100/125/150 %. Aprobación
 ## 3. Tiempo de frame y GPU, con/sin efecto
 
 Usar el mismo tamaño, escena y GPU. Hacer tres repeticiones por variante, alternando el
-orden: **Vidrio con plugin descargado**, **Sólido con plugin cargado/inactivo**, **Liquid 65**.
-Añadir Sólido y Liquid 100. No comparar reposo con una escena animada.
+orden: **Vidrio con plugin descargado**, **Sólido con plugin cargado/inactivo**, **Vidrio 65 con pase**.
+Añadir Sólido y Vidrio 100. No comparar reposo con una escena animada.
 
 Instrumentar solo el KWin privado mediante un wrapper temporal en PATH. Cerrar el runner
 anterior y arrancar otro con los mismos argumentos/plugin path. La variable `out` debe ser

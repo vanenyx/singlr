@@ -22,9 +22,9 @@ Item {
     readonly property bool translucent: Appearance.effectiveMaterial !== "solid" && !softwareRendering
     readonly property real materialStrength: translucent ? Appearance.intensity / 100 : 0
     readonly property real blurRadius: materialStrength * 64
-    readonly property color surface: Palette.alpha(raised, Palette.materialOpacity(materialStrength, Appearance.liquidAvailable))
-    readonly property color barSurface: Palette.alpha(panel, Palette.materialOpacity(materialStrength, Appearance.liquidAvailable))
-    readonly property color dockSurface: Palette.alpha(panel, Palette.materialOpacity(materialStrength, Appearance.liquidAvailable))
+    readonly property color surface: Palette.alpha(raised, Palette.materialOpacity(materialStrength, Appearance.glassAvailable))
+    readonly property color barSurface: Palette.alpha(panel, Palette.materialOpacity(materialStrength, Appearance.glassAvailable))
+    readonly property color dockSurface: Palette.alpha(panel, Palette.materialOpacity(materialStrength, Appearance.glassAvailable))
     readonly property color sheen: Palette.alpha(text, .04)
     // Flat floating surfaces (P-020): one faint hairline when translucent, never a bright rim.
     readonly property color surfaceBorder: translucent ? faintBorder : border

@@ -55,11 +55,11 @@ KDEAppearance::KDEAppearance(QObject *parent) : QObject(parent),
     });
     auto *kwinWatcher = new QDBusServiceWatcher(QStringLiteral("org.kde.KWin"), QDBusConnection::sessionBus(),
         QDBusServiceWatcher::WatchForOwnerChange, this);
-    connect(kwinWatcher, &QDBusServiceWatcher::serviceOwnerChanged, this, [this] { checkLiquid(); });
+    connect(kwinWatcher, &QDBusServiceWatcher::serviceOwnerChanged, this, [this] { checkGlass(); });
     QDBusConnection::sessionBus().connect(QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"),
         QStringLiteral("org.freedesktop.DBus.Properties"), QStringLiteral("PropertiesChanged"),
         this, SLOT(refreshMaterials()));
-    checkLiquid();
+    refreshMaterials();
     migrate();
 }
 bool KDEAppearance::softwareRendering() const {
@@ -68,7 +68,7 @@ bool KDEAppearance::softwareRendering() const {
 }
 QString KDEAppearance::material() const {
     const auto value = m_materialConfig->group("Appearance").readEntry("material", QStringLiteral("glass"));
-    return value == QLatin1String("solid") || value == QLatin1String("liquid") ? value : QStringLiteral("glass");
+    return value == QLatin1String("solid") ? value : QStringLiteral("glass");
 }
 int KDEAppearance::intensity() const {
     return std::clamp(m_materialConfig->group("Appearance").readEntry("intensity", 65), 0, 100);
@@ -77,7 +77,7 @@ bool KDEAppearance::reduceTransparency() const {
     return m_materialConfig->group("Accessibility").readEntry("reduceTransparency", false);
 }
 void KDEAppearance::setMaterial(const QString &value) {
-    if (value != QLatin1String("solid") && value != QLatin1String("glass") && value != QLatin1String("liquid")) return;
+    if (value != QLatin1String("solid") && value != QLatin1String("glass")) return;
     m_materialConfig->reparseConfiguration();
     m_materialConfig->group("Appearance").writeEntry("material", value, KConfig::Notify);
     m_materialConfig->sync(); refreshMaterials();
@@ -94,7 +94,13 @@ void KDEAppearance::setReduceTransparency(bool value) {
 }
 void KDEAppearance::refreshMaterials() {
     m_materialConfig->reparseConfiguration();
-    applyMaterial(); checkLiquid(); Q_EMIT changed();
+    auto appearance = m_materialConfig->group("Appearance");
+    // P-021: persist once; subsequent reloads do not rewrite the profile.
+    if (appearance.readEntry("material", QString()) == QLatin1String("liquid")) {
+        appearance.writeEntry("material", "glass", KConfig::Notify);
+        m_materialConfig->sync();
+    }
+    applyMaterial(); checkGlass(); Q_EMIT changed();
 }
 void KDEAppearance::applyMaterial() {
     // Only a session with the durable apply/restore journal may change kwinrc.
@@ -105,7 +111,7 @@ void KDEAppearance::applyMaterial() {
     auto config = KSharedConfig::openConfig(QStringLiteral("kwinrc"));
     config->reparseConfiguration();
     auto group = config->group("Effect-singlrliquidglass");
-    const bool enabled = material() == QLatin1String("liquid") && intensity() > 0 && !reduceTransparency();
+    const bool enabled = material() == QLatin1String("glass") && intensity() > 0 && !reduceTransparency();
     if (group.readEntry("Enabled", false) == enabled && group.readEntry("Intensity", 65) == intensity()) return;
     group.writeEntry("Enabled", enabled, KConfig::Notify);
     group.writeEntry("Intensity", intensity(), KConfig::Notify);
@@ -116,9 +122,9 @@ void KDEAppearance::applyMaterial() {
     message << QStringLiteral("singlr-liquidglass");
     QDBusConnection::sessionBus().asyncCall(message);
 }
-void KDEAppearance::checkLiquid() {
-    if (m_checkingLiquid) return;
-    m_checkingLiquid = true;
+void KDEAppearance::checkGlass() {
+    if (m_checkingGlass) return;
+    m_checkingGlass = true;
     auto message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"),
         QStringLiteral("org.kde.kwin.Effects"), QStringLiteral("isEffectLoaded"));
     message << QStringLiteral("singlr-liquidglass");
@@ -126,8 +132,8 @@ void KDEAppearance::checkLiquid() {
     const auto finished = [this, watcher] {
         QDBusPendingReply<bool> reply = *watcher;
         const bool available = !reply.isError() && reply.value();
-        m_checkingLiquid = false;
-        if (m_liquidAvailable != available) { m_liquidAvailable = available; Q_EMIT changed(); }
+        m_checkingGlass = false;
+        if (m_glassAvailable != available) { m_glassAvailable = available; Q_EMIT changed(); }
         watcher->deleteLater();
     };
     if (watcher->isFinished()) finished();

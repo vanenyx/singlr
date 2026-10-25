@@ -1,8 +1,8 @@
 {
     "KPlugin": {
         "Id": "singlr-liquidglass",
-        "Name": "Singlr Liquid Glass",
-        "Description": "Edge refraction for Singlr shell surfaces",
+        "Name": "Singlr Glass",
+        "Description": "Flat glass diffusion and luminance adaptation for Singlr shell surfaces",
         "License": "GPL-2.0-or-later",
         "EnabledByDefault": false,
         "Category": "Appearance"

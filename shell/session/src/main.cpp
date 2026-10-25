@@ -36,6 +36,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include "configmigration.h"
+#include "blurregion.h"
 #include "wallpaperprovider.h"
 
 Q_LOGGING_CATEGORY(shellLog, "singlr.shell")
@@ -50,26 +51,6 @@ void requestQuit(int) {
     (void)ignored;
     errno = saved;
 }
-// Región con esquinas redondeadas para que el desenfoque no asome fuera del radio.
-QRegion roundedRegion(const QSize &size, int radius)
-{
-    QRegion region(0, 0, size.width(), size.height());
-    if (radius <= 0)
-        return region;
-    const int d = radius * 2;
-    const QRect corners[] = {{0, 0, radius, radius},
-                             {size.width() - radius, 0, radius, radius},
-                             {0, size.height() - radius, radius, radius},
-                             {size.width() - radius, size.height() - radius, radius, radius}};
-    const QRect ellipses[] = {{0, 0, d, d},
-                              {size.width() - d, 0, d, d},
-                              {0, size.height() - d, d, d},
-                              {size.width() - d, size.height() - d, d, d}};
-    for (int i = 0; i < 4; ++i)
-        region -= QRegion(corners[i]).subtracted(QRegion(ellipses[i], QRegion::Ellipse));
-    return region;
-}
-
 // org.kde.osdService: PowerDevil y otros servicios piden aquí el indicador en pantalla
 // (brillo, volumen…). Lo atendía plasmashell; Singlr lo reenvía a Session.osdRequest().
 class OsdBridge : public QDBusVirtualObject
@@ -131,12 +112,12 @@ void applyBlur(QQuickWindow *window)
         return;
     const bool enabled = window->property("singlrBlur").toBool()
         && QQuickWindow::graphicsApi() != QSGRendererInterface::Software;
-    const int radius = window->property("singlrBlurRadius").toInt();
+    const double radius = window->property("singlrBlurRadius").toDouble();
     const auto requested = window->property("singlrBlurRect");
     const QRect bounds = requested.isValid() ? requested.toRectF().toAlignedRect().intersected(QRect(QPoint(), window->size()))
                                             : QRect(QPoint(), window->size());
-    KWindowEffects::enableBlurBehind(window, enabled && !bounds.isEmpty(),
-        roundedRegion(bounds.size(), radius).translated(bounds.topLeft()));
+    const auto region = SinglrGlass::roundedBlurRegion(bounds.size(), radius).translated(bounds.topLeft());
+    KWindowEffects::enableBlurBehind(window, enabled && !region.isEmpty(), region);
 }
 
 void trackBlur(QQuickWindow *window)

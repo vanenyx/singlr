@@ -16,6 +16,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <cmath>
+#include <algorithm>
 #include <cstdio>
 #include <stdexcept>
 
@@ -46,7 +47,7 @@ int main(int argc, char **argv) {
         if (!eglInitialize(display, &major, &minor) || !eglBindAPI(EGL_OPENGL_API))
             throw std::runtime_error("Surfaceless OpenGL/EGL unavailable");
         const EGLint attributes[] = {EGL_SURFACE_TYPE,EGL_PBUFFER_BIT,EGL_RENDERABLE_TYPE,EGL_OPENGL_BIT,
-            EGL_RED_SIZE,8,EGL_GREEN_SIZE,8,EGL_BLUE_SIZE,8,EGL_NONE};
+            EGL_RED_SIZE,8,EGL_GREEN_SIZE,8,EGL_BLUE_SIZE,8,EGL_ALPHA_SIZE,8,EGL_NONE};
         EGLConfig config; EGLint count;
         if (!eglChooseConfig(display, attributes, &config, 1, &count) || count != 1)
             throw std::runtime_error("No EGL configuration");
@@ -79,18 +80,39 @@ void main() {
         glUniform1i(glGetUniformLocation(program,"sampler"),0);
         glUniform2f(glGetUniformLocation(program,"sourceExtent"),w,h);
         uniform("diagnosticOverlay",0);
-        auto render=[&](const QImage &input,QRect panel,float radius,bool dark,bool liquid,float strength) {
+        auto render=[&](const QImage &input,QRect panel,float radius,bool dark,float strength,float scale=1) {
             const auto upload=input.convertToFormat(QImage::Format_RGBA8888).flipped(Qt::Vertical);
             glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,w,h,0,GL_RGBA,GL_UNSIGNED_BYTE,upload.constBits());
-            glUniform2f(glGetUniformLocation(program,"extent"),panel.width(),panel.height());
-            glUniform2f(glGetUniformLocation(program,"inset"),panel.x(),panel.y());
-            uniform("radius",radius); uniform("dark",dark); uniform("liquid",liquid); uniform("strength",strength);
+            glUniform2f(glGetUniformLocation(program,"extent"),panel.width()/scale,panel.height()/scale);
+            glUniform2f(glGetUniformLocation(program,"inset"),panel.x()/scale,panel.y()/scale);
+            uniform("radius",radius); uniform("dark",dark); uniform("deviceScale",scale);
+            glUniform2f(glGetUniformLocation(program,"sourceExtent"),w/scale,h/scale); uniform("strength",strength);
             glClearColor(0,0,0,0); glClear(GL_COLOR_BUFFER_BIT); glDrawArrays(GL_TRIANGLES,0,3);
             QImage result(w,h,QImage::Format_RGBA8888);
             glReadPixels(0,0,w,h,GL_RGBA,GL_UNSIGNED_BYTE,result.bits());
             if (glGetError()!=GL_NO_ERROR) throw std::runtime_error("GL render/read failed");
             return result.flipped(Qt::Vertical);
         };
+        // Device-space coverage, premultiplication and no writes outside the SDF.
+        // Includes subpixel radii, both themes and both requested viewport scales.
+        for (float scale : {1.f, 2.f}) for (bool dark : {false, true}) {
+            QImage input(w,h,QImage::Format_RGBA8888); input.fill(Qt::white);
+            const QRect panel(40,60,720,490);
+            const float radius = 12.5;
+            const auto image = render(input,panel,radius,dark,.65,scale);
+            int partial = 0;
+            for (int y=58;y<95;++y) for (int x=38;x<75;++x) {
+                const double qx=std::abs((x+.5-panel.x())/scale-panel.width()/scale/2) - (panel.width()/scale/2-radius);
+                const double qy=std::abs((y+.5-panel.y())/scale-panel.height()/scale/2) - (panel.height()/scale/2-radius);
+                const double d=std::hypot(std::max(qx,0.),std::max(qy,0.)) + std::min(std::max(qx,qy),0.) - radius;
+                const double expected=std::clamp(.5-d*scale,0.,1.);
+                const auto c=image.pixelColor(x,y);
+                if (std::abs(c.alphaF()-expected)>1.5/255.) throw std::runtime_error("Device-space SDF coverage mismatch");
+                if (c.red()>c.alpha() || c.green()>c.alpha() || c.blue()>c.alpha()) throw std::runtime_error("Output not premultiplied");
+                if (c.alpha()>0 && c.alpha()<255) ++partial;
+            }
+            if (partial<4) throw std::runtime_error("Binary corner edge: no fractional coverage");
+        }
         QJsonObject report{{"kind","surfaceless-EGL-production-shader-fixture-NOT-KWin"},
             {"renderer",QString::fromLatin1(reinterpret_cast<const char *>(glGetString(GL_RENDERER)))},
             {"version",QString::fromLatin1(reinterpret_cast<const char *>(glGetString(GL_VERSION)))}};
@@ -102,11 +124,11 @@ void main() {
         double maximumDarkY=0, minimumLightY=1;
         int checked=0;
         const QRect samplePanel(40,60,720,490);
-        for (bool dark : {false,true}) for (bool liquid : {false,true})
+        for (bool dark : {false,true})
             for (int intensity : {1,25,50,65,75,100})
                 for (const QColor color : {QColor(Qt::black),QColor(Qt::white),QColor(Qt::red),QColor(Qt::green),QColor(Qt::blue),QColor("#efb63c")}) {
             QImage input(w,h,QImage::Format_RGBA8888); input.fill(color);
-            const auto image=render(input,samplePanel,16,dark,liquid,intensity/100.f);
+            const auto image=render(input,samplePanel,16,dark,intensity/100.f);
             const double t=.85*intensity/100., a=1-t, tint=dark?.14:.90;
             for (int y=65;y<545;y+=4) for (int x=60;x<740;x+=4) {
                 const auto c=image.pixelColor(x,y);
@@ -145,12 +167,11 @@ void main() {
         const bool detailed = backdropName=="warm" || backdropName=="checker";
         for (bool dark : {false,true}) for (const QString surface : {"control-center","launcher","clipboard"}) {
             const QRect panel = surface=="clipboard" ? QRect(120,60,760,542) : surface=="launcher" ? samplePanel : QRect(580,60,340,520);
-            QImage liquidMaximum, glassMaximum;
-            for (bool liquid : {false,true}) {
+            {
                 QImage previous;
                 for (int intensity : {0,25,50,75,100}) {
                     const float strength=intensity/100.f;
-                    QImage optical=render(backdropImage,panel,surface=="dock"?14:16,dark,liquid,strength);
+                    QImage optical=render(backdropImage,panel,surface=="dock"?14:16,dark,strength);
                     QImage result=backdropImage;
                     QPainter painter(&result); painter.setRenderHint(QPainter::Antialiasing);
                     // A fixture shadow; production uses existing QML RectangularShadow.
@@ -158,6 +179,7 @@ void main() {
                     for (int spread=16;spread>=1;--spread) {
                         painter.setBrush(QColor(0,0,0,3)); painter.drawRoundedRect(panel.adjusted(-spread,2-spread,spread,2+spread),16+spread,16+spread);
                     }
+                    optical.reinterpretAsFormat(QImage::Format_RGBA8888_Premultiplied);
                     if (intensity>0) painter.drawImage(0,0,optical);
                     QColor tint(dark?"#191b1e":"#ededed"); tint.setAlphaF(1-.85*strength);
                     painter.setBrush(tint); painter.drawRoundedRect(panel, surface=="dock"?14:16,surface=="dock"?14:16);
@@ -165,11 +187,10 @@ void main() {
                     // Measure optics before captions, text and crop labels.
                     if (!previous.isNull()) {
                         double delta=difference(previous,result,panel.adjusted(20,12,-20,-12));
-                        comparisons.append(QJsonObject{{"backdrop",backdropName},{"dark",dark},{"surface",surface},{"liquid",liquid},{"intensity",intensity},{"meanQuarterStepRGB255",delta}});
+                        comparisons.append(QJsonObject{{"backdrop",backdropName},{"dark",dark},{"surface",surface},{"intensity",intensity},{"meanQuarterStepRGB255",delta}});
                         if (detailed && delta < 0.4) throw std::runtime_error("Intensity quarter-step visually collapsed");
                     }
                     previous=result;
-                    if (intensity==100) (liquid?liquidMaximum:glassMaximum)=result;
                     if (!directory.isEmpty()) {
                         QPainter labels(&result);
                         labels.setRenderHint(QPainter::Antialiasing);
@@ -177,7 +198,7 @@ void main() {
                         labels.setPen(dark?QColor("#f7f8f8"):QColor("#292929"));
                         labels.setFont(QFont("Inter",12));
                         const QString caption = surface=="dock" ? "Finder     Browser     Terminal     Settings"
-                            : "Singlr · Material\n\nReadable content\n\n25 / 50 / 75 / 100\n\nBackdrop + curved lens";
+                            : "Singlr · Material\n\nReadable content\n\n25 / 50 / 75 / 100\n\nBackdrop + flat glass";
                         QPainterPath glyphs;
                         const auto lines = caption.split('\n');
                         for (int i=0;i<lines.size();++i)
@@ -186,25 +207,16 @@ void main() {
                         labels.setBrush(dark?QColor("#f7f8f8"):QColor("#292929"));
                         labels.drawPath(glyphs);
                         labels.fillRect(0,0,w,40,QColor("#111111")); labels.setPen(Qt::white);
-                        labels.drawText(QRect(12,0,w-24,40),Qt::AlignVCenter,QString("EGL SHADER FIXTURE · NOT KWin · %1 · %2 · %3 · %4%").arg(surface,dark?"dark":"light",liquid?"liquid":"glass").arg(intensity));
+                        labels.drawText(QRect(12,0,w-24,40),Qt::AlignVCenter,QString("EGL SHADER FIXTURE · NOT KWin · %1 · %2 · %3 · %4%").arg(surface,dark?"dark":"light","glass").arg(intensity));
                         labels.end();
-                        QString name=QString("%1/%2-%3-%4-%5.png").arg(outputDirectory,surface,liquid?"liquid":"glass",dark?"dark":"light").arg(intensity,3,10,QChar('0'));
+                        QString name=QString("%1/%2-%3-%4-%5.png").arg(outputDirectory,surface,"glass",dark?"dark":"light").arg(intensity,3,10,QChar('0'));
                         if (!result.save(name)) throw std::runtime_error("Cannot save evidence");
                         const QRect edge=panel.adjusted(-12,-12,12,12).intersected(result.rect());
                         result.copy(edge).scaled(edge.size()*2).save(name.chopped(4)+"-edge.png");
                     }
                 }
             }
-            const QList<QRect> rims{QRect(panel.x()+16,panel.y(),panel.width()-32,12),
-                QRect(panel.x()+16,panel.bottom()-11,panel.width()-32,12),
-                QRect(panel.x(),panel.y()+16,12,panel.height()-32),
-                QRect(panel.right()-11,panel.y()+16,12,panel.height()-32)};
-            for (int side=0;side<rims.size();++side) {
-                const double rimDifference=difference(liquidMaximum,glassMaximum,rims[side]);
-                comparisons.append(QJsonObject{{"backdrop",backdropName},{"dark",dark},{"surface",surface},{"side",side},
-                    {"liquidVersusGlassRim12pxRGB255",rimDifference}});
-                if (detailed && rimDifference<1.0) throw std::runtime_error("Liquid optics indistinguishable from glass on a perimeter side");
-            }
+
         }
         }
         report["comparisons"]=comparisons;

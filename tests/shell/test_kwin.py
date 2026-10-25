@@ -71,11 +71,23 @@ class KWinTests(unittest.TestCase):
         config.parent.mkdir(parents=True)
         config.write_text('invalid preference file')
         self.assertTrue(kwin.apply(self.backup))
-        self.assertEqual(self.values[('Effect-singlrliquidglass', 'Enabled')], 'false')
+        self.assertEqual(self.values[('Effect-singlrliquidglass', 'Enabled')], 'true')
         self.assertEqual(self.values[('Effect-singlrliquidglass', 'Intensity')], '65')
         kwin.restore(self.backup)
         self.assertEqual(self.values, self.original)
         self.assertEqual(config.read_text(), 'invalid preference file')
+
+    def test_existing_glass_journal_keeps_legacy_keys_reversible(self):
+        self.values[('Effect-singlrliquidglass', 'Enabled')] = 'false'
+        self.values[('Effect-singlrliquidglass', 'Intensity')] = '81'
+        original = self.values.copy()
+        self.backup.parent.mkdir()
+        self.backup.write_text(json.dumps([[g, k, self.values.get((g, k))]
+                                          for g, k, _ in kwin.KWIN_SETTINGS]))
+        self.assertTrue(kwin.apply(self.backup, recover_pending=True))
+        self.assertEqual(self.values[('Effect-singlrliquidglass', 'Enabled')], 'true')
+        self.assertTrue(kwin.restore(self.backup))
+        self.assertEqual(self.values, original)
 
     def test_pre_t248_journal_can_recover_after_upgrade(self):
         self.backup.parent.mkdir()

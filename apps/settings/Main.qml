@@ -115,7 +115,7 @@ Window {
                         Row {
                             x: 3; y: 3
                             Repeater {
-                                model: [{label: "Sólido", key: "solid"}, {label: "Vidrio", key: "glass"}, {label: "Liquid Glass", key: "liquid"}]
+                                model: [{label: "Sólido", key: "solid"}, {label: "Vidrio", key: "glass"}]
                                 delegate: Controls.AbstractButton {
                                     id: materialButton; required property var modelData
                                     objectName: "material-" + modelData.key
@@ -167,7 +167,6 @@ Window {
                 Ui.UiText {
                     width: parent.width; height: 36; font.pixelSize: 12; color: Ui.Theme.muted
                     text: Ui.Appearance.reduceTransparency ? "Superficies sólidas para facilitar la lectura."
-                        : Ui.Appearance.material === "liquid" && !Ui.Appearance.liquidAvailable ? "Liquid Glass no disponible. Se usa Vidrio."
                         : ""
                 }
                 Ui.UiText { width: parent.width; height: 36; text: Ui.Appearance.mode === "auto" ? "Sigue el horario automático de KDE y Luz nocturna." : ""; color: Ui.Theme.muted; font.pixelSize: 12 }

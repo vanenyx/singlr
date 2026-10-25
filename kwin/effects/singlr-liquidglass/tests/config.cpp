@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "../settings.h"
+#include "../../../../shell/session/src/blurregion.h"
 #ifdef GLASS_PLUGIN
 #include <effect/effect.h>
 #endif
@@ -34,14 +35,45 @@ private Q_SLOTS:
         auto appearance = config.group("Appearance");
         auto accessibility = config.group("Accessibility");
         const auto read = [&] { return SinglrGlass::Settings::readSurface(effect, appearance, accessibility); };
-        QVERIFY(read().active()); QVERIFY(!read().liquid); // glass default
+        QVERIFY(read().active()); // glass default
         appearance.writeEntry("material", "solid"); QVERIFY(!read().active());
-        appearance.writeEntry("material", "liquid"); QVERIFY(!read().active());
-        effect.writeEntry("Enabled", true); QVERIFY(read().active()); QVERIFY(read().liquid);
+        appearance.writeEntry("material", "liquid"); QVERIFY(read().active()); // legacy fallback
+        appearance.writeEntry("material", "invalid"); QVERIFY(!read().active());
+        appearance.writeEntry("material", "glass"); QVERIFY(read().active());
         appearance.writeEntry("intensity", 0); QVERIFY(!read().active());
         appearance.writeEntry("intensity", 100); QVERIFY(read().active());
         accessibility.writeEntry("reduceTransparency", true); QVERIFY(!read().active());
         appearance.writeEntry("material", "glass"); QVERIFY(!read().active());
+    }
+    void nativeRegionContainsWholeCells() {
+        for (double radius : {0., 8., 10., 12., 12.5, 14.}) {
+            const QSize size(100, 80);
+            const auto region = SinglrGlass::roundedBlurRegion(size, radius);
+            QCOMPARE(region.boundingRect(), QRect(QPoint(), size));
+            for (const QRect &rect : region) for (int y = rect.y(); y < rect.y()+rect.height(); ++y)
+                for (int x = rect.x(); x < rect.x()+rect.width(); ++x)
+                    for (double dx : {0., 1.}) for (double dy : {0., 1.}) {
+                        const double qx = std::abs(x+dx-50) - (50-radius);
+                        const double qy = std::abs(y+dy-40) - (40-radius);
+                        const double d = std::hypot(std::max(qx,0.),std::max(qy,0.)) + std::min(std::max(qx,qy),0.) - radius;
+                        QVERIFY(d <= 1e-9);
+                    }
+        }
+    }
+    void radiusRecoveredFromRegion() {
+        // The effect reads only the wl_region; it must recover the shell's exact radius.
+        for (double radius : {0., 6., 8., 10., 12., 14., 16., 20.}) { // Singlr radius tokens are whole pixels
+            const QSize size(300, 200);
+            const auto region = SinglrGlass::roundedBlurRegion(size, radius);
+            std::vector<int> insets;
+            for (int y = 0; y < size.height(); ++y) {
+                int inset = size.width();
+                for (const QRect &rect : region) if (rect.top() <= y && y < rect.top() + rect.height()) inset = std::min(inset, rect.left());
+                if (inset <= 0) break;
+                insets.push_back(inset);
+            }
+            QCOMPARE(SinglrGlass::radiusFromInsets(insets, 100.0), radius);
+        }
     }
     void scope() {
         QVERIFY(SinglrGlass::eligible("singlr-shell", true, true));
