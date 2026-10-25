@@ -57,7 +57,7 @@ perfiles ICC, todos los colores arbitrarios ni la gestión de color real de KWin
 
 Se volvió a intentar `tools/run-singlr.sh --duration 2`. El bus privado falla al crear
 su socket: `Operation not permitted`; limpieza `remaining=[]`, configuración del host
-`files_before=30 files_after=30 equal=True`. [Log](../../tests/shell/evidence/t252/correction/nested-probe.log).
+`files_before=30 files_after=30 equal=True`. Log (registro no conservado).
 No se ha cambiado ni recargado la sesión activa. **La nueva matriz de KWin sigue pendiente**;
 las capturas de Claude corresponden a la entrega anterior, no validan esta corrección.
 
