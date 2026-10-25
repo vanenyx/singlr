@@ -1,0 +1,59 @@
+T248 / 2026-10-25 / day3/codex2-liquidglass / sin commit
+KWin 6.8.1-2; Qt 6.12.0; Arch Linux
+
+CMake ON con cabeceras oficiales Khronos SDK 1.4.335.0 en /tmp/t248-vulkan/include:
+  cmake -S . -B build -DSINGLR_BUILD_LIQUIDGLASS=ON -DVulkan_INCLUDE_DIR=/tmp/t248-vulkan/include -DCMAKE_INSTALL_PREFIX=/usr -DKDE_INSTALL_LIBDIR=lib
+  cmake --build build --parallel 2
+  PASA; enlace del plugin con --no-undefined.
+
+singlr-liquidglass-test (QPluginLoader, sin instanciar compositor):
+********* Start testing of GlassTest *********
+Config: Using QtTest library 6.12.0, Qt 6.12.0 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 16.2.1 20260810), arch unknown
+PASS   : GlassTest::initTestCase()
+PASS   : GlassTest::defaultsAndReload()
+PASS   : GlassTest::scope()
+PASS   : GlassTest::pluginFactoryLoads()
+PASS   : GlassTest::cleanupTestCase()
+Totals: 5 passed, 0 failed, 0 skipped, 0 blacklisted, 2ms
+********* Finished testing of GlassTest *********
+
+singlr-material-settings-test (sin SDK KWin):
+********* Start testing of GlassTest *********
+Config: Using QtTest library 6.12.0, Qt 6.12.0 (x86_64-little_endian-lp64 shared (dynamic) release build; by GCC 16.2.1 20260810), arch unknown
+PASS   : GlassTest::initTestCase()
+PASS   : GlassTest::defaultsAndReload()
+PASS   : GlassTest::scope()
+PASS   : GlassTest::cleanupTestCase()
+Totals: 4 passed, 0 failed, 0 skipped, 0 blacklisted, 1ms
+********* Finished testing of GlassTest *********
+
+Python: transacciones KWin, T241/GTK, empaquetado, rechazo de perfil ajeno:
+..................PASS reload dispatch, queued invocation, legacy session and launcher actions
+...
+----------------------------------------------------------------------
+Ran 21 tests in 2.624s
+
+OK
+
+QML dark:
+Totals: 179 passed, 0 failed, 1 skipped, 0 blacklisted, 23170ms
+Totals: 8 passed, 0 failed, 0 skipped, 0 blacklisted, 210ms
+QML light:
+Totals: 179 passed, 0 failed, 1 skipped, 0 blacklisted, 23116ms
+Totals: 8 passed, 0 failed, 0 skipped, 0 blacklisted, 210ms
+
+GLSL: glslangValidator -S frag /tmp/t248-liquidglass.frag -> exit 0, sin errores.
+check-cmake completo:
+-- Installing: /tmp/singlr-cmake.droL7h/usr/lib/qt6/plugins/kwin/effects/plugins/libsinglr-liquidglass.so
+PASS staged payload, executable modes, fonts and session paths
+CMake: plugin externo Liquid Glass incluido en staging.
+CMake: compilación e instalación DESTDIR verificadas (staging temporal eliminado).
+
+Intento de KWin anidado (no llegó a crear compositor):
+dbus-daemon[131]: Failed to start message bus: Failed to bind socket "/tmp/dbus-zs0sR2z4BZ": Operation not permitted
+dbus-run-session: EOF reading address from bus daemon
+SINGLR_CLEANUP remaining=[] {}
+SINGLR_HOST_CONFIG files_before=30 files_after=30 equal=True
+
+Pendiente: instanciación/render del efecto, seis capturas de compositor, frame/GPU AMD+NVIDIA.
+Las capturas settings-*.png usan offscreen/software y demuestran únicamente la UI.

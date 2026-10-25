@@ -19,6 +19,8 @@ class KWinTests(unittest.TestCase):
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
+        patcher = patch.dict(os.environ, {'XDG_CONFIG_HOME': str(Path(tmp.name) / 'config')})
+        patcher.start(); self.addCleanup(patcher.stop)
         self.backup = Path(tmp.name) / 'state/kwinrc-backup.json'
         self.values = {(g, k): 'previous' for g, k, _ in kwin.KWIN_SETTINGS}
         self.values[('org.kde.kdecoration2', 'theme')] = ''
@@ -48,6 +50,40 @@ class KWinTests(unittest.TestCase):
         self.assertTrue(kwin.restore(self.backup))
         self.assertEqual(self.values, self.original)
         self.assertFalse(self.backup.exists())
+
+    def test_material_preferences_are_session_only_and_recoverable(self):
+        config = Path(os.environ['XDG_CONFIG_HOME']) / 'singlr/singlr.conf'
+        config.parent.mkdir(parents=True)
+        config.write_text('[Appearance]\nmaterial=liquid\nintensity=81\n')
+        kwin.apply(self.backup)
+        self.assertEqual(self.values[('Effect-singlrliquidglass', 'Enabled')], 'true')
+        self.assertEqual(self.values[('Effect-singlrliquidglass', 'Intensity')], '81')
+        kwin.restore(self.backup)
+        self.assertEqual(self.values, self.original)
+        config.write_text('[Appearance]\nmaterial=liquid\nintensity=81\n[Accessibility]\nreduceTransparency=true\n')
+        kwin.apply(self.backup)
+        self.assertEqual(self.values[('Effect-singlrliquidglass', 'Enabled')], 'false')
+        kwin.restore(self.backup)
+        self.assertEqual(self.values, self.original)
+
+    def test_malformed_material_preferences_do_not_prevent_login(self):
+        config = Path(os.environ['XDG_CONFIG_HOME']) / 'singlr/singlr.conf'
+        config.parent.mkdir(parents=True)
+        config.write_text('invalid preference file')
+        self.assertTrue(kwin.apply(self.backup))
+        self.assertEqual(self.values[('Effect-singlrliquidglass', 'Enabled')], 'false')
+        self.assertEqual(self.values[('Effect-singlrliquidglass', 'Intensity')], '65')
+        kwin.restore(self.backup)
+        self.assertEqual(self.values, self.original)
+        self.assertEqual(config.read_text(), 'invalid preference file')
+
+    def test_pre_t248_journal_can_recover_after_upgrade(self):
+        self.backup.parent.mkdir()
+        legacy = [[g, k, self.original.get((g, k))] for g, k, _ in kwin.KWIN_SETTINGS
+                  if (g, k) not in kwin.MATERIAL_KEYS]
+        self.backup.write_text(json.dumps(legacy))
+        self.assertTrue(kwin.restore(self.backup))
+        self.assertEqual(self.values, self.original)
 
     def test_apply_and_restore_are_idempotent(self):
         kwin.apply(self.backup)

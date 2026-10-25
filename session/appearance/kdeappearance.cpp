@@ -1,5 +1,6 @@
 #include "kdeappearance.h"
 #include <QGuiApplication>
+#include <QQuickWindow>
 #include <QPalette>
 #include <QSettings>
 #include <QStandardPaths>
@@ -13,6 +14,8 @@
 #include <QDBusMessage>
 #include <QDBusPendingCallWatcher>
 #include <QDBusPendingReply>
+#include <QDBusServiceWatcher>
+#include <algorithm>
 
 namespace {
 QString configPath() {
@@ -43,7 +46,88 @@ KDEAppearance::KDEAppearance(QObject *parent) : QObject(parent),
             Q_EMIT changed();
         }
     });
+    m_materialConfig = KSharedConfig::openConfig(configPath(), KConfig::SimpleConfig);
+    m_materialWatcher = KConfigWatcher::create(m_materialConfig);
+    connect(m_materialWatcher.data(), &KConfigWatcher::configChanged, this, [this] {
+        refreshMaterials();
+    });
+    auto *kwinWatcher = new QDBusServiceWatcher(QStringLiteral("org.kde.KWin"), QDBusConnection::sessionBus(),
+        QDBusServiceWatcher::WatchForOwnerChange, this);
+    connect(kwinWatcher, &QDBusServiceWatcher::serviceOwnerChanged, this, [this] { checkLiquid(); });
+    QDBusConnection::sessionBus().connect(QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"),
+        QStringLiteral("org.freedesktop.DBus.Properties"), QStringLiteral("PropertiesChanged"),
+        this, SLOT(refreshMaterials()));
+    checkLiquid();
     migrate();
+}
+bool KDEAppearance::softwareRendering() const {
+    return QQuickWindow::graphicsApi() == QSGRendererInterface::Software
+        || qEnvironmentVariable("QT_QUICK_BACKEND") == QLatin1String("software");
+}
+QString KDEAppearance::material() const {
+    const auto value = m_materialConfig->group("Appearance").readEntry("material", QStringLiteral("glass"));
+    return value == QLatin1String("solid") || value == QLatin1String("liquid") ? value : QStringLiteral("glass");
+}
+int KDEAppearance::intensity() const {
+    return std::clamp(m_materialConfig->group("Appearance").readEntry("intensity", 65), 0, 100);
+}
+bool KDEAppearance::reduceTransparency() const {
+    return m_materialConfig->group("Accessibility").readEntry("reduceTransparency", false);
+}
+void KDEAppearance::setMaterial(const QString &value) {
+    if (value != QLatin1String("solid") && value != QLatin1String("glass") && value != QLatin1String("liquid")) return;
+    m_materialConfig->reparseConfiguration();
+    m_materialConfig->group("Appearance").writeEntry("material", value, KConfig::Notify);
+    m_materialConfig->sync(); refreshMaterials();
+}
+void KDEAppearance::setIntensity(int value) {
+    m_materialConfig->reparseConfiguration();
+    m_materialConfig->group("Appearance").writeEntry("intensity", std::clamp(value, 0, 100), KConfig::Notify);
+    m_materialConfig->sync(); refreshMaterials();
+}
+void KDEAppearance::setReduceTransparency(bool value) {
+    m_materialConfig->reparseConfiguration();
+    m_materialConfig->group("Accessibility").writeEntry("reduceTransparency", value, KConfig::Notify);
+    m_materialConfig->sync(); refreshMaterials();
+}
+void KDEAppearance::refreshMaterials() {
+    m_materialConfig->reparseConfiguration();
+    applyMaterial(); checkLiquid(); Q_EMIT changed();
+}
+void KDEAppearance::applyMaterial() {
+    // Only a session with the durable apply/restore journal may change kwinrc.
+    const auto journal = QStandardPaths::writableLocation(QStandardPaths::GenericStateLocation)
+        + QStringLiteral("/singlr/kwinrc-backup.json");
+    if (qEnvironmentVariable("XDG_SESSION_DESKTOP") != QLatin1String("Singlr")
+        || !QFileInfo::exists(journal)) return;
+    auto config = KSharedConfig::openConfig(QStringLiteral("kwinrc"));
+    config->reparseConfiguration();
+    auto group = config->group("Effect-singlrliquidglass");
+    const bool enabled = material() == QLatin1String("liquid") && intensity() > 0 && !reduceTransparency();
+    if (group.readEntry("Enabled", false) == enabled && group.readEntry("Intensity", 65) == intensity()) return;
+    group.writeEntry("Enabled", enabled, KConfig::Notify);
+    group.writeEntry("Intensity", intensity(), KConfig::Notify);
+    config->sync();
+    const auto message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"),
+        QStringLiteral("org.kde.KWin"), QStringLiteral("reconfigure"));
+    QDBusConnection::sessionBus().asyncCall(message);
+}
+void KDEAppearance::checkLiquid() {
+    if (m_checkingLiquid) return;
+    m_checkingLiquid = true;
+    auto message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"),
+        QStringLiteral("org.kde.kwin.Effects"), QStringLiteral("isEffectLoaded"));
+    message << QStringLiteral("singlr-liquidglass");
+    auto *watcher = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(message), this);
+    const auto finished = [this, watcher] {
+        QDBusPendingReply<bool> reply = *watcher;
+        const bool available = !reply.isError() && reply.value();
+        m_checkingLiquid = false;
+        if (m_liquidAvailable != available) { m_liquidAvailable = available; Q_EMIT changed(); }
+        watcher->deleteLater();
+    };
+    if (watcher->isFinished()) finished();
+    else connect(watcher, &QDBusPendingCallWatcher::finished, this, finished);
 }
 bool KDEAppearance::eventFilter(QObject *object, QEvent *event) {
     if (object == qGuiApp && event->type() == QEvent::ApplicationPaletteChange)

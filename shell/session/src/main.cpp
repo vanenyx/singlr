@@ -9,6 +9,9 @@
 #include <QDBusMessage>
 #include <QDBusVirtualObject>
 #include <QGuiApplication>
+#include <QMetaProperty>
+#include <QEvent>
+#include <QTimer>
 #include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -21,7 +24,6 @@
 #include "shortcuts.h"
 #include "launcherbridge.h"
 #include <QCoreApplication>
-#include <QTimer>
 #include <QScopeGuard>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -121,21 +123,51 @@ void registerGlobalActions(QObject *parent, QObject *session)
 
 void applyBlur(QQuickWindow *window)
 {
-    const bool enabled = window->property("singlrBlur").toBool();
+    const bool enabled = window->property("singlrBlur").toBool()
+        && QQuickWindow::graphicsApi() != QSGRendererInterface::Software;
     const int radius = window->property("singlrBlurRadius").toInt();
-    KWindowEffects::enableBlurBehind(window, enabled, roundedRegion(window->size(), radius));
+    const auto requested = window->property("singlrBlurRect");
+    const QRect bounds = requested.isValid() ? requested.toRectF().toAlignedRect().intersected(QRect(QPoint(), window->size()))
+                                            : QRect(QPoint(), window->size());
+    KWindowEffects::enableBlurBehind(window, enabled && !bounds.isEmpty(),
+        roundedRegion(bounds.size(), radius).translated(bounds.topLeft()));
 }
 
 void trackBlur(QQuickWindow *window)
 {
-    if (!window->property("singlrBlur").isValid())
-        return;
+    if (!window->property("singlrBlur").isValid()) return;
+    if (window->property("_singlrBlurTracked").toBool()) { applyBlur(window); return; }
+    window->setProperty("_singlrBlurTracked", true);
     const auto update = [window] { applyBlur(window); };
     QObject::connect(window, &QWindow::widthChanged, window, update);
     QObject::connect(window, &QWindow::heightChanged, window, update);
     QObject::connect(window, &QWindow::visibleChanged, window, update);
+    // QML property bindings change in place: sizes need not change to disable transparency.
+    const auto updateMethod = window->metaObject()->indexOfProperty("singlrBlur");
+    const auto regionMethod = window->metaObject()->indexOfProperty("singlrBlurRect");
+    const auto radiusMethod = window->metaObject()->indexOfProperty("singlrBlurRadius");
+    auto *refresh = new QTimer(window);
+    refresh->setSingleShot(true); refresh->setInterval(0);
+    QObject::connect(refresh, &QTimer::timeout, window, update);
+    const auto start = refresh->metaObject()->method(refresh->metaObject()->indexOfSlot("start()"));
+    for (const int index : {updateMethod, radiusMethod, regionMethod}) {
+        if (index >= 0 && window->metaObject()->property(index).hasNotifySignal())
+            QObject::connect(window, window->metaObject()->property(index).notifySignal(), refresh, start);
+    }
     update();
 }
+// DeferredLoader creates and destroys native windows after engine.load(). Track
+// their Show event as well as the initial surfaces, with no polling timer.
+class BlurTracker final : public QObject {
+public:
+    using QObject::QObject;
+protected:
+    bool eventFilter(QObject *object, QEvent *event) override {
+        if (event->type() == QEvent::Show)
+            if (auto *window = qobject_cast<QQuickWindow *>(object)) trackBlur(window);
+        return false;
+    }
+};
 }
 
 int main(int argc, char *argv[])
@@ -220,6 +252,8 @@ int main(int argc, char *argv[])
         engine.addImageProvider(QStringLiteral("singlrtray"), tray->createImageProvider());
         engine.rootContext()->setContextProperty(QStringLiteral("SinglrTray"), tray);
     }
+    BlurTracker blurTracker(&app);
+    app.installEventFilter(&blurTracker);
     engine.load(QUrl::fromLocalFile(QString::fromLocal8Bit(argv[2])));
     if (engine.rootObjects().isEmpty()) {
         qCCritical(shellLog) << "Cannot load shell QML" << argv[2];

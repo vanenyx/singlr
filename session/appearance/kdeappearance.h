@@ -17,6 +17,11 @@ class KDEAppearance : public QObject {
     Q_PROPERTY(QColor accent READ accent NOTIFY changed)
     Q_PROPERTY(QColor selectedAccent READ selectedAccent NOTIFY changed)
     Q_PROPERTY(QString mode READ mode NOTIFY changed)
+    Q_PROPERTY(bool softwareRendering READ softwareRendering CONSTANT)
+    Q_PROPERTY(QString material READ material NOTIFY changed)
+    Q_PROPERTY(int intensity READ intensity NOTIFY changed)
+    Q_PROPERTY(bool reduceTransparency READ reduceTransparency NOTIFY changed)
+    Q_PROPERTY(bool liquidAvailable READ liquidAvailable NOTIFY changed)
     Q_PROPERTY(bool busy READ busy NOTIFY changed)
     Q_PROPERTY(QString error READ error NOTIFY changed)
 public:
@@ -25,6 +30,15 @@ public:
     QColor accent() const;
     QColor selectedAccent() const;
     QString mode() const;
+    bool softwareRendering() const;
+    QString material() const;
+    int intensity() const;
+    bool reduceTransparency() const;
+    bool liquidAvailable() const { return m_liquidAvailable; }
+    Q_INVOKABLE void setMaterial(const QString &material);
+    Q_INVOKABLE void setIntensity(int intensity);
+    Q_INVOKABLE void setReduceTransparency(bool reduce);
+    Q_SLOT void refreshMaterials();
     bool busy() const { return m_process.state() != QProcess::NotRunning || !m_queue.isEmpty(); }
     QString error() const { return m_error; }
     Q_INVOKABLE void setMode(const QString &mode);
@@ -38,6 +52,12 @@ private:
     void next();
     void finishMigration();
     void migrate();
+    void applyMaterial();
+    void checkLiquid();
+    KSharedConfig::Ptr m_materialConfig;
+    KConfigWatcher::Ptr m_materialWatcher;
+    bool m_liquidAvailable = false;
+    bool m_checkingLiquid = false;
     KSharedConfig::Ptr m_config;
     KConfigWatcher::Ptr m_watcher;
     QProcess m_process;

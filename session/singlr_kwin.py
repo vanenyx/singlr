@@ -21,7 +21,35 @@ KWIN_SETTINGS = [
     ('Plugins', 'maximizeEnabled', 'true'),
     ('Plugins', 'singlr-overviewEnabled', 'true'),
     ('Plugins', 'singlr-gesturesEnabled', 'true'),
+    ('Plugins', 'singlr-liquidglassEnabled', 'true'),
+    ('Effect-singlrliquidglass', 'Enabled', 'false'),
+    ('Effect-singlrliquidglass', 'Intensity', '65'),
 ]
+
+
+# New keys have their own original snapshot, including absence. Accept pre-T248 journals.
+MATERIAL_KEYS = {('Plugins', 'singlr-liquidglassEnabled'),
+                 ('Effect-singlrliquidglass', 'Enabled'), ('Effect-singlrliquidglass', 'Intensity')}
+
+
+def material_settings():
+    from configparser import ConfigParser, Error
+    config = ConfigParser(interpolation=None)
+    try:
+        config.read(Path(os.environ.get('XDG_CONFIG_HOME', str(Path.home() / '.config'))) / 'singlr/singlr.conf')
+    except (Error, OSError):
+        config = ConfigParser(interpolation=None)  # A corrupt preference must not prevent login.
+    try:
+        intensity = max(0, min(100, config.getint('Appearance', 'intensity', fallback=65)))
+    except ValueError:
+        intensity = 65
+    try:
+        reduce = config.getboolean('Accessibility', 'reduceTransparency', fallback=False)
+    except ValueError:
+        reduce = False
+    liquid = config.get('Appearance', 'material', fallback='glass') == 'liquid'
+    return [('Effect-singlrliquidglass', 'Enabled', str(liquid and intensity > 0 and not reduce).lower()),
+            ('Effect-singlrliquidglass', 'Intensity', str(intensity))]
 
 
 def backup_path():
@@ -82,12 +110,12 @@ def locked(path):
 def entries_from(path):
     entries = json.loads(path.read_text())
     allowed = {(group, key) for group, key, _ in KWIN_SETTINGS}
-    if (not isinstance(entries, list) or len(entries) != len(allowed)
+    if (not isinstance(entries, list) or len(entries) not in (len(allowed), len(allowed - MATERIAL_KEYS))
             or any(not isinstance(row, list) or len(row) != 3
                    or not all(isinstance(item, str) for item in row[:2])
                    or (row[0], row[1]) not in allowed
                    or (row[2] is not None and not isinstance(row[2], str)) for row in entries)
-            or len({(row[0], row[1]) for row in entries}) != len(allowed)):
+            or {(row[0], row[1]) for row in entries} not in (allowed, allowed - MATERIAL_KEYS)):
         raise ValueError(f'Backup KWin no reconocido: {path}')
     return entries
 
@@ -114,6 +142,8 @@ def apply(path=None, *, recover_pending=False):
         try:
             for group, key, value in KWIN_SETTINGS:
                 write(group, key, value)
+            for group, key, value in material_settings():
+                write(group, key, value)
         except BaseException:
             _restore(path)
             raise
@@ -132,6 +162,10 @@ def reload_kwin(*, applying):
              ('/Effects', 'org.kde.kwin.Effects.' + ('loadEffect' if applying else 'unloadEffect'), 'singlr-overview'),
              (('/Scripting', 'org.kde.kwin.Scripting.start') if applying else
               ('/Scripting', 'org.kde.kwin.Scripting.unloadScript', 'singlr-gestures'))]
+    # Restore a pre-existing user effect activation as well as its configuration.
+    calls.append(('/Effects', 'org.kde.kwin.Effects.' +
+                  ('loadEffect' if applying or read('Plugins', 'singlr-liquidglassEnabled') == 'true' else 'unloadEffect'),
+                  'singlr-liquidglass'))
     for call in calls:
         subprocess.run(['qdbus6', 'org.kde.KWin', *call], capture_output=True, timeout=10)
 

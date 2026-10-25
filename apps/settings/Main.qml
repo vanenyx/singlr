@@ -106,6 +106,70 @@ Window {
                     }
                 }
                 Rectangle { width: parent.width; height: 1; color: Ui.Theme.faintBorder }
+                Item {
+                    width: parent.width; height: 40
+                    Ui.UiText { height: 40; text: "Material"; color: Ui.Theme.secondary }
+                    Rectangle {
+                        anchors.right: parent.right; width: 306; height: 36; y: 2
+                        radius: 7; color: Ui.Theme.panel; border.color: Ui.Theme.border
+                        Row {
+                            x: 3; y: 3
+                            Repeater {
+                                model: [{label: "Sólido", key: "solid"}, {label: "Vidrio", key: "glass"}, {label: "Liquid Glass", key: "liquid"}]
+                                delegate: Controls.AbstractButton {
+                                    id: materialButton; required property var modelData
+                                    objectName: "material-" + modelData.key
+                                    width: 100; height: 30
+                                    Accessible.name: modelData.label; Accessible.role: Accessible.RadioButton
+                                    Accessible.checked: Ui.Appearance.material === modelData.key
+                                    onClicked: window.save("material", modelData.key)
+                                    background: Rectangle {
+                                        radius: 5; color: Ui.Appearance.material === materialButton.modelData.key ? Ui.Theme.raised : "transparent"
+                                        border.color: materialButton.visualFocus ? Ui.Theme.control : "transparent"
+                                    }
+                                    contentItem: Ui.UiText {
+                                        text: materialButton.modelData.label; horizontalAlignment: Text.AlignHCenter
+                                        color: Ui.Appearance.material === materialButton.modelData.key ? Ui.Theme.text : Ui.Theme.muted
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Item {
+                    width: parent.width; height: 36
+                    Ui.UiText { height: 36; text: "Intensidad"; color: Ui.Theme.secondary }
+                    Ui.SliderControl {
+                        id: materialIntensity; objectName: "materialIntensity"
+                        anchors.right: parent.right; width: 306; height: 36
+                        from: 0; to: 100; stepSize: 1
+                        value: Ui.Appearance.intensity
+                        enabled: Ui.Appearance.material !== "solid" && !Ui.Appearance.reduceTransparency
+                        Accessible.name: "Intensidad del material"
+                        // Persist once at release; keyboard changes are committed immediately.
+                        onMoved: if (!pressed) commitIntensity.restart()
+                        onPressedChanged: if (!pressed) commitIntensity.restart()
+                        Timer {
+                            id: commitIntensity; interval: 0
+                            onTriggered: if (!materialIntensity.pressed) window.save("intensity", Math.round(materialIntensity.value))
+                        }
+                    }
+                }
+                Item {
+                    width: parent.width; height: 36
+                    Ui.UiText { height: 36; text: "Reducir transparencia"; color: Ui.Theme.secondary }
+                    Ui.Toggle {
+                        objectName: "reduceTransparency"; anchors.right: parent.right; width: 34; height: 36
+                        Accessible.name: "Reducir transparencia"; checked: Ui.Appearance.reduceTransparency
+                        onToggled: window.save("reduceTransparency", checked)
+                    }
+                }
+                Ui.UiText {
+                    width: parent.width; height: 36; font.pixelSize: 12; color: Ui.Theme.muted
+                    text: Ui.Appearance.reduceTransparency ? "Superficies sólidas para facilitar la lectura."
+                        : Ui.Appearance.material === "liquid" && !Ui.Appearance.liquidAvailable ? "Liquid Glass no disponible. Se usa Vidrio."
+                        : ""
+                }
                 Ui.UiText { width: parent.width; height: 36; text: Ui.Appearance.mode === "auto" ? "Sigue el horario automático de KDE y Luz nocturna." : ""; color: Ui.Theme.muted; font.pixelSize: 12 }
             }
             Column {

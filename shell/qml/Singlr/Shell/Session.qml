@@ -94,7 +94,7 @@ Item {
             Window {
                 screen: session.clipboardScreen
                 transientParent: null; visible: true; width: 760; height: 542; color: "transparent"
-                property bool singlrBlur: true
+                property bool singlrBlur: Theme.translucent
                 property int singlrBlurRadius: 12
                 LayerShell.Window.layer: LayerShell.Window.LayerOverlay
                 LayerShell.Window.anchors: LayerShell.Window.AnchorNone
@@ -237,7 +237,7 @@ Item {
                 screen: session.effectiveDockScreen
                 id: osdWindow
                 transientParent: null; visible: true; width: 240; height: 44; color: "transparent"
-                property bool singlrBlur: true
+                property bool singlrBlur: Theme.translucent
                 property int singlrBlurRadius: 12
                 flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowTransparentForInput
                 LayerShell.Window.layer: LayerShell.Window.LayerOverlay
@@ -259,7 +259,7 @@ Item {
                 objectName: "controlCenterWindow"
                 transientParent: null; visible: true; width: 340
                 height: Math.min(screen.height - 64, session.controlPanel ? session.controlPanel.implicitHeight : 560); color: "transparent"
-                property bool singlrBlur: true
+                property bool singlrBlur: Theme.translucent
                 property int singlrBlurRadius: 12
                 LayerShell.Window.layer: LayerShell.Window.LayerOverlay
                 LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorRight
@@ -288,7 +288,7 @@ Item {
     }
     Window {
         screen: session.effectiveDockScreen
-        id: dockWindow; transientParent: null; visible: true; width: dock.width; height: dock.height; property bool singlrBlur: true; property int singlrBlurRadius: 14; color: "transparent"
+        id: dockWindow; transientParent: null; visible: true; width: dock.width; height: dock.height; property bool singlrBlur: Theme.translucent; property int singlrBlurRadius: 14; color: "transparent"
         LayerShell.Window.layer: LayerShell.Window.LayerTop  // Top: el dock queda por encima de las ventanas, como en macOS.
         LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
         LayerShell.Window.margins.bottom: 10
@@ -306,7 +306,7 @@ Item {
                 transientParent: null; visible: true
                 screen: session.notificationCenter.historyOpen ? session.historyScreen : session.effectiveDockScreen
                 width: 360; height: Math.max(1, notifications.height); color: "transparent"
-                property bool singlrBlur: true
+                property bool singlrBlur: Theme.translucent
                 property int singlrBlurRadius: 10
                 LayerShell.Window.layer: LayerShell.Window.LayerOverlay
                 LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorRight
@@ -326,6 +326,8 @@ Item {
             Window {
                 screen: session.effectiveDockScreen
                 id: dockMenuWindow
+                property bool singlrBlur: Theme.translucent
+                property int singlrBlurRadius: 8
                 transientParent: null; visible: true; width: 240; height: dock.menuHeight; color: "transparent"
                 LayerShell.Window.layer: LayerShell.Window.LayerTop
                 LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
@@ -345,6 +347,8 @@ Item {
             Window {
                 screen: session.effectiveDockScreen
                 id: tooltipWindow
+                property bool singlrBlur: Theme.translucent
+                property int singlrBlurRadius: 8
                 transientParent: null; visible: true
                 width: Math.ceil(tooltipLabel.implicitWidth) + 16; height: Math.ceil(tooltipLabel.implicitHeight) + 16
                 color: "transparent"; flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowTransparentForInput
@@ -365,6 +369,9 @@ Item {
         sourceComponent: Component {
             Window {
                 screen: session.launcherScreen
+                property bool singlrBlur: Theme.translucent
+                property int singlrBlurRadius: 12
+                property rect singlrBlurRect: session.launcher ? Qt.rect(session.launcher.x, session.launcher.y, session.launcher.width, session.launcher.height) : Qt.rect(0,0,0,0)
                 objectName: "launcherWindow"; transientParent: null; visible: true; color: "transparent"
                 LayerShell.Window.layer: LayerShell.Window.LayerOverlay
                 LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight

@@ -8,7 +8,7 @@ Item {
     property bool compositorBlur: false
     property real radius: 12
     readonly property bool rhi: glass.GraphicsInfo.api !== GraphicsInfo.Software && glass.GraphicsInfo.api !== GraphicsInfo.Unknown
-    readonly property bool canBlur: crystal && rhi && backdrop !== null
+    readonly property bool canBlur: crystal && Theme.translucent && rhi && !compositorBlur && backdrop !== null
     // Sample the lower scene only. Overscan protects the crop from blur edges.
     readonly property point origin: backdrop ? mapToItem(backdrop,-64,-64) : Qt.point(0,0)
     Loader {
@@ -28,7 +28,7 @@ Item {
                 MultiEffect {
                     id: blur; x:-64; y:-64; width:glass.width+128; height:glass.height+128
                     visible:false; source:sample; autoPaddingEnabled:false
-                    blurEnabled:true; blurMax:64; blur:.85; saturation:-1
+                    blurEnabled:true; blurMax:64; blur:Theme.materialStrength; saturation:-1
                 }
                 ShaderEffectSource {
                     id: crop; visible: false
@@ -48,7 +48,7 @@ Item {
     // Explicit opaque reduced-effects material on software: no fake CPU blur.
     Rectangle {
         anchors.fill: parent; radius: glass.radius
-        color: glass.compositorBlur ? Theme.surface : glass.canBlur ? Qt.rgba(Theme.raised.r,Theme.raised.g,Theme.raised.b,Theme.dark?.90:.92) : Theme.raised
+        color: !glass.rhi || !Theme.translucent ? Theme.raised : glass.compositorBlur || glass.canBlur ? Theme.surface : Theme.raised
         border.width: 1; border.color: Theme.focusBorder
     }
     Rectangle { x:12; y:1; width:parent.width-24; height:1; color:Theme.sheen }

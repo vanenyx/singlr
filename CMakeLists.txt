@@ -19,3 +19,8 @@ pkg_check_modules(LIBNM REQUIRED IMPORTED_TARGET libnm)
 add_subdirectory(shell/session)
 include(cmake/InstallDesktop.cmake)
 include(cmake/InstallShellPackage.cmake)
+
+option(SINGLR_BUILD_LIQUIDGLASS "Build the KWin 6.8.1 material effect" ON)
+if(SINGLR_BUILD_LIQUIDGLASS)
+    add_subdirectory(kwin/effects/singlr-liquidglass)
+endif()
