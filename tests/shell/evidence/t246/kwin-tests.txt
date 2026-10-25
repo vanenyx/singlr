@@ -1,0 +1,15 @@
+test_real_cli_roundtrip_and_offline_recovery (test_kwin.KConfigTests.test_real_cli_roundtrip_and_offline_recovery) ... ok
+test_apply_and_restore_are_idempotent (test_kwin.KWinTests.test_apply_and_restore_are_idempotent) ... ok
+test_backup_failure_does_not_modify_config (test_kwin.KWinTests.test_backup_failure_does_not_modify_config) ... ok
+test_backup_precedes_first_write_and_roundtrip_preserves_absent_and_empty (test_kwin.KWinTests.test_backup_precedes_first_write_and_roundtrip_preserves_absent_and_empty) ... ok
+test_duplicate_journal_is_rejected (test_kwin.KWinTests.test_duplicate_journal_is_rejected) ... ok
+test_failed_apply_rolls_back (test_kwin.KWinTests.test_failed_apply_rolls_back) ... ok
+test_failed_restore_retains_original_journal_then_retry_succeeds (test_kwin.KWinTests.test_failed_restore_retains_original_journal_then_retry_succeeds) ... ok
+test_invalid_journal_is_preserved_without_writes (test_kwin.KWinTests.test_invalid_journal_is_preserved_without_writes) ... ok
+test_old_journal_restores_before_new_switcher_snapshot (test_kwin.KWinTests.test_old_journal_restores_before_new_switcher_snapshot) ... ok
+test_pending_restore_before_new_snapshot_after_partial_apply (test_kwin.KWinTests.test_pending_restore_before_new_snapshot_after_partial_apply) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.200s
+
+OK

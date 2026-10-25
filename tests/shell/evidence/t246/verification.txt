@@ -1,0 +1,17 @@
+tools/test-qml.sh
+Totals: 180 passed, 0 failed, 1 skipped, 0 blacklisted, 23207ms
+Totals: 7 passed, 0 failed, 0 skipped, 0 blacklisted, 254ms
+tools/test-qml.sh --light
+Totals: 180 passed, 0 failed, 1 skipped, 0 blacklisted, 23188ms
+Totals: 7 passed, 0 failed, 0 skipped, 0 blacklisted, 202ms
+tools/check-cmake.sh: PASS build + DESTDIR + verify_package.py (staging removed)
+python3 scripts/check_setup.py: PASS
+python3 -m py_compile tests/shell/workspace-e2e.py session/singlr_kwin.py: PASS
+KWin 6.8.1 / Qt 6.12.0
+overview check-qml.sh: qmllint exit 0 WITH metadata/unqualified warnings; QQmlComponent Ready (1)
+switcher main + SwitcherView: qmllint exit 0 WITH metadata/unqualified warnings
+Full switcher QQmlComponent load outside KWin: no completed result; interrupted, bounded retry also did not complete. NOT validated.
+Nested KWin: BLOCKED dbus-daemon socket Operation not permitted; host config hashes equal=True
+Resource measurement: BLOCKED same private D-Bus restriction; no PSS/CPU values obtained
+workspace-e2e.py: syntax checked; compositor steps NOT run here
+git diff --check: PASS; no commit / no reload / no installation

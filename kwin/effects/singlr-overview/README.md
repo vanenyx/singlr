@@ -1,3 +1,9 @@
+> **T246:** el comportamiento y la verificación vigentes están en
+> [Workspace](../../../session/WORKSPACE.md). Se comparten los tokens de Singlr.Ui,
+> claro/oscuro y movimiento reducido; escribir abre Command; Ctrl+1…9 cambia
+> escritorio y eliminar requiere confirmar. Lo que sigue conserva la evidencia
+> histórica de T223 (los pasos de copiar el paquete sin adaptar imports ya no aplican).
+
 # Singlr Overview — T223
 
 Efecto declarativo para KWin **6.8.1**, Qt **6.12.0**. Prototipo de la

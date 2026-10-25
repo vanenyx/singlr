@@ -60,3 +60,30 @@ install(FILES session/color-schemes/SinglrDark.colors session/color-schemes/Sing
 
 # Read-only, privacy-filtered support report, available from a TTY as well.
 install(PROGRAMS tools/singlr-doctor DESTINATION "${KDE_INSTALL_BINDIR}")
+
+# Workspace packages share the shell's actual Singlr.Ui tokens and fonts.
+install(DIRECTORY session/kwin/tabbox/singlr DESTINATION "${KDE_INSTALL_DATADIR}/kwin/tabbox"
+    FILES_MATCHING PATTERN "*.qml" PATTERN "*.json")
+foreach(workspace_package overview switcher switcher-view)
+    if(workspace_package STREQUAL "overview")
+        set(source "kwin/effects/singlr-overview/contents/ui/main.qml")
+        set(destination "${KDE_INSTALL_DATADIR}/kwin/effects/singlr-overview/contents/ui")
+    elseif(workspace_package STREQUAL "switcher-view")
+        set(source "session/kwin/tabbox/singlr/contents/ui/SwitcherView.qml")
+        set(destination "${KDE_INSTALL_DATADIR}/kwin/tabbox/singlr/contents/ui")
+    else()
+        set(source "session/kwin/tabbox/singlr/contents/ui/main.qml")
+        set(destination "${KDE_INSTALL_DATADIR}/kwin/tabbox/singlr/contents/ui")
+    endif()
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/${source}")
+    file(READ "${PROJECT_SOURCE_DIR}/${source}" workspace_qml)
+    string(REGEX REPLACE "import \"[. /]*shell/qml/Singlr/Ui\" as Ui"
+        "import \"${SINGLR_ROOT}/qml/Singlr/Ui\" as Ui" workspace_qml "${workspace_qml}")
+    file(WRITE "${PROJECT_BINARY_DIR}/workspace-${workspace_package}.qml" "${workspace_qml}")
+    if(workspace_package STREQUAL "switcher-view")
+        set(workspace_filename SwitcherView.qml)
+    else()
+        set(workspace_filename main.qml)
+    endif()
+    install(FILES "${PROJECT_BINARY_DIR}/workspace-${workspace_package}.qml" DESTINATION "${destination}" RENAME "${workspace_filename}")
+endforeach()

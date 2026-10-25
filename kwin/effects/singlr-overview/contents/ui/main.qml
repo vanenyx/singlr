@@ -4,16 +4,19 @@
 import QtQuick
 import org.kde.kirigami as Kirigami
 import org.kde.kwin as KWin
+import "../../../../../shell/qml/Singlr/Ui" as Ui
 
 KWin.SceneEffect {
     id: effect
 
     property bool activated: false
+    property string pendingQuery: ""
+    property string searchScreen: ""
     property real reveal: 0
     // SwipeGestureHandler has no enabled/active property in KWin 6.8.1.
     // Keep the starting state for the whole gesture, including cancellation.
     property int gestureDirection: 0 // 1 = opening, -1 = closing
-    Behavior on reveal { enabled: effect.gestureDirection === 0; NumberAnimation { duration: 120 } }
+    Behavior on reveal { enabled: effect.gestureDirection === 0; NumberAnimation { duration: Ui.Motion.duration } }
 
     function updateGesture(direction, progress) {
         if (gestureDirection === 0) {
@@ -53,6 +56,7 @@ KWin.SceneEffect {
     }
 
     function toggle() {
+        pendingQuery = "";
         if (activated) {
             deactivate();
         } else {
@@ -76,8 +80,24 @@ KWin.SceneEffect {
     }
     Timer {
         id: hideTimer
-        interval: 120
-        onTriggered: effect.visible = false
+        interval: Ui.Motion.duration
+        onTriggered: {
+            effect.visible = false;
+            if (effect.pendingQuery) {
+                command.call();
+                effect.pendingQuery = "";
+            }
+        }
+    }
+
+    KWin.DBusCall {
+        id: command
+        service: "org.kde.plasmashell"
+        path: "/SinglrWorkspace"
+        dbusInterface: "org.singlr.Workspace"
+        method: "search"
+        arguments: [effect.pendingQuery, effect.searchScreen]
+        onFailed: console.warn("Singlr: no se pudo abrir Command desde Workspace")
     }
 
     delegate: Item {
@@ -89,6 +109,8 @@ KWin.SceneEffect {
         property int selectedIndex: 0
         property KWin.VirtualDesktop menuDesktop: null
         property KWin.Window draggedWindow: null
+        property bool confirmRemoval: false
+        onMenuDesktopChanged: confirmRemoval = false
         readonly property int gap: 24
         readonly property int columns: Math.max(1, Math.min(windows.count,
             Math.ceil(Math.sqrt(windows.count * gridArea.width / Math.max(1, gridArea.height) * 0.65))))
@@ -103,9 +125,16 @@ KWin.SceneEffect {
             forceActiveFocus();
         }
         function removeDesktop(desktop) {
+            if (!desktop || KWin.Workspace.desktops.length <= 1) return;
+            if (menuDesktop !== desktop || !confirmRemoval) {
+                menuDesktop = desktop;
+                confirmRemoval = true;
+                desktopMenu.x = (width - desktopMenu.width) / 2;
+                desktopMenu.y = 166;
+                return;
+            }
             menuDesktop = null;
-            if (desktop && KWin.Workspace.desktops.length > 1)
-                KWin.Workspace.removeDesktop(desktop);
+            KWin.Workspace.removeDesktop(desktop);
             forceActiveFocus();
         }
         function activateSelected() {
@@ -144,7 +173,7 @@ KWin.SceneEffect {
                 client: window
             }
         }
-        Rectangle { anchors.fill: parent; color: "#08090a"; opacity: 0.85 }
+        Rectangle { anchors.fill: parent; color: Ui.Theme.background; opacity: 0.91 }
         MouseArea {
             anchors.fill: parent
             onClicked: { view.menuDesktop = null; view.forceActiveFocus(); }
@@ -172,12 +201,16 @@ KWin.SceneEffect {
                         required property KWin.VirtualDesktop modelData
                         width: 160
                         height: 126
+                        Accessible.role: Accessible.Button
+                        Accessible.name: modelData.name
+                        Accessible.selected: modelData === view.currentDesktop
+                        Accessible.onPressAction: view.switchDesktop(modelData)
                         Rectangle {
                             id: desktopPreview
                             width: 160
                             height: 100
-                            color: "#141516"
-                            radius: 4
+                            color: Ui.Theme.content
+                            radius: 8
                             clip: true
                             Item {
                                 width: view.targetScreen.geometry.width
@@ -209,9 +242,9 @@ KWin.SceneEffect {
                             Rectangle {
                                 anchors.fill: parent
                                 color: "transparent"
-                                radius: 4
+                                radius: 8
                                 border.width: desktopCard.modelData === view.currentDesktop ? 1.5 : (drop.containsDrag ? 1 : 0)
-                                border.color: "#f7f8f8"
+                                border.color: Ui.Theme.text
                             }
                             MouseArea {
                                 anchors.fill: parent
@@ -240,12 +273,12 @@ KWin.SceneEffect {
                                 }
                             }
                         }
-                        Text {
+                        Text { textFormat: Text.PlainText;
                             y: 108
                             width: parent.width
                             text: desktopCard.modelData.name
-                            color: "#d0d6e0"
-                            font.pixelSize: 12
+                            color: Ui.Theme.secondary
+                            font.family: Ui.Theme.family; font.pixelSize: 12
                             elide: Text.ElideRight
                             horizontalAlignment: Text.AlignHCenter
                         }
@@ -254,9 +287,9 @@ KWin.SceneEffect {
                 Rectangle {
                     width: 48
                     height: 100
-                    radius: 4
-                    color: addHover.hovered ? "#191a1b" : "#0f1011"
-                    Text { anchors.centerIn: parent; text: "+"; color: "#d0d6e0"; font.pixelSize: 24 }
+                    radius: 8
+                    color: addHover.hovered ? Ui.Theme.raised : Ui.Theme.panel
+                    Ui.Icon { anchors.centerIn: parent; name: "plus"; color: Ui.Theme.secondary; font.pixelSize: 20 }
                     HoverHandler { id: addHover }
                     TapHandler { onTapped: KWin.Workspace.createDesktop(KWin.Workspace.desktops.length, "") }
                     Accessible.role: Accessible.Button
@@ -306,10 +339,10 @@ KWin.SceneEffect {
                             Rectangle {
                                 anchors.fill: parent
                                 color: "transparent"
-                                radius: 4
+                                radius: 8
                                 border.width: 1
                                 // QML uses #AARRGGBB, not CSS #RRGGBBAA.
-                                border.color: view.selectedIndex === card.index ? "#f7f8f8" : (cardHover.hovered ? "#26ffffff" : "transparent")
+                                border.color: view.selectedIndex === card.index ? Ui.Theme.text : (cardHover.hovered ? Ui.Theme.focusBorder : "transparent")
                             }
                             MouseArea {
                                 id: windowMouse
@@ -355,10 +388,10 @@ KWin.SceneEffect {
                                 anchors.margins: 6
                                 width: 24
                                 height: 24
-                                radius: 4
-                                color: "#191a1b"
+                                radius: 8
+                                color: Ui.Theme.raised
                                 visible: cardHover.hovered && card.window.closeable
-                                Text { anchors.centerIn: parent; text: "×"; color: "#f7f8f8"; font.pixelSize: 18 }
+                                Ui.Icon { anchors.centerIn: parent; name: "x"; color: Ui.Theme.text; font.pixelSize: 14 }
                                 TapHandler { onTapped: card.window.closeWindow() }
                                 Accessible.role: Accessible.Button
                                 Accessible.name: "Cerrar " + card.window.caption
@@ -370,11 +403,11 @@ KWin.SceneEffect {
                             y: card.height - 20
                             spacing: 6
                             Kirigami.Icon { width: 16; height: 16; source: card.window.icon }
-                            Text {
+                            Text { textFormat: Text.PlainText;
                                 width: Math.max(0, picture.width - 22)
                                 text: card.window.caption
-                                color: "#d0d6e0"
-                                font.pixelSize: 12
+                                color: Ui.Theme.secondary
+                                font.family: Ui.Theme.family; font.pixelSize: 12
                                 elide: Text.ElideRight
                             }
                         }
@@ -384,12 +417,12 @@ KWin.SceneEffect {
                     }
                 }
             }
-            Text {
+            Text { textFormat: Text.PlainText;
                 anchors.centerIn: parent
                 visible: windows.count === 0
                 text: "No hay ventanas en este escritorio"
-                color: "#8a8f98"
-                font.pixelSize: 12
+                color: Ui.Theme.muted
+                font.family: Ui.Theme.family; font.pixelSize: 12
             }
         }
         // Internal drag feedback stays in the effect's scene (no native drag window).
@@ -399,15 +432,15 @@ KWin.SceneEffect {
             y: view.mapFromGlobal(KWin.Workspace.cursorPos).y + 12
             width: 160
             height: 26
-            radius: 4
-            color: "#191a1b"
+            radius: 8
+            color: Ui.Theme.raised
             z: 20
-            Text {
+            Text { textFormat: Text.PlainText;
                 anchors.fill: parent
                 anchors.margins: 5
                 text: view.draggedWindow ? view.draggedWindow.caption : ""
-                color: "#f7f8f8"
-                font.pixelSize: 12
+                color: Ui.Theme.text
+                font.family: Ui.Theme.family; font.pixelSize: 12
                 elide: Text.ElideRight
             }
         }
@@ -417,24 +450,38 @@ KWin.SceneEffect {
             z: 30
             width: 176
             height: 36
-            radius: 4
-            color: "#191a1b"
-            Text {
+            radius: 8
+            color: Ui.Theme.raised
+            Text { textFormat: Text.PlainText;
                 anchors.centerIn: parent
-                text: "Eliminar escritorio"
-                font.pixelSize: 12
-                color: KWin.Workspace.desktops.length > 1 ? "#f7f8f8" : "#62666d"
+                text: view.confirmRemoval ? "Confirmar eliminación" : "Eliminar escritorio"
+                font.family: Ui.Theme.family; font.pixelSize: 12
+                color: KWin.Workspace.desktops.length > 1 ? Ui.Theme.text : Ui.Theme.muted
             }
             TapHandler { onTapped: view.removeDesktop(view.menuDesktop) }
             Accessible.role: Accessible.MenuItem
-            Accessible.name: "Eliminar escritorio"
+            Accessible.name: view.confirmRemoval ? "Confirmar eliminación de escritorio" : "Eliminar escritorio"
+            Accessible.onPressAction: view.removeDesktop(view.menuDesktop)
+        }
+
+        Row {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom; anchors.bottomMargin: 20
+            spacing: 8
+            Ui.Icon { name: "magnifying-glass"; font.pixelSize: 14; color: Ui.Theme.muted }
+            Text { textFormat: Text.PlainText; text: effect.pendingQuery || "Escribe para buscar"; font.family: Ui.Theme.family; font.pixelSize: 12; color: Ui.Theme.muted }
         }
 
         Keys.onPressed: event => {
             event.accepted = true;
+            if (effect.pendingQuery && event.key !== Qt.Key_Escape) {
+                if (event.key === Qt.Key_Backspace) effect.pendingQuery = effect.pendingQuery.slice(0, -1);
+                else if (event.text && event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Tab && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))) effect.pendingQuery += event.text;
+                return;
+            }
             if (event.key === Qt.Key_Escape) {
                 if (view.menuDesktop) view.menuDesktop = null;
-                else effect.deactivate();
+                else { effect.pendingQuery = ""; effect.deactivate(); }
             } else if (event.key === Qt.Key_Delete) view.removeDesktop(view.menuDesktop || view.currentDesktop);
             else if (event.key === Qt.Key_Left) view.navigate(-1);
             else if (event.key === Qt.Key_Right) view.navigate(1);
@@ -443,9 +490,15 @@ KWin.SceneEffect {
             else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                 if (view.menuDesktop) view.removeDesktop(view.menuDesktop);
                 else view.activateSelected();
-            } else if (event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
+            } else if ((event.modifiers & Qt.ControlModifier) && event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
                 const desktop = KWin.Workspace.desktops[event.key - Qt.Key_1];
                 if (desktop) view.switchDesktop(desktop);
+            } else if ((event.key === Qt.Key_Plus || event.key === Qt.Key_Equal) && (event.modifiers & Qt.ControlModifier)) {
+                KWin.Workspace.createDesktop(KWin.Workspace.desktops.length, "");
+            } else if (event.text && event.text.trim().length && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))) {
+                effect.pendingQuery = event.text;
+                effect.searchScreen = view.targetScreen.name;
+                effect.deactivate();
             } else event.accepted = false;
         }
     }

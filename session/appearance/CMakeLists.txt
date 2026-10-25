@@ -4,7 +4,7 @@ qt_add_qml_module(singlr-system
     URI Singlr.System VERSION 1.0
     RESOURCE_PREFIX /qt/qml
     OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml/Singlr/System"
-    SOURCES kdeappearance.h kdeappearance.cpp
+    SOURCES kdeappearance.h kdeappearance.cpp workspacebridge.h
 )
 target_link_libraries(singlr-system PRIVATE Qt6::Gui Qt6::DBus KF6::ConfigGui)
 set_target_properties(singlr-system singlr-systemplugin PROPERTIES INSTALL_RPATH "$ORIGIN")

@@ -4,6 +4,7 @@ import QtQuick.Window
 import QtQml.Models
 import org.kde.layershell as LayerShell
 import Singlr.Ui
+import Singlr.System
 // transientParent: null es imprescindible: si no, Qt ata cada Window a la ventana del
 // Item contenedor (inexistente) y KWin nunca recibe la superficie layer-shell.
 // LayerShell.Window.scope usa los nombres que KWin traduce a tipo de ventana (desktop, dock,
@@ -11,6 +12,15 @@ import Singlr.Ui
 // ventanas normales: aparecen en la multitarea y en Alt+Tab.
 Item {
     id: session
+    Component.onCompleted: WorkspaceBridge.enable()
+    Connections {
+        target: WorkspaceBridge
+        function onSearchRequested(text, screenName) {
+            const screen = session.screens.find(s => s.name === screenName) || session.effectiveDockScreen;
+            session.openLauncher(false, screen);
+            session.launcher.query = text;
+        }
+    }
     // First entry is Qt's primary screen; dockScreen remains an overridable policy.
     property var screens: Qt.application.screens
     property var dockScreen: screens.length ? screens[0] : null
