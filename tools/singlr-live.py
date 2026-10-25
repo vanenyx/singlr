@@ -22,6 +22,7 @@ NETWORK_MARK = STATE / 'networkmanagement-unloaded'
 KWIN_BACKUP = STATE / 'kwinrc-backup.json'
 AURORAE = Path.home() / '.local/share/aurorae/themes/Singlr'
 OVERVIEW = Path.home() / '.local/share/kwin/effects/singlr-overview'
+GESTURES = Path.home() / '.local/share/kwin/scripts/singlr-gestures'
 # Ajustes de KWin de Singlr en modo sustitución; los valores previos se guardan y se restauran al parar.
 KWIN_SETTINGS = [
     ('org.kde.kdecoration2', 'library', 'org.kde.kwin.aurorae'),
@@ -37,6 +38,7 @@ KWIN_SETTINGS = [
     # Multitarea de Singlr: KWin solo descubre efectos al arrancar, así que se activa en el
     # siguiente inicio de sesión (o al instante si KWin ya lo conoce).
     ('Plugins', 'singlr-overviewEnabled', 'true'),
+    ('Plugins', 'singlr-gesturesEnabled', 'true'),
 ]
 PLASMA_UNIT = 'plasma-plasmashell.service'
 LOG = STATE / 'shell.log'
@@ -98,12 +100,18 @@ def apply_kwin():
     OVERVIEW.parent.mkdir(parents=True, exist_ok=True)
     if not OVERVIEW.exists():
         OVERVIEW.symlink_to(effect)
+    gestures = Path(__file__).resolve().parents[1] / 'kwin/scripts/singlr-gestures'
+    GESTURES.parent.mkdir(parents=True, exist_ok=True)
+    if not GESTURES.exists():
+        GESTURES.symlink_to(gestures)
     KWIN_BACKUP.write_text(json.dumps([[g, k, kwin_read(g, k)] for g, k, _ in KWIN_SETTINGS]))
     for group, key, value in KWIN_SETTINGS:
         kwin_write(group, key, value)
     subprocess.run(['qdbus6', 'org.kde.KWin', '/KWin', 'reconfigure'], capture_output=True)
     subprocess.run(['qdbus6', 'org.kde.KWin', '/Effects', 'org.kde.kwin.Effects.loadEffect', 'singlr-overview'],
                    capture_output=True)
+    # Los scripts habilitados en kwinrc se cargan con start() sin reiniciar KWin.
+    subprocess.run(['qdbus6', 'org.kde.KWin', '/Scripting', 'org.kde.kwin.Scripting.start'], capture_output=True)
 
 
 def restore_kwin():
@@ -118,6 +126,8 @@ def restore_kwin():
     # El efecto queda enlazado: deshabilitado en kwinrc, no se carga, y evita que KWin pierda
     # el paquete en uso. Se descarga de la sesión actual.
     subprocess.run(['qdbus6', 'org.kde.KWin', '/Effects', 'org.kde.kwin.Effects.unloadEffect', 'singlr-overview'],
+                   capture_output=True)
+    subprocess.run(['qdbus6', 'org.kde.KWin', '/Scripting', 'org.kde.kwin.Scripting.unloadScript', 'singlr-gestures'],
                    capture_output=True)
 
 
