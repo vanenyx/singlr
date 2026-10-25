@@ -1,0 +1,42 @@
+# T221: medidas lógicas a 96 DPI / tamaño de botones Normal.
+# Fuente 13 px / peso 510 y ButtonsOnLeft=XIA: preferencias globales de KWin.
+# Aurorae SVG no admite esas preferencias dentro del rc del tema.
+[General]
+ActiveTextColor=208,214,224
+InactiveTextColor=98,102,109
+TitleAlignment=Center
+TitleVerticalAlignment=Center
+UseTextShadow=false
+TextShadowOffsetX=0
+TextShadowOffsetY=0
+Shadow=true
+Animation=100
+DecorationPosition=0
+
+[Layout]
+BorderTop=0
+BorderLeft=1
+BorderRight=1
+BorderBottom=1
+TitleHeight=16
+TitleEdgeTop=7
+TitleEdgeBottom=7
+TitleEdgeLeft=12
+TitleEdgeRight=12
+# Compensación para XIA a la izquierda: centro geométrico de la ventana.
+TitleBorderLeft=12
+TitleBorderRight=76
+ButtonWidth=16
+ButtonHeight=16
+ButtonSpacing=8
+ButtonMarginTop=0
+ButtonMarginTopMaximized=0
+ExplicitButtonSpacer=8
+PaddingTop=24
+PaddingBottom=24
+PaddingLeft=24
+PaddingRight=24
+TitleEdgeTopMaximized=7
+TitleEdgeBottomMaximized=7
+TitleEdgeLeftMaximized=12
+TitleEdgeRightMaximized=12

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="208" height="24" viewBox="0 0 208 24">
+<title>Singlr — maximize</title>
+<desc>Rejilla 16 px. Halo nativo 16 px; véase README para el límite de Aurorae SVG.</desc>
+<g id="active-center" transform="translate(0 4)">
+<rect width="16" height="16" fill="#000000" fill-opacity="0"/>
+<g color="#8a8f98" fill="#8a8f98" opacity="1"><circle cx="8" cy="8" r="4.75" fill="none" stroke="currentColor" stroke-width="1.5"/></g>
+</g>
+<g id="hover-center" transform="translate(26 4)">
+<rect width="16" height="16" fill="#000000" fill-opacity="0"/>
+<circle cx="8" cy="8" r="8" fill="#ffffff" fill-opacity="0.0705882353"/>
+<g color="#f7f8f8" fill="#f7f8f8" opacity="1"><circle cx="8" cy="8" r="4.75" fill="none" stroke="currentColor" stroke-width="1.5"/></g>
+</g>
+<g id="pressed-center" transform="translate(52 4)">
+<rect width="16" height="16" fill="#000000" fill-opacity="0"/>
+<g color="#d0d6e0" fill="#d0d6e0" opacity="1"><circle cx="8" cy="8" r="4.75" fill="none" stroke="currentColor" stroke-width="1.5"/></g>
+</g>
+<g id="inactive-center" transform="translate(78 4)">
+<rect width="16" height="16" fill="#000000" fill-opacity="0"/>
+<g color="#62666d" fill="#62666d" opacity="0.6"><circle cx="8" cy="8" r="4.75" fill="none" stroke="currentColor" stroke-width="1.5"/></g>
+</g>
+<g id="deactivated-center" transform="translate(104 4)">
+<rect width="16" height="16" fill="#000000" fill-opacity="0"/>
+<g color="#62666d" fill="#62666d" opacity="0.6"><circle cx="8" cy="8" r="4.75" fill="none" stroke="currentColor" stroke-width="1.5"/></g>
+</g>
+<g id="hover-inactive-center" transform="translate(130 4)">
+<rect width="16" height="16" fill="#000000" fill-opacity="0"/>
+<circle cx="8" cy="8" r="8" fill="#ffffff" fill-opacity="0.0705882353"/>
+<g color="#f7f8f8" fill="#f7f8f8" opacity="1"><circle cx="8" cy="8" r="4.75" fill="none" stroke="currentColor" stroke-width="1.5"/></g>
+</g>
+<g id="pressed-inactive-center" transform="translate(156 4)">
+<rect width="16" height="16" fill="#000000" fill-opacity="0"/>
+<g color="#d0d6e0" fill="#d0d6e0" opacity="1"><circle cx="8" cy="8" r="4.75" fill="none" stroke="currentColor" stroke-width="1.5"/></g>
+</g>
+<g id="deactivated-inactive-center" transform="translate(182 4)">
+<rect width="16" height="16" fill="#000000" fill-opacity="0"/>
+<g color="#62666d" fill="#62666d" opacity="0.6"><circle cx="8" cy="8" r="4.75" fill="none" stroke="currentColor" stroke-width="1.5"/></g>
+</g>
+</svg>
