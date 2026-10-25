@@ -1,5 +1,12 @@
 # T250 — Command y carga de sesión
 
+## Corrección T251 de Command
+
+El contrato de agregación y el ID `systemsettings` descritos abajo quedan
+corregidos por [T251](../handoffs/T251-command-fix.md): ID instalado
+`krunner_systemsettings`, origen real por QueryMatch, deduplicación global y
+ofertas al final. El contrato KSplash se conserva.
+
 ## Contratos
 
 Command conserva Milou/KRunner para aplicaciones, archivos y operaciones. Un segundo

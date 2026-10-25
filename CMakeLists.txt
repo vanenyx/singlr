@@ -20,6 +20,7 @@ add_subdirectory(shell/session)
 # Local review tool only; never installed in the desktop session.
 add_executable(singlr-material-image EXCLUDE_FROM_ALL tools/material-image.cpp)
 target_link_libraries(singlr-material-image PRIVATE Qt6::Gui)
+add_subdirectory(shell/command)
 include(cmake/InstallDesktop.cmake)
 include(cmake/InstallShellPackage.cmake)
 

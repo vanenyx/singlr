@@ -1,0 +1,122 @@
+[
+    {
+        "name": "Calculadora",
+        "runnerId": "calculator"
+    },
+    {
+        "name": "Ayuda sobre lanzador",
+        "runnerId": "helprunner"
+    },
+    {
+        "name": "Centro de software",
+        "runnerId": "krunner_appstream"
+    },
+    {
+        "name": "Marcadores",
+        "runnerId": "krunner_bookmarksrunner"
+    },
+    {
+        "name": "Cerrar aplicaciones",
+        "runnerId": "krunner_kill"
+    },
+    {
+        "name": "Lugares",
+        "runnerId": "krunner_placesrunner"
+    },
+    {
+        "name": "Archivos recientes",
+        "runnerId": "krunner_recentdocuments"
+    },
+    {
+        "name": "Aplicaciones",
+        "runnerId": "krunner_services"
+    },
+    {
+        "name": "Sesiones de escritorio",
+        "runnerId": "krunner_sessions"
+    },
+    {
+        "name": "Ejecución de órdenes",
+        "runnerId": "krunner_shell"
+    },
+    {
+        "name": "Palabras clave de búsqueda web",
+        "runnerId": "krunner_webshortcuts"
+    },
+    {
+        "name": "Ubicaciones",
+        "runnerId": "locations"
+    },
+    {
+        "name": "Caracteres especiales",
+        "runnerId": "krunner_charrunner"
+    },
+    {
+        "name": "Colores",
+        "runnerId": "krunner_colors"
+    },
+    {
+        "name": "Diccionario",
+        "runnerId": "krunner_dictionary"
+    },
+    {
+        "name": "Sesiones de Kate",
+        "runnerId": "krunner_katesessions"
+    },
+    {
+        "name": "Perfiles de Konsole",
+        "runnerId": "krunner_konsoleprofiles"
+    },
+    {
+        "name": "Comprobación ortográfica",
+        "runnerId": "krunner_spellcheck"
+    },
+    {
+        "name": "Fecha y hora",
+        "runnerId": "org.kde.datetime"
+    },
+    {
+        "name": "Conversor de unidades",
+        "runnerId": "unitconverter"
+    },
+    {
+        "name": "Preferencias del sistema",
+        "runnerId": "krunner_systemsettings"
+    },
+    {
+        "name": "Energía",
+        "runnerId": "krunner_powerdevil"
+    },
+    {
+        "name": "Atajo de teclado globales",
+        "runnerId": "krunner_keys"
+    },
+    {
+        "name": "KWin",
+        "runnerId": "krunner_kwin"
+    },
+    {
+        "name": "Shell de escritorio Plasma",
+        "runnerId": "krunner_plasma-desktop"
+    },
+    {
+        "name": "Actividades",
+        "runnerId": "org.kde.activities2"
+    },
+    {
+        "name": "Búsqueda de archivos",
+        "runnerId": "baloosearch"
+    },
+    {
+        "name": "Historial del navegador",
+        "runnerId": "browserhistory"
+    },
+    {
+        "name": "Pestañas del navegador",
+        "runnerId": "browsertabs"
+    },
+    {
+        "name": "Ventanas",
+        "runnerId": "windows"
+    }
+]
