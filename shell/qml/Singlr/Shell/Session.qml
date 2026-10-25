@@ -188,6 +188,7 @@ Item {
         }
     }
     function reloadSettings() { Theme.reloadSettings(); }
+    function closePanels() { closeMenus(); if (launcher) launcher.close(); launcherOpen = false; }
     function closeDockMenu() { dock.closeMenu(); }
     function closeBarMenus() {
         for (let i = 0; i < screenSurfaces.count; ++i) {

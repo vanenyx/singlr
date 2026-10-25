@@ -24,11 +24,23 @@ function level(base,offset,contrast) {
     var b=lch(base); return color(b[0]+offset*contrast,Math.min(.7,b[1]),b[2]);
 }
 function alpha(c,a) { return Qt.rgba(c.r,c.g,c.b,a); }
+// Saturating curve: 0 is opaque; 65 transmits 25.8% of the backdrop; 100
+// transmits 30%. The floor bounds the worst white/black backdrop for AA text.
+function materialOpacity(strength) {
+    return 1 - .30 * Math.pow(Math.max(0, Math.min(1, strength)), .35);
+}
+function materialInk(base,dark,role,strength,contrast) {
+    if (strength > 0)
+        return ink(base, dark ? (role === "secondary" ? 93 : 90) : (role === "secondary" ? 20 : 23), contrast);
+    if (role === "secondary" && dark) return Qt.color("#d0d6e0");
+    return ink(base, role === "secondary" ? 35 : dark ? (role === "muted" ? 72 : 71) : 39, contrast);
+}
 function ink(base,target,contrast) {
     var b=lch(base);
     return color(b[0]+(target-b[0])*contrast,Math.min(.8,b[1]),b[2]);
 }
-function accentInk(accent,dark,contrast) {
+function accentInk(accent,dark,contrast,strength = 0) {
     var a=lch(accent);
+    if (strength > 0) return color(dark?90:20,Math.min(25,a[1]),a[2]);
     return color((dark?74:43)+(dark?1:-1)*(contrast-1)*12,Math.min(62,a[1]),a[2]);
 }

@@ -18,9 +18,10 @@ public:
     static bool supported();
     bool valid() const { return bool(m_shader); }
     bool isActive() const override;
+    QString debug(const QString &parameter) const override;
     bool blocksDirectScanout() const override { return false; }
     void reconfigure(ReconfigureFlags) override;
-    int requestedEffectChainPosition() const override { return 80; } // after native blur (20)
+    int requestedEffectChainPosition() const override { return 80; } // after native blur
     void prePaintScreen(ScreenPrePaintData &data) override;
     bool drawWindow(const RenderTarget &, const RenderViewport &, EffectWindow *, int, const Region &, WindowPaintData &) override;
 private:
@@ -33,6 +34,8 @@ private:
         QMetaObject::Connection blurConnection;
         std::unique_ptr<BackgroundEffectItem> item;
         std::map<RenderView *, Buffer> buffers;
+        quint64 draws = 0;
+        const char *lastResult = "not-drawn";
     };
     void watch(EffectWindow *);
     void update(EffectWindow *);
@@ -43,5 +46,6 @@ private:
     std::unique_ptr<GLShader> m_shader;
     std::map<EffectWindow *, Surface> m_surfaces;
     RenderView *m_view = nullptr;
+    bool m_diagnosticOverlay = false;
 };
 }

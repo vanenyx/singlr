@@ -40,6 +40,7 @@ for source in (root / "shell/qml/tests").glob("*.qml"):
     text = source.read_text().replace('"../../../session/shell-package/org.singlr.desktop/contents/lockscreen"', f'"{lock.as_uri()}"')
     text = text.replace('"../../../apps/settings/Main.qml"', f'"{(root / "apps/settings/Main.qml").as_uri()}"')
     text = text.replace('"../../../session/kwin/tabbox/singlr/contents/ui"', f'"{(root / "session/kwin/tabbox/singlr/contents/ui").as_uri()}"')
+    text = text.replace('"../Singlr/Ui/Theme.js"', f'"{(root / "shell/qml/Singlr/Ui/Theme.js").as_uri()}"')
     (fixtures / source.name).write_text(text)
 imports = tmp / "imports/org/kde/kscreenlocker"
 imports.mkdir(parents=True)

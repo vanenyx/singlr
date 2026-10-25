@@ -5,9 +5,12 @@ from pathlib import Path
 import runpy
 import tempfile
 import unittest
+import struct
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
-environment = runpy.run_path(str(ROOT / 'tools/material-review.py'))['environment']
+review = runpy.run_path(str(ROOT / 'tools/material-review.py'))
+environment = review['environment']
 
 
 class ReviewEnvironmentTests(unittest.TestCase):
@@ -28,6 +31,38 @@ class ReviewEnvironmentTests(unittest.TestCase):
             descriptor.chmod(0o644)
             with self.assertRaisesRegex(ValueError, 'Descriptor privado'):
                 environment(descriptor)
+
+    def test_crop_uses_content_region_not_fullscreen_launcher(self):
+        diagnostic = {'windows': [
+            dict(eligible=True, visible=True, region=[0, 0, 2048, 28], position=[0, 0]),
+            dict(eligible=True, visible=True, region=[0, 0, 200, 48], position=[924, 1222]),
+            dict(eligible=True, visible=True, region=[664, 286, 720, 490], position=[0, 0]),
+            dict(eligible=False, visible=True, region=[0, 0, 340, 560], position=[1692, 36])
+        ]}
+        self.assertEqual(review['panel_edge'](diagnostic, 'launcher'), [652, 274, 256, 96])
+        with self.assertRaisesRegex(RuntimeError, 'No hay región'):
+            review['panel_edge'](diagnostic, 'control-center')
+
+    def test_crop_maps_logical_geometry_to_spectacle_pixels(self):
+        diagnostic = dict(screenCount=1, virtualGeometry=[0, 0, 2048, 1280])
+        source = ROOT / 'tests/shell/evidence/t248/nested/cc-liquid.png'
+        self.assertEqual(review['pixel_edge']([652, 274, 256, 96], diagnostic, source), [815, 342, 320, 121])
+        diagnostic['screenCount'] = 2
+        with self.assertRaisesRegex(RuntimeError, 'una salida'):
+            review['pixel_edge']([652, 274, 256, 96], diagnostic, source)
+
+    @unittest.skipUnless((ROOT / 'build/singlr-material-image').is_file(), 'Build Qt crop helper first')
+    def test_qimage_crop_zoom_and_bounds(self):
+        source = ROOT / 'tests/shell/evidence/t248/nested/cc-liquid.png'
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / 'crop.png'
+            command = [str(ROOT / 'build/singlr-material-image'), str(source), str(output)]
+            subprocess.run([*command, '1680', '24', '20', '10', '4'], check=True)
+            self.assertEqual(struct.unpack('>II', output.read_bytes()[16:24]), (80, 40))
+            output.unlink()
+            failed = subprocess.run([*command, '99999', '0', '20', '10', '4'], capture_output=True)
+            self.assertNotEqual(failed.returncode, 0)
+            self.assertFalse(output.exists())
 
 
 if __name__ == '__main__':

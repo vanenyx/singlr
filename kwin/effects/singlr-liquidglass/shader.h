@@ -7,6 +7,7 @@ uniform sampler2D sampler;
 uniform vec2 extent;
 uniform float radius;
 uniform float strength;
+uniform float diagnosticOverlay;
 in vec2 texcoord0;
 out vec4 fragColor;
 float sdf(vec2 p) {
@@ -20,8 +21,8 @@ void main() {
     if (d > 0.0) discard;
     vec2 n = normalize(vec2(sdf(p + vec2(0.5,0.0)) - sdf(p - vec2(0.5,0.0)),
                             sdf(p + vec2(0.0,0.5)) - sdf(p - vec2(0.0,0.5))) + vec2(0.00001));
-    float edge = 1.0 - smoothstep(0.0, 16.0, -d);
-    vec2 bend = n * edge * edge * (4.0 * strength) / extent;
+    float edge = 1.0 - smoothstep(0.0, 24.0, -d);
+    vec2 bend = n * edge * edge * (16.0 * strength) / extent;
     bend.y = -bend.y;
     vec2 uv = texcoord0 - bend;
     // A small nine-tap pass on the native blurred background. No noise or time uniform.
@@ -34,8 +35,13 @@ void main() {
     vec2 dispersion = bend * 0.045;
     color.r += (texture(sampler, uv + dispersion).r - texture(sampler, uv).r) * edge;
     color.b += (texture(sampler, uv - dispersion).b - texture(sampler, uv).b) * edge;
-    float rim = exp(-abs(d + 1.0) * 1.4);
-    float light = 0.035 + 0.11 * max(0.0, dot(n, normalize(vec2(-0.4,-1.0))));
-    fragColor = vec4(color + vec3(rim * light * strength), 1.0);
+    float rim = exp(-abs(d + 2.0) * 0.65);
+    float light = 0.16 + 0.64 * max(0.0, dot(n, normalize(vec2(-0.4,-1.0))));
+    color += vec3(rim * light * strength);
+    // Explicit proof of shader execution, confined to an 8px optical rim.
+    if (diagnosticOverlay > 0.5 && d > -8.0)
+        color = vec3(1.0, 0.0, 1.0);
+    // Bound the reference-white specular so the tint's SDR contrast floor holds.
+    fragColor = vec4(clamp(color, vec3(0.0), vec3(1.0)), 1.0);
 }
 )GLSL";

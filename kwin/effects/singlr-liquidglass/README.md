@@ -1,5 +1,9 @@
 # Singlr Liquid Glass — T248
 
+T249 corrige la opacidad del tinte, amplía la refracción/brillo y añade diagnóstico
+por ventana y marcador magenta en el shader. Ver [causa, pruebas y revisión pendiente](../../../docs/handoffs/T249-liquidglass-fix.md).
+La apariencia nueva aún requiere captura en KWin; `pluginLoaded` no acredita dibujo.
+
 Prototipo fuera del árbol para **KWin 6.8.1**, compilado y con factory comprobada;
 pendiente de renderizado y revisión visual en compositor real.
 No instalar en el perfil habitual para probarlo. No se ha modificado la sesión activa.
@@ -45,6 +49,9 @@ Un filtro de nueve muestras adicional depende de intensidad. Sin ruido, reloj ni
 No bloquea direct scanout. Libera texturas al desactivar, eliminar ventana o retirar vista.
 
 `kwinrc [Effect-singlrliquidglass]`: `Enabled=false`, `Intensity=65` (0–100).
+`DiagnosticOverlay=false` por defecto; el helper privado puede activarlo para identificar
+el borde magenta generado por el fragment shader. `/Effects debug singlr-liquidglass windows`
+devuelve JSON de configuración, región, identidad y pases dibujados sin log por frame.
 `KConfigWatcher` y `reconfigure` actualizan en vivo; basta `KConfig::Notify` o una llamada
 D-Bus a reconfigure. El efecto rechaza software rendering. Transformaciones, fullscreen
 effects y pantalla bloqueada conservan el comportamiento nativo. La factory no se activa
