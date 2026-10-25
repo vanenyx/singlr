@@ -82,7 +82,7 @@ Item {
         LayerShell.Window.exclusionZone: 28
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
         LayerShell.Window.scope: "dock"
-        TopBar { id: bar; notificationsUnread: notifications.unread; onControlCenterRequested: session.toggleControlCenter(); onNotificationsRequested: { controlWindow.visible = false; bar.closeMenu(); dock.closeMenu(); notifications.toggle(); } sessionMode: true; menuHost: barMenuHost; width: parent.width; height: 28; activeAppName: dock.activeAppName; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
+        TopBar { id: bar; notificationsUnread: notifications.unread; onControlCenterRequested: session.toggleControlCenter(); onNotificationsRequested: { controlWindow.visible = false; bar.closeMenu(); dock.closeMenu(); notifications.toggle(); } sessionMode: true; menuHost: barMenuHost; trayMenuHost: traySurfaceHost; width: parent.width; height: 28; activeAppName: dock.activeAppName; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
     }
     Window {
@@ -131,7 +131,7 @@ Item {
     }
     Window {
         id: tooltipWindow
-        transientParent: null; visible: !!dock.tooltipText && !dock.menuOpen && !bar.menuOpen && !overlay.visible
+        transientParent: null; visible: !!dock.tooltipText && !dock.menuOpen && !bar.menuOpen && !bar.tray.opened && !overlay.visible
         width: Math.ceil(tooltipLabel.implicitWidth) + 16; height: Math.ceil(tooltipLabel.implicitHeight) + 16
         color: "transparent"; flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowTransparentForInput
         LayerShell.Window.layer: LayerShell.Window.LayerTop
@@ -159,6 +159,36 @@ Item {
         onVisibleChanged: if (visible) { dock.closeMenu(); requestActivate(); }
         onActiveChanged: if (!active && visible) bar.closeMenu()
         Item { id: barMenuHost; anchors.fill: parent }
+    }
+    Window {
+        id: trayMenuWindow
+        transientParent: null; visible: bar.tray.opened
+        width: 240; height: bar.tray.menuHeight; color: "transparent"
+        LayerShell.Window.layer: LayerShell.Window.LayerTop
+        LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft
+        LayerShell.Window.margins.top: 4
+        LayerShell.Window.margins.left: Math.round(Math.max(4, Math.min(screen.width - width - 4, bar.tray.menuX)))
+        LayerShell.Window.exclusionZone: 0
+        LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
+        LayerShell.Window.scope: "utility"
+        LayerShell.Window.activateOnShow: true
+        onVisibleChanged: if (visible) { dock.closeMenu(); requestActivate(); }
+        onActiveChanged: if (!active && visible) bar.tray.close()
+        Item { id: traySurfaceHost; anchors.fill: parent }
+    }
+    Window {
+        transientParent: null; visible: !!bar.tray.tooltipText && !bar.tray.opened
+        width: Math.ceil(trayTooltip.implicitWidth) + 16; height: 30; color: "transparent"
+        flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowTransparentForInput
+        LayerShell.Window.layer: LayerShell.Window.LayerTop
+        LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft
+        LayerShell.Window.margins.top: 4
+        LayerShell.Window.margins.left: Math.round(Math.max(4, Math.min(screen.width - width - 4, bar.tray.tooltipX - width / 2)))
+        LayerShell.Window.exclusionZone: 0
+        LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
+        LayerShell.Window.scope: "tooltip"
+        Rectangle { anchors.fill: parent; radius: 8; color: Theme.raised; border.color: Theme.border }
+        UiText { id: trayTooltip; anchors.centerIn: parent; text: bar.tray.tooltipText; font.pixelSize: 12 }
     }
     Window {
         id: overlay; transientParent: null; visible: false; color: "transparent"

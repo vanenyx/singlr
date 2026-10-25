@@ -10,6 +10,12 @@ import Singlr.Ui
 Rectangle {
     id: dock
     property bool sessionMode: false
+    // T224: launcher contract pending. overviewAvailable must reflect the loaded
+    // effect, not just the presence of a registered KGlobalAccel shortcut.
+    // qmllint disable unqualified
+    property var systemBridge: typeof SinglrSystem !== "undefined" ? SinglrSystem : null
+    // qmllint enable unqualified
+    readonly property bool overviewAvailable: !!systemBridge && systemBridge.overviewAvailable === true && typeof systemBridge.invokeShortcut === "function"
     property Item menuHost: null
     property string tooltipText: ""
     property real tooltipCenter: 0
@@ -282,6 +288,7 @@ Rectangle {
         }
         Rectangle { visible: pinned.count > 0; width: 1; height: 20; y: 14; color: "#14ffffff" }
         DockItem { sessionMode: dock.sessionMode; onTooltipRequested: (text, center) => dock.showTooltip(text, center); task: ({AppName: "Todas las aplicaciones", singlrGrid: true, decoration: ""}); onActivated: dock.applicationsRequested() }
+        Tool { objectName: "overviewButton"; visible: dock.overviewAvailable; width: 32; height: 48; icon: "squares-four"; iconSize: 20; description: "Multitarea"; onClicked: dock.systemBridge.invokeShortcut("kwin", "Singlr Overview") }
     }
     component TaskEntry: Item {
         id: entry

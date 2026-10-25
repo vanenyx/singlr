@@ -569,3 +569,44 @@ permanece el aviso previo del portal para `singlr-shell`. La suite offscreen
 conserva avisos esperados de D-Bus, UPower y audio por el sandbox. Quedan pendientes
 la autenticación Wi-Fi real, PIN Bluetooth con el puente indicado, cambios reales
 de PowerDevil y comprobación física de foco entre ventanas layer-shell.
+
+### T224 — bandeja en vivo y contrato de multitarea
+
+`SystemTray.qml`, antes de la campana, consume `SinglrTray` si existe: seis
+iconos de 16 px y 12 px entre ellos, pixmap preferido y nombre de tema como
+alternativa; desbordamiento, tooltip, acciones primaria/secundaria, rueda y menú.
+El desbordamiento conserva las acciones de cada app, incluido clic derecho.
+Los menús usan `ContextMenu` en una superficie layer-shell independiente de
+240 × 344 px bajo la barra. La altura permanece fija durante carga e
+invalidaciones; desplazamiento interno, navegación Atrás para submenús,
+separadores, radios/casillas, iconos y deshabilitados. Escape, pérdida de foco y
+retirada de filas cierran el menú. Son soluciones técnicas derivadas de T224 y
+P-011/P-012; no una nueva aprobación visual.
+
+Pendientes para Claude **fuera de `shell/qml/**`**:
+
+- El contrato actual `menu()` es síncrono. Se abre primero la superficie con
+  «Cargando…» y se consulta mediante `Qt.callLater` después de ceder un ciclo.
+  Esto permite presentar la superficie, pero **no evita bloquear el hilo GUI
+  durante la llamada C++**, hasta ~3 s con un exportador colgado. Para garantizar
+  hover fluido se necesita una consulta asíncrona en C++, con resultado/señal y
+  control de respuestas antiguas. Referencia: [Qt.callLater](https://doc.qt.io/qt-6/qml-qtqml-qt.html#callLater-method).
+- Añadir rol booleano `hasAttentionIcon`: el backend ya elige el icono de
+  atención, pero no permite distinguirlo del normal. Hasta entonces un ítem
+  NeedsAttention lleva también punto de 4 px; al exponer el rol se suprime el
+  punto cuando hay icono específico, sin otro cambio QML.
+- Exponer `SinglrSystem.invokeShortcut(component, name)` para llamar por D-Bus
+  a `org.kde.kglobalaccel /component/<component>` con
+  `org.kde.kglobalaccel.Component.invokeShortcut(name)`, y propiedad notificada
+  `overviewAvailable` que confirme que el efecto está cargado. `Dock.qml` ya
+  prepara el botón Phosphor squares-four junto al de aplicaciones y llama con
+  `("kwin", "Singlr Overview")`. Permanece oculto mientras falte este contrato;
+  no se deduce disponibilidad de la mera existencia del atajo.
+
+Verificación T224 (Qt 6.12.0): `qmllint` completo sin avisos; suite
+`qmltestrunner` offscreen/software con pruebas de bandeja (acciones, overflow,
+menú diferido/cancelado, submenú, invalidación, retirada y geometría fija).
+El supervisor recarga los cambios en vivo; se vigiló
+`/run/user/1000/singlr-live/shell.log`, sin errores QML nuevos. El acceso directo
+al bus real está denegado por el sandbox, por lo que no se acredita interacción
+manual con las siete apps ni revisión visual/captura de la sesión real.

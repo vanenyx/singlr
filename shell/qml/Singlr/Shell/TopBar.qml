@@ -6,7 +6,9 @@ Rectangle {
     id: bar
     property bool sessionMode: false
     property Item menuHost: null
-    function closeMenu() { menu.close(); }
+    function closeMenu() { menu.close(); systemTray.close(); }
+    property alias tray: systemTray
+    property Item trayMenuHost: null
     property bool notificationsUnread: false
     signal controlCenterRequested()
     signal notificationsRequested()
@@ -25,6 +27,7 @@ Rectangle {
     }
     Row {
         id: trailing; anchors.right: parent.right; anchors.rightMargin: 16; height: 28; spacing: 14
+        SystemTray { id: systemTray; menuHost: bar.trayMenuHost; onOpenedChanged: if (opened) menu.close() }
         Tool {
             y: 3; width: 24; height: 22; icon: "bell"; iconSize: 15; description: "Notificaciones"
             onClicked: bar.notificationsRequested()
@@ -35,7 +38,7 @@ Rectangle {
         UiText { height: 28; text: bar.now.toLocaleString(Qt.locale("es_ES"), "ddd d MMM  HH:mm"); weight: 510; color: Theme.secondary }
     }
     Controls.Popup {
-        id: menu; parent: bar.menuHost || bar; x: bar.menuHost ? 0 : 16; y: bar.menuHost ? 0 : 32; width: 220; height: 80; padding: 4; focus: true
+        id: menu; onAboutToShow: systemTray.close(); parent: bar.menuHost || bar; x: bar.menuHost ? 0 : 16; y: bar.menuHost ? 0 : 32; width: 220; height: 80; padding: 4; focus: true
         popupType: Controls.Popup.Item
         closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
         background: Rectangle { radius: 8; color: Theme.raised; border.color: Theme.border }
