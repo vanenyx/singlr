@@ -25,7 +25,7 @@ tools/test-qml.sh --light
 tools/check-cmake.sh
 stage=$(mktemp -d /tmp/singlr-material-stage.XXXXXX)
 DESTDIR="$stage" cmake --install build
-test -s "$stage/usr/lib/qt6/plugins/kwin/effects/plugins/libsinglr-liquidglass.so"
+test -s "$stage/usr/lib/qt6/plugins/kwin/effects/plugins/singlr-liquidglass.so"
 out=$(mktemp -d /tmp/singlr-material-results.XXXXXX)
 QT_PLUGIN_PATH="$stage/usr/lib/qt6/plugins${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}" QML_IMPORT_PATH="$PWD/build/qml" SINGLR_DEV_ROOT="$PWD" tools/run-singlr.sh --size 2048x1280 --duration 900 > "$out/session.log" 2>&1 &
 runner=$!

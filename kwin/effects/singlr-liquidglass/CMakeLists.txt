@@ -2,7 +2,8 @@
 find_package(KWin 6.8.1 EXACT REQUIRED)
 find_package(Qt6 REQUIRED COMPONENTS OpenGL Test)
 add_library(singlr-liquidglass MODULE liquidglass.cpp liquidglass.h)
-set_target_properties(singlr-liquidglass PROPERTIES CXX_STANDARD 23)
+# KWin effect plugins have no "lib" prefix: the file name is the plugin id, as kcoreaddons_add_plugin does.
+set_target_properties(singlr-liquidglass PROPERTIES CXX_STANDARD 23 PREFIX "")
 target_link_libraries(singlr-liquidglass PRIVATE KWin::kwin KF6::ConfigCore Qt6::OpenGL)
 target_link_options(singlr-liquidglass PRIVATE "LINKER:--no-undefined")
 install(TARGETS singlr-liquidglass DESTINATION "${KDE_INSTALL_PLUGINDIR}/kwin/effects/plugins")
