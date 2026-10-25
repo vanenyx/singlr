@@ -18,6 +18,21 @@ Item {
             Ui.Appearance.save("wallpaper", "singlr:linear");
             Ui.Theme.reloadSettings();
         }
+        function test_dockControlsApplyAndPersist() {
+            const app = createTemporaryObject(appFactory, fixture); verify(app);
+            mouseClick(findChild(app.contentItem, "nav-dock")); compare(app.page, "dock");
+            mouseClick(findChild(app.contentItem, "dock-mode-fixed")); compare(Ui.DockSettings.mode, "fixed");
+            const slider = findChild(app.contentItem, "dockHeight");
+            mouseClick(slider, slider.width - 8, slider.height / 2); compare(Ui.DockSettings.height, 72);
+            mouseClick(slider, slider.width * 0.75, slider.height / 2); compare(Ui.DockSettings.height, 64);
+            mouseClick(findChild(app.contentItem, "dockAutoHide")); verify(Ui.DockSettings.autoHide);
+            const store = Qt.createQmlObject('import QtCore; Settings { category: "Dock" }', fixture);
+            store.location = Ui.Appearance.location; store.sync();
+            compare(store.value("mode"), "fixed"); compare(Number(store.value("height")), 64);
+            compare(String(store.value("autoHide")), "true"); store.destroy();
+            mouseClick(findChild(app.contentItem, "dock-mode-floating")); compare(Ui.DockSettings.mode, "floating");
+            Ui.DockSettings.setHeight(48); Ui.DockSettings.setAutoHide(false); app.close();
+        }
         function test_materialControlsKeepGeometry() {
             const app = createTemporaryObject(appFactory, fixture); verify(app);
             mouseClick(findChild(app.contentItem, "material-glass")); compare(Ui.Appearance.material, "glass");

@@ -19,6 +19,34 @@ Rectangle {
     Keys.onRightPressed: Focus.advance(dock, Window.window.activeFocusItem, true)
     readonly property var dockMenu: dockMenuLoader.item
     property bool sessionMode: false
+    property string dockMode: DockSettings.mode
+    property int dockHeight: DockSettings.height
+    property bool autoHide: DockSettings.autoHide
+    property real screenWidth: 2048
+    readonly property bool fixed: dockMode === "fixed"
+    readonly property int bottomMargin: fixed ? 0 : 4
+    readonly property int exclusionZone: autoHide ? 0 : height + bottomMargin
+    readonly property int iconSize: Math.round(height * 2 / 3)
+    readonly property real sizeFactor: height / 48
+    property bool keyboardHeld: false
+    property bool launcherHeld: false
+    property bool edgeHovered: false
+    property bool dragging: false
+    property bool fileDragActive: false
+    readonly property bool pointerInside: hover.hovered
+    readonly property bool filesHovered: fileHover.containsDrag || fileDragActive
+    readonly property bool heldOpen: pointerInside || filesHovered || dragging || menuOpen || keyboardHeld || launcherHeld || edgeHovered
+    property bool revealed: false
+    readonly property bool shown: !autoHide || heldOpen || revealed
+    function reveal() { revealed = true; if (autoHide && !heldOpen) hideDelay.restart(); }
+    onHeldOpenChanged: { if (heldOpen) { revealed = true; hideDelay.stop(); } else if (autoHide) hideDelay.restart(); }
+    onAutoHideChanged: { revealed = heldOpen; hideDelay.stop(); }
+    Timer { id: hideDelay; interval: 450; onTriggered: if (dock.autoHide && !dock.heldOpen) { dock.revealed = false; dock.hideTooltip(); } }
+    // Keep the reveal grace period while crossing the floating dock's 4 px gap.
+    onShownChanged: if (!shown) hideTooltip()
+    HoverHandler { id: hover }
+    DropArea { id: fileHover; anchors.fill: parent; onEntered: event => { event.accepted = event.hasUrls; } }
+
     // Available only when the session bridge confirms the loaded effect.
     // qmllint disable unqualified
     property var systemBridge: typeof SinglrSystem !== "undefined" ? SinglrSystem : null
@@ -349,18 +377,19 @@ Rectangle {
         }
         return count;
     }
-    width: contents.width+16; height: 48; radius: 14
-    color: Theme.dockSurface; border.color: Theme.surfaceBorder
-    RectangularShadow { anchors.fill: parent; z: -1; radius: 14; blur: 24; offset: Qt.vector2d(0, 8); color: Theme.shadow; visible: GraphicsInfo.api !== GraphicsInfo.Software }
-    Row { id: contents; x: 8; height: 48; spacing: 6
+    width: fixed ? screenWidth : contents.width + Math.round(16 * sizeFactor); height: dockHeight; radius: fixed ? 0 : 14
+    color: Theme.dockSurface; border.color: fixed ? "transparent" : Theme.surfaceBorder
+    Rectangle { width: parent.width; height: 1; color: Theme.surfaceBorder; visible: dock.fixed }
+    RectangularShadow { anchors.fill: parent; z: -1; radius: 14; blur: 24; offset: Qt.vector2d(0, 8); color: Theme.shadow; visible: !dock.fixed && GraphicsInfo.api !== GraphicsInfo.Software }
+    Row { id: contents; x: Math.round((dock.width - width) / 2); height: dock.height; spacing: Math.round(6 * dock.sizeFactor)
         Repeater {
             id: pinned
             model: dock.taskSource
             delegate: TaskEntry {}
         }
-        Rectangle { visible: pinned.count > 0; width: 1; height: 20; y: 14; color: Theme.border }
-        DockItem { sessionMode: dock.sessionMode; onTooltipRequested: (text, center) => dock.showTooltip(text, center); task: ({AppName: "Todas las aplicaciones", singlrGrid: true, decoration: ""}); onActivated: dock.applicationsRequested() }
-        Tool { objectName: "overviewButton"; visible: dock.overviewAvailable; width: 32; height: 48; icon: "cards-three"; iconSize: 20; description: "Multitarea"; onClicked: dock.systemBridge.invokeShortcut("kwin", "Singlr Overview") }
+        Rectangle { visible: pinned.count > 0; width: 1; height: Math.round(20 * dock.sizeFactor); anchors.verticalCenter: parent.verticalCenter; color: Theme.border }
+        DockItem { dockHeight: dock.height; sessionMode: dock.sessionMode; onTooltipRequested: (text, center) => dock.showTooltip(text, center); task: ({AppName: "Todas las aplicaciones", singlrGrid: true, decoration: ""}); onActivated: dock.applicationsRequested() }
+        Tool { objectName: "overviewButton"; visible: dock.overviewAvailable; width: dock.iconSize; height: dock.height; icon: "cards-three"; iconSize: Math.round(20 * dock.sizeFactor); description: "Multitarea"; onClicked: { dock.reveal(); dock.systemBridge.invokeShortcut("kwin", "Singlr Overview"); } }
     }
     component TaskEntry: Item {
         id: entry
@@ -368,11 +397,14 @@ Rectangle {
         required property int index
         readonly property bool pinnedTask: !!model && (!!model.IsLauncher || !!model.HasLauncher)
         readonly property string activeName: model && model.IsActive ? String(model.AppName || model.display || "Escritorio") : ""
-        visible: !!model; width: 32; height: 48
+        visible: !!model; width: dock.iconSize; height: dock.height
         DockItem {
+            dockHeight: dock.height
             objectName: "dockTask" + entry.index
             sessionMode: dock.sessionMode; task: entry.model
             dockOwner: dock
+            onFileDragChanged: inside => dock.fileDragActive = inside
+            onReorderDragChanged: active => dock.dragging = active
             onReorderFinished: position => dock.moveAt(entry.index, position)
             fileAcceptor: urls => dock.acceptsFiles(entry.model, urls)
             onFilesDropped: urls => dock.openFiles(entry.index, entry.model, urls)

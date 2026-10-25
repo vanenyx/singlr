@@ -15,6 +15,7 @@ Item {
     Component.onCompleted: WorkspaceBridge.enable()
     Connections {
         target: WorkspaceBridge
+        function onOverviewChanged(open) { session.overviewOpen = open; }
         function onSearchRequested(text, screenName) {
             const screen = session.screens.find(s => s.name === screenName) || session.effectiveDockScreen;
             session.openLauncher(false, screen);
@@ -206,12 +207,12 @@ Item {
     }
     // Invocado desde C++ (tecla Meta, Alt+Espacio) a través de D-Bus.
     function showApplications() { openLauncher(true); }
+    property bool overviewOpen: false
     property bool dockKeyboard: false
     function focusDock() {
         closeMenus(); if (launcher) launcher.close(); launcherOpen = false;
         dockKeyboard = true;
-        dockWindow.requestActivate();
-        Qt.callLater(() => dock.focusFirst());
+        Qt.callLater(() => { if (session.dockKeyboard) { dockWindow.requestActivate(); dock.focusFirst(); } });
     }
     function showSessionMenu() {
         closeMenus();
@@ -295,20 +296,52 @@ Item {
         if (!effectiveDockScreen || typeof SinglrSystem === "undefined" || !SinglrSystem.placeOnScreen) return;
         SinglrSystem.placeOnScreen(dockWindow, effectiveDockScreen.name);
         // qmllint enable unqualified
-        dockWindow.visible = true;
+        dock.reveal();
+        if (edgeSurface.item && systemBridge && systemBridge.placeOnScreen) systemBridge.placeOnScreen(edgeSurface.item, effectiveDockScreen.name);
     }
     Window {
         screen: session.effectiveDockScreen
-        id: dockWindow; transientParent: null; visible: true; width: dock.width; height: dock.height; property bool singlrBlur: Theme.translucent; property real singlrBlurRadius: 14; color: "transparent"
+        id: dockWindow; objectName: "dockWindow"; transientParent: null; visible: dock.shown; width: dock.width; height: dock.height; property bool singlrBlur: Theme.translucent; property real singlrBlurRadius: dock.radius; color: "transparent"
         LayerShell.Window.layer: LayerShell.Window.LayerTop  // Top: el dock queda por encima de las ventanas, como en macOS.
-        LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
-        LayerShell.Window.margins.bottom: 10
-        LayerShell.Window.exclusionZone: 58
+        LayerShell.Window.anchors: dock.fixed ? LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight : LayerShell.Window.AnchorBottom
+        LayerShell.Window.margins.bottom: dock.bottomMargin
+        LayerShell.Window.exclusionZone: dock.exclusionZone
         onActiveChanged: if (!active) session.dockKeyboard = false
         LayerShell.Window.keyboardInteractivity: session.dockKeyboard ? LayerShell.Window.KeyboardInteractivityOnDemand : LayerShell.Window.KeyboardInteractivityNone  // None: un clic en el dock o la barra no debe quitar la actividad a la app de delante
         LayerShell.Window.scope: "dock"
-        Dock { Keys.onEscapePressed: session.dockKeyboard = false; id: dock; objectName: "sessionDock"; sessionMode: true; menuHost: dockMenuSurface.item ? (dockMenuSurface.item as Window).contentItem : null; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.showApplications() }
+        Dock { Keys.onEscapePressed: session.dockKeyboard = false; id: dock; objectName: "sessionDock"; sessionMode: true; screenWidth: dockWindow.screen ? dockWindow.screen.width : 1; keyboardHeld: session.dockKeyboard; launcherHeld: session.launcherOpen || session.overviewOpen; menuHost: dockMenuSurface.item ? (dockMenuSurface.item as Window).contentItem : null; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.showApplications() }
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
+    }
+    // A minimal native edge target: no polling, pointer warps or KWin script.
+    // Full-width target also accepts file drags before a destination is known.
+    Loader {
+        id: edgeSurface; objectName: "dockEdgeSurface"; active: dock.autoHide
+        sourceComponent: Component {
+            Window {
+                screen: session.effectiveDockScreen
+                transientParent: null; visible: true; color: "transparent"
+                width: screen ? screen.width : 1; height: 2
+                LayerShell.Window.layer: LayerShell.Window.LayerOverlay
+                LayerShell.Window.anchors: LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
+                LayerShell.Window.exclusionZone: 0
+                LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
+                LayerShell.Window.scope: "dock"
+                HoverHandler {
+                    onHoveredChanged: {
+                        dock.edgeHovered = hovered;
+                        if (hovered) dock.reveal();
+                    }
+                }
+                DropArea {
+                    anchors.fill: parent
+                    onEntered: event => { event.accepted = event.hasUrls; if (event.hasUrls) { dock.edgeHovered = true; dock.reveal(); } }
+                    onExited: dock.edgeHovered = false
+                    onDropped: dock.edgeHovered = false
+                }
+                onVisibleChanged: if (!visible) dock.edgeHovered = false
+                Component.onDestruction: dock.edgeHovered = false
+            }
+        }
     }
     Loader {
         id: notificationSurface; objectName: "notificationSurface"; active: !session.notificationRemapping && (notifications.historyOpen || notifications.popups.length > 0)

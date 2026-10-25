@@ -1,5 +1,6 @@
 #include "kdeappearance.h"
 #include <QGuiApplication>
+#include <QDBusConnection>
 #include <QPalette>
 #include <QSettings>
 #include <QSignalSpy>
@@ -116,6 +117,33 @@ private Q_SLOTS:
         appearance.setMaterial("solid"); appearance.setMaterial("liquid");
         QCOMPARE(appearance.material(), QString("solid"));
         appearance.refreshMaterials(); QCOMPARE(appearance.material(), QString("solid"));
+    }
+    void dockPersistsAndNormalizes() {
+        KDEAppearance appearance;
+        QCOMPARE(appearance.dockMode(), QString("floating"));
+        QCOMPARE(appearance.dockHeight(), 48); QVERIFY(!appearance.dockAutoHide());
+        appearance.setDockMode("fixed"); appearance.setDockHeight(70); appearance.setDockAutoHide(true);
+        QCOMPARE(appearance.dockMode(), QString("fixed")); QCOMPARE(appearance.dockHeight(), 72);
+        KDEAppearance second;
+        QCOMPARE(second.dockMode(), QString("fixed")); QCOMPARE(second.dockHeight(), 72);
+        QVERIFY(second.dockAutoHide());
+        appearance.setDockMode("invalid"); QCOMPARE(appearance.dockMode(), QString("fixed"));
+        appearance.setDockHeight(-100); QCOMPARE(appearance.dockHeight(), 40);
+        appearance.setDockHeight(1000); QCOMPARE(appearance.dockHeight(), 72);
+        auto config = KSharedConfig::openConfig("singlr/singlr.conf", KConfig::SimpleConfig);
+        config->group("Dock").writeEntry("mode", "broken");
+        config->group("Dock").writeEntry("height", 55); config->sync();
+        appearance.refreshMaterials();
+        QCOMPARE(appearance.dockMode(), QString("floating")); QCOMPARE(appearance.dockHeight(), 56);
+    }
+    void dockWatcherReceivesExternalWrites() {
+        if (!QDBusConnection::sessionBus().isConnected()) QSKIP("Requires isolated session bus");
+        KDEAppearance appearance;
+        QSignalSpy changed(&appearance, &KDEAppearance::changed);
+        QProcess writer;
+        writer.start("kwriteconfig6", {"--file", "singlr/singlr.conf", "--group", "Dock", "--key", "height", "--notify", "64"});
+        QVERIFY(writer.waitForFinished()); QCOMPARE(writer.exitCode(), 0);
+        QTRY_VERIFY(changed.count() > 0); QCOMPARE(appearance.dockHeight(), 64);
     }
     void materialsPersistClampAndPreserveKDE() {
         QFile kwin(m_temp.filePath("kwinrc"));

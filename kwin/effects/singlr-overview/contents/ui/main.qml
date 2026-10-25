@@ -10,6 +10,15 @@ KWin.SceneEffect {
     id: effect
 
     property bool activated: false
+    onVisibleChanged: overviewState.call()
+    KWin.DBusCall {
+        id: overviewState
+        service: "org.kde.plasmashell"
+        path: "/SinglrWorkspace"
+        dbusInterface: "org.singlr.Workspace"
+        method: "overview"
+        arguments: [effect.visible]
+    }
     property string pendingQuery: ""
     property string searchScreen: ""
     property real reveal: 0

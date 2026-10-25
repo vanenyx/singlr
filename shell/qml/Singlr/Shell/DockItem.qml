@@ -12,6 +12,8 @@ Controls.Control {
     property Item dockOwner: null
     property var fileAcceptor: null
     property bool fileTarget: false
+    signal fileDragChanged(bool inside)
+    signal reorderDragChanged(bool active)
     signal reorderFinished(point position)
     signal filesDropped(var urls)
     signal interacted()
@@ -20,7 +22,10 @@ Controls.Control {
     signal contextRequested()
     signal tooltipRequested(string text, real center)
     readonly property bool running: !!task?.IsWindow || !!task?.IsGroupParent
-    width: 32; height: 48; padding: 0
+    property int dockHeight: 48
+    readonly property real sizeFactor: dockHeight / 48
+    readonly property int iconSize: Math.round(dockHeight * 2 / 3)
+    width: iconSize; height: dockHeight; padding: 0
     // Marco de foco solo para navegación con teclado, nunca al hacer clic.
     background: Rectangle { radius: 6; color: tile.fileTarget ? Theme.selection : "transparent"; border.color: tile.fileTarget ? Theme.accentText : tile.activeFocus && tile.keyboardFocus ? Theme.accentText : "transparent" }
     activeFocusOnTab: true
@@ -33,7 +38,7 @@ Controls.Control {
     Keys.onReturnPressed: activated()
     Keys.onSpacePressed: activated()
     Rectangle {
-        anchors.horizontalCenter: parent.horizontalCenter; y: 23; width: 30; height: 17; radius: 8
+        anchors.horizontalCenter: parent.horizontalCenter; y: Math.round(23 * tile.sizeFactor); width: Math.round(30 * tile.sizeFactor); height: Math.round(17 * tile.sizeFactor); radius: Math.round(8 * tile.sizeFactor)
         color: Theme.accentText; opacity: 0.16
         visible: !!tile.task?.IsDemandingAttention && !tile.task?.IsActive
         layer.enabled: visible
@@ -41,14 +46,21 @@ Controls.Control {
     }
     Item {
         id: iconContainer
-        anchors.horizontalCenter: parent.horizontalCenter; y: 5; width: 32; height: 32
+        anchors.horizontalCenter: parent.horizontalCenter; y: Math.round(5 * tile.sizeFactor); width: tile.iconSize; height: tile.iconSize
         scale: 1
         Item {
             id: pulse; anchors.fill: parent
             AppIcon { visible: !tile.task?.singlrGrid; anchors.fill: parent; source: tile.task?.decoration }
-            Icon { anchors.centerIn: parent; visible: !!tile.task?.singlrGrid; name: "squares-four"; width: 24; height: 24; font.pixelSize: 24; color: Theme.secondary }
+            Icon { anchors.centerIn: parent; visible: !!tile.task?.singlrGrid; name: "squares-four"; width: Math.round(24 * tile.sizeFactor); height: width; font.pixelSize: width; color: Theme.secondary }
 
         }
+    }
+    Rectangle {
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: tile.height - height - Math.round(4 * tile.sizeFactor)
+        width: Math.max(3, Math.round(3 * tile.sizeFactor)); height: width; radius: width / 2
+        color: tile.task?.IsActive ? Theme.text : Theme.muted
+        visible: tile.running
     }
     // MouseArea keeps its grab outside the dock. Only a release over an app
     // commits a move; releasing anywhere else leaves the model untouched.
@@ -56,11 +68,13 @@ Controls.Control {
     DropArea {
         anchors.fill: parent
         onEntered: event => {
+            tile.fileDragChanged(event.hasUrls);
             tile.fileTarget = event.hasUrls && !!tile.fileAcceptor && tile.fileAcceptor(event.urls);
             event.accepted = tile.fileTarget;
         }
-        onExited: tile.fileTarget = false
+        onExited: { tile.fileTarget = false; tile.fileDragChanged(false); }
         onDropped: event => {
+            tile.fileDragChanged(false);
             if (event.hasUrls && tile.fileAcceptor && tile.fileAcceptor(event.urls)) {
                 tile.filesDropped(event.urls); event.acceptProposedAction();
             } else event.accepted = false;
@@ -72,6 +86,10 @@ Controls.Control {
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         drag.target: tile.dockOwner ? dragProxy : null
         property bool dragged: false
+        Connections {
+            target: pointer.drag
+            function onActiveChanged() { tile.reorderDragChanged(pointer.drag.active); }
+        }
         cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.ArrowCursor
         onContainsMouseChanged: {
             const center = tile.mapToItem(null, tile.width / 2, 0).x;
