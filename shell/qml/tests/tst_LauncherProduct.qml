@@ -19,14 +19,22 @@ Item {
         function isPinned(url) { return pins.indexOf(url) >= 0; }
         function setPinned(url, keep) { pins = keep ? pins.concat([url]) : pins.filter(u => u !== url); }
     }
-    QtObject { id: bridge; property var shown: []; function showInFolder(urls) { shown = urls; } }
+    QtObject {
+        id: bridge
+        property var shown: []
+        property var actions: []
+        property var launched: []
+        function showInFolder(urls) { shown = urls; }
+        function applicationActions(url) { return actions; }
+        function launchApplicationAction(url, name) { launched = [url, name]; return true; }
+    }
     Addons.Clipboard { id: clipboard }
     Launcher { id: launcher; modelOverride: runner; dockController: dock; systemBridge: bridge }
     TestCase {
         name: "LauncherProduct"; when: windowShown
         function init() {
             runner.clear(); runner.lastRow = -1; runner.lastAction = -1;
-            dock.pins = []; bridge.shown = []; launcher.open();
+            dock.pins = []; bridge.shown = []; bridge.actions = []; bridge.launched = []; launcher.open();
         }
         function cleanup() { launcher.close(); }
         function append(id, title, category, urls, actions) {
@@ -63,6 +71,20 @@ Item {
             launcher.actionMenu.activate(0); compare(dock.pins, ["applications:org.kde.kate.desktop"]);
             launcher.openActions(); compare(launcher.actionMenu.entries[0].label, "Quitar del dock");
             launcher.actionMenu.activate(0); compare(dock.pins, []);
+        }
+        function test_applicationActions_data() { return [{tag:"apps", apps:true}, {tag:"search", apps:false}]; }
+        function test_applicationActions(data) {
+            launcher.open(data.apps);
+            bridge.actions = [{name:"new-window", text:"Nueva ventana", iconName:"window-new"},
+                              {name:"private", text:"Incógnito", iconName:""}];
+            append("services_browser", "Browser", "Aplicaciones", ["applications:browser.desktop"], [{text:"Nueva ventana", enabled:true}]);
+            tryVerify(() => launcher.contextEntries.length === 3);
+            compare(launcher.contextEntries[0].iconName, "window-new");
+            verify(launcher.contextEntries[2].separator);
+            launcher.openActions();
+            keyClick(Qt.Key_Down); keyClick(Qt.Key_Return);
+            compare(bridge.launched, ["applications:browser.desktop", "private"]);
+            compare(runner.lastAction, -1); verify(!launcher.visible);
         }
         function test_contextMenuDispatchAndRightClick() {
             append("command", "Comando", "Acciones", [], [{text:"Primera", enabled:true}, {text:"Segunda", enabled:true}]);

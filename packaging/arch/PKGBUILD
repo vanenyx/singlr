@@ -7,7 +7,7 @@ arch=('x86_64')
 # Distribution license remains pending; this local package is not a release.
 license=('LicenseRef-Singlr-Pending')
 depends=('bash' 'python' 'qt6-base' 'qt6-declarative' 'qt6-svg'
-         'kwindowsystem' 'kglobalaccel' 'networkmanager-qt' 'kwallet' 'layer-shell-qt'
+         'kservice' 'kio' 'kwindowsystem' 'kglobalaccel' 'networkmanager-qt' 'kwallet' 'layer-shell-qt'
          'libnm' 'networkmanager' 'plasma-workspace' 'plasma-desktop' 'kwin'
          'plasma-nm' 'plasma-pa' 'bluez-qt' 'bluedevil' 'kitemmodels' 'kcmutils' 'milou'
          'breeze-icons' 'breeze-gtk' 'kde-gtk-config' 'xsettingsd'

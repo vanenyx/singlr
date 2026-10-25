@@ -15,6 +15,7 @@
 #include <QFileInfo>
 #include <QUrl>
 #include <KService>
+#include <KIO/ApplicationLauncherJob>
 #include <QMimeDatabase>
 #include <pwd.h>
 #include <unistd.h>
@@ -409,4 +410,39 @@ QUrl System::launcherUrl(const QUrl &url) const
     result.setScheme(QStringLiteral("applications"));
     result.setPath(service->storageId());
     return result;
+}
+
+// KService owns locale resolution and Desktop Action metadata (KF6 6.31).
+QVariantList System::applicationActions(const QUrl &launcher) const
+{
+    const auto service = desktopService(launcher);
+    QVariantList result;
+    if (!service || !service->isApplication()) return result;
+    for (const auto &action : service->actions()) {
+        if (action.noDisplay() || action.isSeparator() || action.text().isEmpty() || action.exec().isEmpty()) continue;
+        result.append(QVariantMap{{QStringLiteral("name"), action.name()},
+                                  {QStringLiteral("text"), action.text()},
+                                  {QStringLiteral("iconName"), action.icon()}});
+    }
+    return result;
+}
+
+bool System::launchApplicationAction(const QUrl &launcher, const QString &name)
+{
+    // Resolve again: QML supplies only an action identity, never an Exec command.
+    const auto service = desktopService(launcher);
+    if (!service || !service->isApplication()) return false;
+    for (const auto &action : service->actions()) {
+        if (action.name() != name || action.noDisplay() || action.isSeparator()
+            || action.text().isEmpty() || action.exec().isEmpty()) continue;
+        auto *job = new KIO::ApplicationLauncherJob(action, this);
+        connect(job, &KJob::result, this, [this, launcher, name](KJob *job) {
+            const QString error = job->error() ? job->errorString() : QString();
+            if (!error.isEmpty()) qWarning() << "Singlr application action:" << error;
+            Q_EMIT applicationActionFinished(launcher, name, error);
+        });
+        job->start();
+        return true;
+    }
+    return false;
 }

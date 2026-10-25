@@ -26,7 +26,7 @@ class SessionActionsTests(unittest.TestCase):
                         '-I' + str(ROOT / 'shell/session/src'), '-I/usr/include/KF6/KService', '-I/usr/include/KF6/KConfigCore',
                         str(ROOT / 'tests/shell/session_actions.cpp'),
                         str(ROOT / 'shell/session/src/system.cpp'), moc,
-                        *flags, '-lKF6Service', '-lLayerShellQtInterface', '-o', cls.binary], check=True, timeout=60)
+                        *flags, '-lKF6Service', '-I/usr/include/KF6/KIO', '-I/usr/include/KF6/KIOGui', '-I/usr/include/KF6/KIOCore', '-I/usr/include/KF6/KCoreAddons', '-lKF6KIOGui', '-lKF6CoreAddons', '-lLayerShellQtInterface', '-o', cls.binary], check=True, timeout=60)
 
     def test_disconnected_bus_and_qml_contract(self):
         result = subprocess.run([self.binary, '--offline'], capture_output=True, text=True, timeout=10)

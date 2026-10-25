@@ -1,6 +1,7 @@
 #pragma once
 #include <QObject>
 #include <QUrl>
+#include <QVariantList>
 #include <QDBusConnection>
 #include <QTimer>
 #include <QDBusMessage>
@@ -27,6 +28,8 @@ public:
     QString userIcon() const { return m_userIcon; }
     bool sessionActionPending() const { return m_sessionActionPending; }
     Q_INVOKABLE QUrl launcherUrl(const QUrl &url) const;
+    Q_INVOKABLE QVariantList applicationActions(const QUrl &launcher) const;
+    Q_INVOKABLE bool launchApplicationAction(const QUrl &launcher, const QString &name);
     Q_INVOKABLE bool acceptsUrls(const QUrl &launcher, const QList<QUrl> &urls) const;
     Q_INVOKABLE void showInFolder(const QList<QUrl> &urls);
     Q_INVOKABLE void lockScreen();
@@ -42,6 +45,7 @@ public:
     // Window.screen: se recrea la superficie nativa en la pantalla indicada.
     Q_INVOKABLE void placeOnScreen(QObject *window, const QString &screenName);
 Q_SIGNALS:
+    void applicationActionFinished(const QUrl &launcher, const QString &name, const QString &error);
     void overviewAvailableChanged();
     void canSuspendChanged();
     void canHibernateChanged();
