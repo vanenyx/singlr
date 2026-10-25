@@ -12,8 +12,6 @@ import uuid
 KWIN_SETTINGS = [
     ('TabBox', 'LayoutName', 'singlr'),
     ('TabBox', 'ShowTabBox', 'true'),
-    ('org.kde.kdecoration2', 'library', 'org.kde.kwin.aurorae'),
-    ('org.kde.kdecoration2', 'theme', '__aurorae__svg__Singlr'),
     ('Effect-scale', 'OutScale', '0.4'),
     ('Effect-scale', 'OutOpacity', '0'),
     ('Effect-scale', 'InScale', '0.92'),
@@ -28,6 +26,10 @@ KWIN_SETTINGS = [
     ('Effect-singlrliquidglass', 'Intensity', '65'),
 ]
 
+
+# Settings Singlr no longer applies (native KDE decoration, P-023). A journal written
+# before that still restores them exactly, so the user's original decoration returns.
+RETIRED_KEYS = {('org.kde.kdecoration2', 'library'), ('org.kde.kdecoration2', 'theme')}
 
 # New keys have their own original snapshot, including absence. Accept pre-T248 journals.
 MATERIAL_KEYS = {('Plugins', 'singlr-liquidglassEnabled'),
@@ -112,14 +114,15 @@ def locked(path):
 def entries_from(path):
     entries = json.loads(path.read_text())
     allowed = {(group, key) for group, key, _ in KWIN_SETTINGS}
+    restorable = allowed | RETIRED_KEYS
     if (not isinstance(entries, list) or not entries
             or any(not isinstance(row, list) or len(row) != 3
                    or not all(isinstance(item, str) for item in row[:2])
-                   or (row[0], row[1]) not in allowed
+                   or (row[0], row[1]) not in restorable
                    or (row[2] is not None and not isinstance(row[2], str)) for row in entries)
             or len({(row[0], row[1]) for row in entries}) != len(entries)):
         raise ValueError(f'Backup KWin no reconocido: {path}')
-    keys = {(row[0], row[1]) for row in entries}
+    keys = {(row[0], row[1]) for row in entries} - RETIRED_KEYS
     # Backups written before the window switcher (TabBox) or materials existed remain valid.
     legacy = {(group, key) for group, key in allowed if group != 'TabBox'}
     if keys not in (allowed, legacy, allowed - MATERIAL_KEYS, legacy - MATERIAL_KEYS):

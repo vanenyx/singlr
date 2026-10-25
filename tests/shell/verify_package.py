@@ -23,7 +23,6 @@ def verify(stage):
         'usr/lib/systemd/user/singlr-shell.service',
         'usr/lib/systemd/user/singlr-shell-failed.service',
         'usr/lib/systemd/user/singlr-workspace.target',
-        'usr/share/aurorae/themes/Singlr/Singlrrc',
         'usr/share/kwin/tabbox/singlr/metadata.json',
         'usr/share/kwin/tabbox/singlr/contents/ui/main.qml',
         'usr/share/kwin/tabbox/singlr/contents/ui/SwitcherView.qml',

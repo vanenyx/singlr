@@ -23,7 +23,7 @@ class KWinTests(unittest.TestCase):
         patcher.start(); self.addCleanup(patcher.stop)
         self.backup = Path(tmp.name) / 'state/kwinrc-backup.json'
         self.values = {(g, k): 'previous' for g, k, _ in kwin.KWIN_SETTINGS}
-        self.values[('org.kde.kdecoration2', 'theme')] = ''
+        self.values[('Effect-scale', 'OutOpacity')] = ''
         self.values.pop(('Plugins', 'singlr-gesturesEnabled'))
         self.original = self.values.copy()
         self.writes = []
@@ -38,6 +38,19 @@ class KWinTests(unittest.TestCase):
             self.values.pop((group, key), None)
         else:
             self.values[group, key] = value
+
+    def test_journal_from_before_native_decoration_restores_the_original_decoration(self):
+        # P-023: Singlr no longer applies its Aurorae theme, but a journal written while it
+        # did must still put the user's original decoration back.
+        legacy = [[g, k, self.values.get((g, k))] for g, k, _ in kwin.KWIN_SETTINGS]
+        legacy += [['org.kde.kdecoration2', 'library', 'org.kde.breeze'], ['org.kde.kdecoration2', 'theme', 'Breeze']]
+        self.backup.parent.mkdir(parents=True, exist_ok=True)
+        self.backup.write_text(__import__("json").dumps(legacy))
+        self.backup.chmod(0o600)
+        self.values[('org.kde.kdecoration2', 'library')] = 'org.kde.kwin.aurorae'
+        self.assertTrue(kwin.restore(self.backup))
+        self.assertEqual(self.values[('org.kde.kdecoration2', 'library')], 'org.kde.breeze')
+        self.assertEqual(self.values[('org.kde.kdecoration2', 'theme')], 'Breeze')
 
     def test_backup_precedes_first_write_and_roundtrip_preserves_absent_and_empty(self):
         def write(group, key, value):

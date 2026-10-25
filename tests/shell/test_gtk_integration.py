@@ -1,8 +1,7 @@
-"""T241: native KDE adapter, real Plasma tool and upstream Aurorae lookup."""
+"""T241: native KDE adapter and real Plasma tool."""
 import configparser
 import os
 from pathlib import Path
-import shlex
 import shutil
 import subprocess
 import tempfile
@@ -47,28 +46,15 @@ class GtkIntegrationTests(unittest.TestCase):
             self.assertEqual(config['Colors:Window']['DecorationFocus'], '235,94,169')
             self.assertEqual(config['General']['AccentColor'], '235,94,169')
 
-    @unittest.skipUnless(shutil.which('g++'), 'requires compiler and Qt6Svg development files')
-    def test_aurorae_user_only_lookup_reproduces_empty_buttons(self):
-        with tempfile.TemporaryDirectory() as temp:
-            base = Path(temp)
-            flags = subprocess.run(['pkg-config', '--cflags', '--libs', 'Qt6Gui', 'Qt6Svg'],
-                                   capture_output=True, text=True, check=True).stdout
-            binary = base / 'gtk-csd'
-            subprocess.run(['g++', '-std=c++17', '-fPIC', str(ROOT / 'tests/shell/gtk_csd.cpp'),
-                            '-o', str(binary), *shlex.split(flags)], check=True, capture_output=True)
-            result = subprocess.run([str(binary), str(ROOT / 'decoration/aurorae/Singlr')],
-                                    env=isolated(base), text=True, capture_output=True, check=True)
-            self.assertIn('system/source=16/16 user-missing=0/16 temporary-user-copy=16/16', result.stdout)
-
     @unittest.skipUnless(shutil.which('plasma-apply-lookandfeel'), 'requires Plasma global theme tool')
-    def test_color_only_auto_themes_preserve_singlr_decoration(self):
+    def test_color_only_auto_themes_preserve_the_window_decoration(self):
         with tempfile.TemporaryDirectory() as temp:
             env = isolated(Path(temp))
             themes = Path(env['XDG_DATA_HOME']) / 'plasma/look-and-feel'
             themes.parent.mkdir()
             shutil.copytree(ROOT / 'session/look-and-feel', themes)
             kwin = Path(env['XDG_CONFIG_HOME']) / 'kwinrc'
-            original = '[org.kde.kdecoration2]\nlibrary=org.kde.kwin.aurorae\ntheme=__aurorae__svg__Singlr\n'
+            original = '[org.kde.kdecoration2]\nlibrary=org.kde.breeze\ntheme=Breeze\n'
             kwin.write_text(original)
             for theme, background in [('dev.singlr.dark', '32,35,38'), ('dev.singlr.light', '239,240,241')]:
                 subprocess.run(['plasma-apply-lookandfeel', '--apply', theme], env=env,

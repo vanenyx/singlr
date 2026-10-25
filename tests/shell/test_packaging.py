@@ -67,7 +67,6 @@ class PackagingTests(unittest.TestCase):
         for kind, name in [('effects', 'singlr-overview'), ('scripts', 'singlr-gestures')]:
             metadata = json.loads((ROOT / f'kwin/{kind}/{name}/metadata.json').read_text())
             self.assertEqual(metadata['KPlugin']['Id'], name)
-        self.assertTrue((ROOT / 'decoration/aurorae/Singlr/Singlrrc').is_file())
 
     @unittest.skipUnless(shutil.which('g++') and shutil.which('pkg-config'), 'requires Qt build tools')
     def test_reload_bridge(self):

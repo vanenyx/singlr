@@ -32,8 +32,6 @@ file(WRITE "${PROJECT_BINARY_DIR}/Theme.qml" "${theme}")
 install(FILES "${PROJECT_BINARY_DIR}/Theme.qml" DESTINATION "${KDE_INSTALL_LIBDIR}/singlr/qml/Singlr/Ui")
 install(DIRECTORY third_party/ DESTINATION "${KDE_INSTALL_LIBDIR}/singlr/third_party"
     FILES_MATCHING PATTERN "*.ttf" PATTERN "LICENSE*")
-install(DIRECTORY decoration/aurorae/Singlr DESTINATION "${KDE_INSTALL_DATADIR}/aurorae/themes"
-    FILES_MATCHING PATTERN "*.svg" PATTERN "*.json" PATTERN "*.desktop" PATTERN "*rc")
 foreach(kind effects scripts)
     if(kind STREQUAL "effects")
         set(package singlr-overview)
