@@ -13,6 +13,13 @@ Item {
     readonly property var notificationCenter: notifications
     function closeMenus() { bar.closeMenu(); dock.closeMenu(); notifications.historyOpen = false; controlWindow.visible = false; }
     // Invocado desde C++ (tecla Meta, Alt+Espacio) a través de D-Bus.
+    function showApplications() { openLauncher(true); }
+    function activateDockEntry(n) { return dock.activateEntry(n); }
+    function toggleNotifications() {
+        const wasOpen = notifications.historyOpen;
+        closeMenus(); launcher.close(); overlay.visible = false;
+        if (!wasOpen) notifications.toggle();
+    }
     function toggleLauncher() { if (overlay.visible) launcher.close(); else openLauncher(false); }
     function openLauncher(apps = false) { closeMenus(); overlay.visible = true; launcher.open(apps); overlay.requestActivate(); focusTimer.restart(); }
     Timer { id: focusTimer; interval: 0; onTriggered: launcher.focusInput() }
@@ -43,6 +50,7 @@ Item {
     }
     Window {
         id: controlWindow
+        objectName: "controlCenterWindow"
         transientParent: null; visible: false; width: 340
         height: Math.min(screen.height - 64, controlPanel.implicitHeight); color: "transparent"
         property bool singlrBlur: true
@@ -82,7 +90,7 @@ Item {
         LayerShell.Window.exclusionZone: 28
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
         LayerShell.Window.scope: "dock"
-        TopBar { id: bar; notificationsUnread: notifications.unread; onControlCenterRequested: session.toggleControlCenter(); onNotificationsRequested: { controlWindow.visible = false; bar.closeMenu(); dock.closeMenu(); notifications.toggle(); } sessionMode: true; menuHost: barMenuHost; trayMenuHost: traySurfaceHost; width: parent.width; height: 28; activeAppName: dock.activeAppName; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
+        TopBar { id: bar; notificationsUnread: notifications.unread; onControlCenterRequested: session.toggleControlCenter(); onNotificationsRequested: session.toggleNotifications(); sessionMode: true; menuHost: barMenuHost; trayMenuHost: traySurfaceHost; width: parent.width; height: 28; activeAppName: dock.activeAppName; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.showApplications() }
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
     }
     Window {
@@ -93,7 +101,7 @@ Item {
         LayerShell.Window.exclusionZone: 58
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone  // None: un clic en el dock o la barra no debe quitar la actividad a la app de delante
         LayerShell.Window.scope: "dock"
-        Dock { id: dock; sessionMode: true; menuHost: dockMenuHost; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
+        Dock { id: dock; objectName: "sessionDock"; sessionMode: true; menuHost: dockMenuHost; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.showApplications() }
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
     }
     Window {
@@ -191,7 +199,7 @@ Item {
         UiText { id: trayTooltip; anchors.centerIn: parent; text: bar.tray.tooltipText; font.pixelSize: 12 }
     }
     Window {
-        id: overlay; transientParent: null; visible: false; color: "transparent"
+        id: overlay; objectName: "launcherWindow"; transientParent: null; visible: false; color: "transparent"
         LayerShell.Window.layer: LayerShell.Window.LayerOverlay
         LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
         LayerShell.Window.exclusionZone: -1
@@ -199,7 +207,7 @@ Item {
         LayerShell.Window.scope: "utility"
         MouseArea { anchors.fill: parent; onClicked: launcher.close() }
         Launcher {
-            id: launcher; visible: false; sessionMode: true; x: (parent.width-width)/2; y: Math.min(286,(parent.height-height)/2)
+            id: launcher; objectName: "sessionLauncher"; visible: false; sessionMode: true; x: (parent.width-width)/2; y: Math.min(286,(parent.height-height)/2)
             onClosed: overlay.visible = false
         }
     }

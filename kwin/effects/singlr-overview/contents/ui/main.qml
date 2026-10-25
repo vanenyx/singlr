@@ -10,7 +10,47 @@ KWin.SceneEffect {
 
     property bool activated: false
     property real reveal: 0
-    Behavior on reveal { NumberAnimation { duration: 120 } }
+    // SwipeGestureHandler has no enabled/active property in KWin 6.8.1.
+    // Keep the starting state for the whole gesture, including cancellation.
+    property int gestureDirection: 0 // 1 = opening, -1 = closing
+    Behavior on reveal { enabled: effect.gestureDirection === 0; NumberAnimation { duration: 120 } }
+
+    function updateGesture(direction, progress) {
+        if (gestureDirection === 0) {
+            if (progress <= 0 || (direction === 1 ? activated : !activated)) return;
+            gestureDirection = direction;
+            hideTimer.stop();
+            visible = true;
+        }
+        if (gestureDirection !== direction) return;
+        reveal = direction === 1 ? progress : 1 - progress;
+    }
+    function finishGesture(direction, completed) {
+        if (gestureDirection !== direction) return;
+        const open = completed ? direction === 1 : reveal >= 0.5;
+        gestureDirection = 0;
+        if (open) {
+            hideTimer.stop();
+            activated = true;
+            reveal = 1;
+        } else deactivate();
+    }
+    KWin.SwipeGestureHandler {
+        direction: KWin.SwipeGestureHandler.Direction.Up
+        deviceType: KWin.SwipeGestureHandler.Device.Touchpad
+        fingerCount: 3
+        onProgressChanged: effect.updateGesture(1, progress)
+        onActivated: effect.finishGesture(1, true)
+        onCancelled: effect.finishGesture(1, false)
+    }
+    KWin.SwipeGestureHandler {
+        direction: KWin.SwipeGestureHandler.Direction.Down
+        deviceType: KWin.SwipeGestureHandler.Device.Touchpad
+        fingerCount: 3
+        onProgressChanged: effect.updateGesture(-1, progress)
+        onActivated: effect.finishGesture(-1, true)
+        onCancelled: effect.finishGesture(-1, false)
+    }
 
     function toggle() {
         if (activated) {

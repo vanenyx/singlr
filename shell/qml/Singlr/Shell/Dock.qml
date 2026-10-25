@@ -209,6 +209,20 @@ Rectangle {
         }
         return false;
     }
+    // Number the visible entries: pinned launchers/windows, then unpinned apps.
+    // Model rows can be interleaved, so resolve the presentation order first.
+    function activateEntry(n) {
+        if (!Number.isInteger(n) || n < 1 || n > 9) return false;
+        let position = 0;
+        for (const pinnedPass of [true, false]) {
+            for (let row = 0; row < pinned.count; ++row) {
+                const item = pinned.itemAt(row) as TaskEntry;
+                if (!item || item.pinnedTask !== pinnedPass) continue;
+                if (++position === n) { activate(row, item.model); return true; }
+            }
+        }
+        return false;
+    }
     function activate(row, task) {
         hideTooltip(); closeMenu();
         if (task.IsLauncher) { beginLaunch(row, task); return; }

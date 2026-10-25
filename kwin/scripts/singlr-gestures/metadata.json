@@ -1,0 +1,10 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Id": "singlr-gestures",
+        "Name": "Singlr Gestures",
+        "Description": "Gestos del escritorio y aplicaciones de Singlr",
+        "EnabledByDefault": false
+    },
+    "X-Plasma-API": "declarativescript"
+}

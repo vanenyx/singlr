@@ -151,3 +151,21 @@ Reversión de una instalación posterior: descargar solo este efecto con
 `qdbus6 org.kde.KWin /Effects org.kde.kwin.Effects.unloadEffect singlr-overview`
 en el bus correcto, deshabilitar su entrada en el kwinrc correspondiente y retirar
 solo su carpeta instalada. La prueba aislada no necesita alterar kwinrc habitual.
+
+## Gestos — T226 / P-015
+
+Tres dedos arriba en panel táctil revela la vista proporcionalmente al progreso;
+tres abajo con la vista abierta la cierra. Durante el gesto no hay animación
+interpolada; al terminar completa el fundido de 120 ms. `activated` completa la
+dirección; `cancelled` resuelve al estado abierto si la opacidad alcanzó 0,5, o al
+cerrado en caso contrario. El umbral de 0,5 es una solución técnica derivada.
+No se añadió `pragma ComponentBehavior: Bound`.
+
+`SwipeGestureHandler.Direction.Up/Down`, `Device.Touchpad`, `fingerCount`,
+`progress`, `progressChanged`, `activated` y `cancelled` se contrastaron con la
+biblioteca instalada KWin 6.8.1 y la [documentación oficial](https://api.kde.org/qml-org-kde-kwin-swipegesturehandler.html).
+La consulta del código fuente etiquetado v6.8.x no fue accesible; ver el
+[detalle de compatibilidad](../../scripts/singlr-gestures/README.md).
+Se repitió `tools/check-qml.sh`: qmllint exit 0 con los avisos de metadatos
+indicados arriba y carga **Ready=1**, cero errores. Quedan pendientes los gestos
+físicos, la cancelación/reversión y la convivencia con otros efectos en KWin real.

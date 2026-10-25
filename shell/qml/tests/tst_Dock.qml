@@ -82,6 +82,19 @@ Item {
             bridge.overviewAvailable = false; verify(!button.visible);
             dock.systemBridge = null; verify(!button.visible);
         }
+        function test_numberedEntrySharesCycle() {
+            doubleModel.delayActive = true;
+            for (let i = 0; i < 5; ++i) verify(dock.activateEntry(1));
+            compare(doubleModel.calls, ["activate:30", "activate:40", "activate:10", "activate:20", "activate:30"]);
+        }
+        function test_numberedPresentationOrderAndBounds() {
+            doubleModel.append({AppName:"Pinned", AppId:"pinned", IsLauncher:true, HasLauncher:true});
+            // The pinned app is model row 1, but visible entry 1.
+            verify(dock.activateEntry(1)); compare(doubleModel.calls, ["new"]);
+            verify(dock.activateEntry(2)); compare(doubleModel.calls, ["new", "activate:30"]);
+            for (const n of [0, -1, 3, 9, 10, 1.5, NaN, "1"]) verify(!dock.activateEntry(n));
+            compare(doubleModel.calls, ["new", "activate:30"]);
+        }
         function test_fourWindowsReorderEveryActivation() {
             const size = [dock.width, dock.height, dock.visible];
             for (let i = 0; i < 3; ++i) {
