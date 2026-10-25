@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Ajustes de Singlr
+Exec=singlr-settings
+Icon=preferences-desktop-theme
+Categories=Settings;
+Terminal=false
