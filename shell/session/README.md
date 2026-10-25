@@ -268,3 +268,86 @@ el módulo; no puede ejecutarse limpieza desde un proceso muerto.
   not permitted`; no se ejecutó integración real con NetworkManager/KWallet.
 
 No se modificó `shell/qml/**`, no se creó commit y no se tocó la sesión KDE activa.
+
+## T227: atajos globales (P-015)
+
+Implementa el [contrato de entrada](../../docs/phase1/input-contract.md). Solo al
+adquirir `org.kde.plasmashell`, fuera de `--windowed`, registra el dock 1…9 con
+Autoloading y el componente `singlr`/«Singlr». Meta+N y Meta+A se asignan como
+predeterminados y activos si no hay otro propietario, incluidas secuencias que
+los solapen. Los conflictos y métodos QML ausentes quedan en `shell.log`.
+`/PlasmaShell.singlrShowApplications` invoca `showApplications()`; los demás
+mensajes del puente conservan `toggleLauncher()`.
+
+Antes de modificar las cuatro acciones KWin se guarda un JSON atómico, versión 1,
+componente `kwin`, `actions` por nombre y listas de secuencias de hasta cuatro
+enteros Qt. Conserva atajos deshabilitados, alternativos y de varios pasos.
+`$XDG_RUNTIME_DIR/singlr-live/shortcuts-backup.json` nunca se sobrescribe si existe;
+un backup inválido impide aplicar cambios y se conserva. Un bloqueo de archivo
+serializa aplicar/restaurar. Meta+Up/Down se liberan primero en las cuatro acciones,
+se asignan a maximizar/minimizar y se conservan las demás teclas de Quick Tile.
+Las escrituras se comprueban leyendo de nuevo `shortcutKeys`.
+
+SIGTERM/SIGINT se convierten en salida del bucle Qt; `aboutToQuit` restaura.
+Una salida temprana del lanzador también intenta restaurar. Solo se borra el
+backup tras confirmar todas las escrituras. `stop` ejecuta el modo headless
+`--restore-shortcuts` si queda un backup, incluso sin supervisor activo; un error
+conserva el archivo y devuelve fallo para reintentar. `--keep-plasma` pasa
+`--no-takeover` para evitar una sustitución accidental si Plasma no está presente.
+
+API contrastada con cabeceras locales KGlobalAccel **6.31.0**, Qt **6.12.0** y
+[XML D-Bus oficial](https://github.com/KDE/kglobalaccel/blob/master/src/org.kde.KGlobalAccel.xml):
+`shortcutKeys(as) → a(ai)`, `setForeignShortcutKeys(as, a(ai))`. Se reutilizan los
+operadores D-Bus exportados de `QKeySequence` y se registran `QList<int>`,
+`QKeySequence` y `QList<QKeySequence>` como
+[KGlobalAccel](https://github.com/KDE/kglobalaccel/blob/master/src/kglobalaccel.cpp).
+No se modifican los valores predeterminados de las acciones KWin.
+
+### Comandos para Claude, fuera del sandbox
+
+Tras integrar las funciones QML de Codex 1, en la sesión Wayland real:
+
+```bash
+shell/session/build.sh
+python3 -m unittest discover -s tests/shell -p 'test_shortcuts.py' -v
+python3 -m unittest discover -s tests/shell -p 'test_live_*.py' -v
+tools/singlr-live.sh start
+python3 -m json.tool "$XDG_RUNTIME_DIR/singlr-live/shortcuts-backup.json"
+# Pinza o llamada directa; debe abrir todas las aplicaciones:
+qdbus6 org.kde.plasmashell /PlasmaShell singlrShowApplications
+# Revisar mensajes de conflicto/métodos ausentes:
+rg 'Singlr:|conflicto' "$XDG_RUNTIME_DIR/singlr-live/shell.log"
+```
+
+Comprobar Meta y Alt+F1, Meta+1…9 (incluidas posiciones sin aplicación), Meta+N,
+Meta+A y Meta+Up/Down con una ventana normal. Revisar que Quick Tile conserva
+otros atajos. Si Meta+N/A ya pertenece a otra acción, esa acción debe seguir
+funcionando y aparecer el conflicto; no hace falta cambiar atajos para probarlo.
+Cambiar un QML para provocar recarga: el backup debe seguir representando el
+estado original y Meta+Up/Down deben seguir funcionando.
+
+```bash
+tools/singlr-live.sh stop
+test ! -e "$XDG_RUNTIME_DIR/singlr-live/shortcuts-backup.json"
+# Confirmar en Preferencias de KDE los cuatro atajos previos del JSON.
+# Repetir la parada: no debe cambiar nada.
+tools/singlr-live.sh stop
+# Recuperación directa sin interfaz gráfica, si queda un backup tras un cierre forzado:
+shell/session/build/singlr-shell --restore-shortcuts
+```
+
+Las pruebas nativas verifican el formato y la política de conflictos sin bus;
+una prueba adicional usa exclusivamente un servicio KGlobalAccel simulado en
+`dbus-run-session` para aplicar dos veces, conservar backup, restaurar y rechazar
+JSON inválido. El sandbox impide crear su socket: esa prueba se marca omitida,
+no como integración aprobada. Las pruebas Python cubren el respaldo de `stop`
+y la conservación del backup ante errores. La interacción real queda pendiente
+de ejecutar estos comandos con Claude; no se ha cambiado la sesión KDE del host.
+
+Evidencia T227 ejecutada en este sandbox (24-10-2026): `build.sh` PASS (solo aviso
+preexistente de `useLayerShell`); suite `test_*.py`: **36 pruebas, 34 PASS y 2
+omitidas** por sockets D-Bus bloqueados (76,205 s). Las omitidas son la nueva
+restauración D-Bus simulada y la prueba D-Bus de tray preexistente. Sonda del
+binario real `--restore-shortcuts` sin display y con QPA deliberadamente inválido:
+PASS con backup ausente, y fallo esperado conservando un backup inválido.
+`check_setup.py` y `git diff --check`: PASS. Sin commit.
