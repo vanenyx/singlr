@@ -9,6 +9,9 @@ Item {
     id: row
     required property var players
     readonly property var player: players.currentPlayer
+    // A player stays registered after its media is gone (e.g. Chrome with the
+    // tab closed): show the row only while it has something to play.
+    readonly property bool hasMedia: !!player && !!player.track && player.playbackStatus !== Mpris.PlaybackStatus.Stopped
     readonly property bool playing: !!player && player.playbackStatus === Mpris.PlaybackStatus.Playing
     readonly property bool canToggle: !!player && player.canControl && (playing ? player.canPause : player.canPlay)
     readonly property alias menu: choices
@@ -39,7 +42,7 @@ Item {
     }
     // The slot always occupies 36 px, even without a player. No progress polling.
     Item {
-        anchors.fill: parent; visible: !!row.player
+        anchors.fill: parent; visible: row.hasMedia
         Image {
             id: art; width: 28; height: 28; anchors.verticalCenter: parent.verticalCenter
             source: row.player ? row.player.artUrl : ""; sourceSize: Qt.size(28 * Screen.devicePixelRatio, 28 * Screen.devicePixelRatio)

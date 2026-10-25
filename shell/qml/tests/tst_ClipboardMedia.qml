@@ -54,7 +54,7 @@ Item {
             clipboard.append({uuid: "c", display: "Imagen", type: 4, starred: true, decoration: ""});
             playerModel.clear(); playerModel.append({identity: "Automático", isMultiplexer: true}); playerModel.append({identity: "mpv", isMultiplexer: false});
             playerModel.currentPlayer = fixture.player; playerModel.currentIndex = 0;
-            fixture.player.canControl = true; fixture.player.canGoNext = true; fixture.player.canPause = true; fixture.player.playbackStatus = Mpris.PlaybackStatus.Playing; fixture.player.lastAction = "";
+            fixture.player.canControl = true; fixture.player.canGoNext = true; fixture.player.canPause = true; fixture.player.playbackStatus = Mpris.PlaybackStatus.Playing; fixture.player.lastAction = ""; fixture.player.track = "Tema";
         }
         function test_searchKeyboardCopyAndFixedSize() {
             const panel = createTemporaryObject(clipboardFactory, fixture);
@@ -126,6 +126,18 @@ Item {
             playerModel.currentPlayer = null; compare(row.height, 36); verify(!row.canToggle);
             playerModel.currentPlayer = fixture.player; compare(row.height, 36);
             row.openMenu(row, 100, 20); playerModel.remove(1); tryCompare(row.menu, "opened", false);
+        }
+        function test_mediaRowHiddenWhenPlayerHasNoMedia() {
+            const row = createTemporaryObject(mediaFactory, fixture);
+            verify(row.hasMedia);
+            // Chrome keeps its MPRIS player after the tab with music is closed.
+            fixture.player.track = ""; refreshPlayer();
+            verify(!row.hasMedia);
+            fixture.player.track = "Tema"; fixture.player.playbackStatus = Mpris.PlaybackStatus.Stopped; refreshPlayer();
+            verify(!row.hasMedia);
+            fixture.player.playbackStatus = Mpris.PlaybackStatus.Paused; refreshPlayer();
+            verify(row.hasMedia);
+            compare(row.implicitHeight, 36); // the slot never changes size (P-011)
         }
         function test_clipboardLifecycleAndExclusivity() {
             const session = createTemporaryObject(sessionFactory, fixture);

@@ -28,6 +28,7 @@ Item {
         return opened;
     }
     onScreensChanged: {
+        Qt.callLater(placeDock);
         closeMenus();
         if (launcher) launcher.close();
         launcherOpen = false;
@@ -261,6 +262,16 @@ Item {
     }
     // --no-background: sobre una sesión Plasma real se conserva el fondo del usuario.
     readonly property bool showBackground: Qt.application.arguments.indexOf("--no-background") < 0
+    // The dock lives for the whole session, unlike the per-screen surfaces. A
+    // layer surface stays on the output it was created for and closes with it
+    // (resume, unplug), so re-create it on the dock screen whenever outputs change.
+    function placeDock() {
+        // qmllint disable unqualified
+        if (!effectiveDockScreen || typeof SinglrSystem === "undefined" || !SinglrSystem.placeOnScreen) return;
+        SinglrSystem.placeOnScreen(dockWindow, effectiveDockScreen.name);
+        // qmllint enable unqualified
+        dockWindow.visible = true;
+    }
     Window {
         screen: session.effectiveDockScreen
         id: dockWindow; transientParent: null; visible: true; width: dock.width; height: dock.height; property bool singlrBlur: true; property int singlrBlurRadius: 14; color: "transparent"

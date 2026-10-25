@@ -32,8 +32,10 @@ Item {
                 LayerShell.Window.scope: "desktop"
                 Background {
                     anchors.fill: parent
-                    pixelSize: Qt.size(Math.ceil(surfaces.outputScreen.width * surfaces.outputScreen.devicePixelRatio),
-                                       Math.ceil(surfaces.outputScreen.height * surfaces.outputScreen.devicePixelRatio))
+                    // The screen object goes away before this delegate when an output is removed.
+                    pixelSize: surfaces.outputScreen ? Qt.size(Math.ceil(surfaces.outputScreen.width * surfaces.outputScreen.devicePixelRatio),
+                                                               Math.ceil(surfaces.outputScreen.height * surfaces.outputScreen.devicePixelRatio))
+                                                     : Qt.size(0, 0)
                     TapHandler { onTapped: surfaces.controller.closeMenus() }
                 }
             }
