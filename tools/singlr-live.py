@@ -17,6 +17,7 @@ QML = ROOT / 'shell/qml'
 STATE = Path(os.environ.get('XDG_RUNTIME_DIR', '/tmp')) / 'singlr-live'
 PIDFILE = STATE / 'supervisor.pid'
 PLASMA_MARK = STATE / 'plasma-stopped'
+NETWORK_MARK = STATE / 'networkmanagement-unloaded'
 PLASMA_UNIT = 'plasma-plasmashell.service'
 LOG = STATE / 'shell.log'
 
@@ -39,7 +40,31 @@ def plasma(action):
     return subprocess.run(['systemctl', '--user', action, PLASMA_UNIT], capture_output=True, text=True)
 
 
+def network_module(action):
+    return subprocess.run(['qdbus6', 'org.kde.kded6', '/kded',
+                           f'org.kde.kded6.{action}Module', 'networkmanagement'],
+                          capture_output=True, text=True)
+
+
+def unload_network_module():
+    # Mark before mutation so a failed startup can still restore KDE's agent.
+    NETWORK_MARK.write_text('1')
+    result = network_module('unload')
+    if result.returncode or result.stdout.strip().lower() != 'true':
+        raise RuntimeError('No se pudo descargar networkmanagement: ' + result.stderr.strip())
+
+
 def restore_plasma():
+    if NETWORK_MARK.exists():
+        try:
+            result = network_module('load')
+            restored = result.returncode == 0 and result.stdout.strip().lower() == 'true'
+        except OSError:
+            restored = False
+        if restored:
+            NETWORK_MARK.unlink(missing_ok=True)
+        else:
+            print('No se pudo restaurar networkmanagement; reintente tools/singlr-live.sh stop', file=sys.stderr)
     if PLASMA_MARK.exists():
         # Un arranque/parada rápido puede dejar la unidad en «failed»; se limpia antes de arrancar.
         plasma('reset-failed')
@@ -62,31 +87,39 @@ def supervise(takeover):
     signal.signal(signal.SIGINT, finish)
     shell = None
     seen = {}
-    while not stop:
-        current = snapshot()
-        if shell is None or shell.poll() is not None or current != seen:
-            if shell is not None and shell.poll() is None:
-                shell.terminate()
-                try:
-                    shell.wait(timeout=3)
-                except subprocess.TimeoutExpired:
-                    shell.kill()
-            seen = current
-            with LOG.open('a') as log:
-                log.write(f'--- {time.strftime("%H:%M:%S")} recarga\n')
-                log.flush()
-                shell = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT,
-                                         env={**os.environ, 'QT_FORCE_STDERR_LOGGING': '1'})
-            # Si el QML tiene un error, el shell muere: se espera al siguiente cambio.
-            time.sleep(1)
-            if shell.poll() is not None:
-                seen = snapshot()
-        time.sleep(0.4)
-    if shell is not None and shell.poll() is None:
-        shell.terminate()
-        shell.wait(timeout=3)
-    restore_plasma()
-    PIDFILE.unlink(missing_ok=True)
+    try:
+        while not stop:
+            current = snapshot()
+            if shell is None or shell.poll() is not None or current != seen:
+                if shell is not None and shell.poll() is None:
+                    shell.terminate()
+                    try:
+                        shell.wait(timeout=3)
+                    except subprocess.TimeoutExpired:
+                        shell.kill()
+                        shell.wait()
+                seen = current
+                with LOG.open('a') as log:
+                    log.write(f'--- {time.strftime("%H:%M:%S")} recarga\n')
+                    log.flush()
+                    shell = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT,
+                                             env={**os.environ, 'QT_FORCE_STDERR_LOGGING': '1'})
+                # Si el QML tiene un error, el shell muere: se espera al siguiente cambio.
+                time.sleep(1)
+                if shell.poll() is not None:
+                    seen = snapshot()
+            time.sleep(0.4)
+    finally:
+        # Release Singlr's agent before allowing KDE's to register, including errors.
+        if shell is not None and shell.poll() is None:
+            shell.terminate()
+            try:
+                shell.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                shell.kill()
+                shell.wait()
+        restore_plasma()
+        PIDFILE.unlink(missing_ok=True)
 
 
 def main():
@@ -100,14 +133,19 @@ def main():
             print('Se requiere una sesión Wayland', file=sys.stderr)
             return 1
         takeover = '--keep-plasma' not in sys.argv
-        if takeover and plasma('is-active').stdout.strip() == 'active':
-            PLASMA_MARK.write_text('1')
-            plasma('stop')
-        if takeover:
-            # KRunner se retira para que Singlr reciba su nombre de D-Bus (Alt+Espacio);
-            # vuelve solo por activación D-Bus cuando Singlr se detiene.
-            subprocess.run(['kquitapp6', 'krunner'], capture_output=True)
-        if os.fork():
+        try:
+            if takeover:
+                unload_network_module()
+                if plasma('is-active').stdout.strip() == 'active':
+                    PLASMA_MARK.write_text('1')
+                    plasma('stop')
+                # KRunner vuelve por activación D-Bus al detener Singlr.
+                subprocess.run(['kquitapp6', 'krunner'], capture_output=True)
+            child = os.fork()
+        except (OSError, RuntimeError):
+            restore_plasma()
+            raise
+        if child:
             time.sleep(1.5)
             print(f'Singlr en vivo activo. Registro: {LOG}. Para quitarlo: tools/singlr-live.sh stop')
             return 0
@@ -120,6 +158,7 @@ def main():
             supervise(takeover)
         finally:
             restore_plasma()
+            PIDFILE.unlink(missing_ok=True)
         return 0
     if action == 'stop':
         pid = running()

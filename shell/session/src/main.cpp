@@ -11,9 +11,11 @@
 #include <QGuiApplication>
 #include <QIcon>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include <QQuickWindow>
 #include <QRegion>
 #include <QUrl>
+#include "secretagent.h"
 
 namespace
 {
@@ -154,21 +156,24 @@ int main(int argc, char *argv[])
     }
     QQmlApplicationEngine engine;
     engine.addImportPath(QString::fromLocal8Bit(argv[1]));
+    auto bus = QDBusConnection::sessionBus();
+    const bool ownsPlasma = !app.arguments().contains(QStringLiteral("--windowed"))
+        && bus.registerService(QStringLiteral("org.kde.plasmashell"));
+    if (ownsPlasma)
+        engine.rootContext()->setContextProperty(QStringLiteral("SinglrSecrets"), new SecretAgent(&engine));
     engine.load(QUrl::fromLocalFile(QString::fromLocal8Bit(argv[2])));
     if (engine.rootObjects().isEmpty())
         return 1;
     // Solo en modo sesión: el objeto raíz expone la sesión en su propiedad «surface».
     QObject *session = engine.rootObjects().constFirst()->property("surface").value<QObject *>();
     if (session && session->metaObject()->indexOfMethod("toggleLauncher()") >= 0) {
-        auto bus = QDBusConnection::sessionBus();
         auto *bridge = new LauncherBridge(session);
         // Los nombres solo están libres si plasmashell y krunner no se ejecutan.
-        if (bus.registerService(QStringLiteral("org.kde.plasmashell")))
+        if (ownsPlasma)
             bus.registerVirtualObject(QStringLiteral("/PlasmaShell"), bridge);
         // Meta llega por kglobalaccel como acción del componente «plasmashell». Mientras Plasma está
         // parado, Singlr registra esa misma acción y carga el atajo ya guardado sin modificarlo.
-        if (bus.interface()->registeredServiceNames().value().contains(QStringLiteral("org.kde.plasmashell"))
-            && bus.interface()->serviceOwner(QStringLiteral("org.kde.plasmashell")).value() == bus.baseService()) {
+        if (ownsPlasma) {
             auto *action = new QAction(&app);
             action->setObjectName(QStringLiteral("activate application launcher"));
             action->setProperty("componentName", QStringLiteral("plasmashell"));
