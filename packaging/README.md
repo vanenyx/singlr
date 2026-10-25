@@ -70,3 +70,19 @@ tras integrar QML; las pruebas nativas solo acreditan el despacho del puente.
 - CMake, Ninja y ECM ausentes: no se configuró/compiló con CMake ni se
   ejecutó DESTDIR/makepkg. `tools/check-cmake.sh` informa la omisión con código 0.
 - Sin prueba de login ni recarga visual; no se modificó la sesión KDE.
+
+## Actualizaciones con pacman (repositorio local)
+
+`tools/build-package.sh` construye desde `HEAD` con versión `0.1.0.r<commits>.g<hash>`
+(convención VCS de Arch: cada build es más nueva) y la añade a `.local/repo` con `repo-add`.
+Configuración única, decidida por el creador (requiere sudo):
+
+```ini
+# /etc/pacman.conf, al final
+[singlr]
+SigLevel = Optional TrustAll
+Server = file:///home/sunw/Projects/singlr/.local/repo
+```
+
+Después Singlr se actualiza con el sistema: `sudo pacman -Syu`. El repositorio es local y
+sin firma; publicarlo (remoto, firma, checksums fijos) sigue pendiente de autorización.
