@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "shortcuts.h"
 #include <KGlobalAccel>
 #include <KGlobalShortcutInfo>
@@ -219,6 +220,23 @@ void registerActions(QObject *parent, QObject *session)
             for (const auto &owner : KGlobalAccel::globalShortcutsByKey(key, type))
                 owners.append({owner.componentUniqueName(), owner.uniqueName()});
         if (!canAssign(available, owners, QStringLiteral("singlr"), name)) {
+            // Si la tecla pertenece a una acción de plasmashell, Singlr ya es dueño de ese componente
+            // mientras sustituye a Plasma: atiende esa misma acción sin cambiar el atajo guardado.
+            // Cuando Plasma vuelve, la acción vuelve a ser suya.
+            const auto plasmaOwner = std::find_if(owners.cbegin(), owners.cend(), [](const QStringList &owner) {
+                return owner.value(0) == QLatin1String("plasmashell");
+            });
+            if (owners.size() == 1 && plasmaOwner != owners.cend()) {
+                auto *borrowed = new QAction(parent);
+                borrowed->setObjectName(plasmaOwner->value(1));
+                borrowed->setProperty("componentName", "plasmashell");
+                KGlobalAccel::self()->setShortcut(borrowed, {key}, KGlobalAccel::Autoloading);
+                QObject::connect(borrowed, &QAction::triggered, session, [session, method = entry.method] {
+                    QMetaObject::invokeMethod(session, method);
+                });
+                qInfo() << "Singlr: atiende" << key << "mediante plasmashell /" << plasmaOwner->value(1);
+                continue;
+            }
             qWarning() << "Singlr: conflicto de atajo; se conserva" << key << owners;
             continue;
         }
