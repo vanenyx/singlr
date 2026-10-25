@@ -734,3 +734,161 @@ Validación pendiente para Claude, fuera del sandbox, sin tocar la sesión KDE:
 4. Repetir la medición P-016 con el controlador normal y con dos salidas, en
    reposo, con panel abierto y después de cerrarlo. Guardar informe; este encargo
    no declara cumplido el presupuesto ni validada la integración multisalida.
+
+### T238 — portapapeles y «Ahora suena»
+
+Soluciones técnicas derivadas de T238/P-005/P-011…P-017; la composición sigue
+pendiente de revisión visual del creador. No hay commit ni cambios de sesión.
+
+- `ClipboardBackend` vive desde la construcción de `Session`. Retiene
+  `Clipboard.KlipperInterface` **y** `Clipboard.HistoryModel`: el primero conserva
+  `Klipper::self()` y su registro `org.kde.klipper`, objeto `/klipper`, interfaz
+  `org.kde.klipper.klipper`; el segundo expone el historial estándar. No se crea
+  otro almacén, proceso de portapapeles ni servicio D-Bus. El módulo mantiene sus
+  preferencias de persistencia, selección e imágenes (no se fuerzan imágenes si
+  Klipper las tiene desactivadas). Se usa `moveToTop(uuid)` para copiar el MIME
+  original, `remove(uuid)`, escritura del rol `starred` y `removeRows(0, rowCount())` para vaciar todo tras confirmar.
+- `ClipboardPanel`: 760 × 542, centrado por layer-shell (`AnchorNone`), lista de
+  filas de 44 px y búsqueda literal insensible a mayúsculas. Enter copia y cierra;
+  flechas navegan; Escape cierra. Clic derecho/«…» abren `ContextMenu`; fijación,
+  eliminación y vaciado con segundo clic en el menú. Un cambio estructural del
+  historial invalida el menú para no operar sobre otro UUID. El vaciado
+  incluye los fijados («¿Vaciar todo?»): usa la operación nativa `removeRows`,
+  porque `clearHistory()` del binario instalado abre además un KMessageDialog
+  Qt Widgets (contrastado mediante objdump), incompatible con P-012 y el host
+  QGuiApplication. No se cambian preferencias «no volver a preguntar». Miniaturas desde
+  `decoration` de Klipper, URL con Phosphor link, texto plano y truncado. Reutiliza
+  Glass, ListItem, ContextMenu, ShortcutHint, UiText y Theme; Glass admite ahora
+  el material `Theme.surface` cuando KWin proporciona el blur. ListItem admite
+  espacio final reservado sin alterar sus valores por defecto.
+- El panel se carga mediante `DeferredLoader` (caché de 2500 ms); su ventana se
+  destruye al cerrar, y después se libera búsqueda, proxy, delegados y menú.
+  Solo el backend indispensable para registrar el historial permanece activo.
+- `shortcuts.cpp`: `toggleClipboard()`, Meta+V, acción estándar
+  `show-on-mouse-pos`. El `kglobalshortcutsrc` consultado la conserva en
+  `[plasmashell]`; el binario `libklipper.so.6` instalado registra
+  `org.kde.klipper`. Se atiende el propietario estándar encontrado en KGlobalAccel
+  (ambos nombres admitidos), usando Autoloading; en perfil nuevo se usa
+  `org.kde.klipper`. No se sustituye un propietario personalizado. La inscripción
+  ocurre después de cargar el backend y reemplaza el destino local del atajo,
+  manteniendo los atajos guardados. Falta contrastarlo en el bus privado real.
+- `NowPlaying` reserva **36 px** en la página principal del centro de control,
+  también sin reproductor; el contenido solo aparece cuando existe uno. Es una
+  propuesta de composición derivada: evita variar alto/posición por reproducción.
+  Comparado con la página anterior añade un hueco fijo de 44 px con su espaciado.
+  Carátula de 28 px, título/artista en una línea, anterior/pausa/siguiente y «…»;
+  capacidades MPRIS deshabilitan acciones, con nombres accesibles y foco de Tool.
+  Comparte `SystemControls.mediaPlayers` (Mpris2Model ya residente para teclas);
+  Automático usa el multiplexor activo de KDE, y el menú permite elegir otro.
+  No hay progreso ni nuevos temporizadores de sondeo. Los delegados del selector
+  se destruyen junto con el centro de control.
+
+Contratos comprobados en **Qt 6.12.0 / plasma-workspace 6.8.1-1**: qmltypes de
+`org.kde.plasma.private.clipboard` y `.mpris`, `KlipperPopup.qml`,
+`ClipboardMenu.qml`, `DelegateToolButtons.qml`, `ImageItemDelegate.qml` instalados.
+Código oficial de referencia (rama master, contrastado con contratos/binarios
+locales, no sustituye una prueba de la versión instalada):
+[KlipperInterface](https://github.com/KDE/plasma-workspace/blob/master/klipper/declarative/klipperinterface.cpp),
+[registro D-Bus y acciones](https://github.com/KDE/plasma-workspace/blob/master/klipper/klipper.cpp),
+[Mpris2Model](https://github.com/KDE/plasma-workspace/blob/master/libkmpris/mpris2model.cpp),
+[registro y resolución de QAction en KGlobalAccel](https://github.com/KDE/kglobalaccel/blob/master/src/kglobalaccel.cpp).
+`ldd /usr/bin/ksmserver` y sus cadenas no muestran enlace/referencia a Klipper;
+no se detectó otro requisito de ksmserver para este servicio. Las apps copian por
+el protocolo del compositor y los clientes D-Bus conservan el contrato de KDE.
+Esto no acredita aún cierre/restauración ni comunicación con todas las apps.
+
+**Límite offscreen detectado:** crear incluso HistoryModel sin KlipperInterface
+produce SIGSEGV en el módulo instalado. Una traza local con manejador de señales
+(no ptrace) lo sitúa en `SystemClipboard → xcb_get_input_focus →
+xcb_send_request_with_fds64`, con conexión nula. El backend solo instancia esos
+tipos en Wayland/XCB; en offscreen expone un modelo vacío.
+Las pruebas de interacción usan un proxy doble y no invocan el backend nativo.
+No se ha ocultado el fallo como una prueba de integración aprobada.
+
+Comprobaciones (logs en `/tmp/t238-*.log`):
+
+```bash
+QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software \
+  /usr/lib/qt6/bin/qmltestrunner -import shell/qml -input shell/qml/tests
+# suite completa: 133 passed, 0 failed. Dobles, teclado, búsqueda literal,
+# representación visual por tipo (no transferencia nativa de MIME),
+# fijar/desfijar, eliminar UUID filtrado, confirmación, invalidación,
+# capacidades MPRIS, selector y ciclo de vida/exclusividad del panel.
+tools/check-shell.sh --output /tmp/t238-desktop.png
+# compilación C++, qmllint, carga offscreen y PNG: PASS.
+python3 -m unittest discover -s tests/shell -p 'test_shortcuts.py' -v
+# unidad nativa PASS; D-Bus privado SKIP (socket denegado).
+git diff --check
+```
+
+Preview con dobles renderizado e inspeccionado: `/tmp/t238-preview.png`, panel
+sobre fondo/barra y fila multimedia aparte para revisar densidad. No representa
+una reproducción real ni blur de KWin. Antes no existían estas superficies.
+
+**P-016 pendiente:** `tools/measure-resources.sh --output /tmp/t238-resources`
+intentado; falla antes de arrancar KWin: D-Bus `Failed to bind socket … Operation
+not permitted`. No hay PSS/CPU del backend ni declaración de presupuesto cumplido.
+La salida acredita limpieza sin procesos restantes y configuración host idéntica.
+Para aislar el coste incremental, medir main y esta rama con los mismos XDG
+privados, historial vacío y luego 20 textos/una imagen, al inicio, tras abrir y
+5 s después de cerrar. Conservar `smaps_rollup`, ticks CPU en reposo y diferencia
+PSS; no atribuir al backend el coste conjunto de otros cambios concurrentes.
+
+Verificación para Claude **fuera del sandbox**, siempre en bus/pantalla privados:
+
+```bash
+tools/run-singlr.sh --duration 240
+# Mantener abierto; copiar la ruta SINGLR_SESSION_FILE que imprime.
+tools/measure-resources.sh --output /tmp/t238-resources-real
+```
+
+En otra terminal, ejecutar comandos en el entorno del descriptor, nunca en el
+bus host (sustituir la ruta; el ejemplo no busca ni elige sesiones por deducción):
+
+```bash
+python3 - /tmp/singlr-session-XXXX/session.json <<'PY'
+import json, os, subprocess, sys
+from pathlib import Path
+session = json.loads(Path(sys.argv[1]).read_text())
+assert session['kind'] == 'singlr-nested-v1'
+env = os.environ | session['env']
+def run(*args):
+    return subprocess.run(args, env=env, check=True, text=True, capture_output=True).stdout.strip()
+print(run('qdbus6', 'org.kde.klipper', '/klipper'))  # comprobar interfaz completa
+for text in ('T238 primero', 'T238 segundo', 'https://kde.org'):
+    run('qdbus6', 'org.kde.klipper', '/klipper',
+        'org.kde.klipper.klipper.setClipboardContents', text)
+print(run('qdbus6', 'org.kde.klipper', '/klipper',
+          'org.kde.klipper.klipper.getClipboardHistoryMenu'))
+# El controlador desactiva global shortcuts en KWin anidado: invocar la misma
+# acción en el daemon privado evita que Meta+V lo capture la sesión anfitriona.
+for component in ('org.kde.klipper', 'plasmashell'):
+    try:
+        path = run('qdbus6', 'org.kde.kglobalaccel', '/kglobalaccel',
+                   'org.kde.KGlobalAccel.getComponent', component)
+        run('qdbus6', 'org.kde.kglobalaccel', path,
+            'org.kde.kglobalaccel.Component.invokeShortcut', 'show-on-mouse-pos')
+        break
+    except subprocess.CalledProcessError:
+        continue
+else:
+    raise RuntimeError('No se encontró la acción estándar privada')
+# Si mpv y su complemento MPRIS están disponibles:
+# subprocess.Popen(['mpv', '/ruta/a/un/audio.ogg'], env=env)
+# print(run('playerctl', '-l'))
+# print(run('playerctl', 'metadata'))
+PY
+```
+
+Comprobar que los textos anteriores se registraron **sin abrir antes** el panel;
+Enter y posterior Ctrl+V en una app privada, fijar/desfijar, borrar y cancelar/
+confirmar vaciado; imagen copiada desde una app privada y miniatura. Repetir al
+liberar/recrear la UI. Revisar que solo aparece Singlr al invocar el atajo y no el
+popup de Plasma. Para teclado físico Meta+V hace falta un entorno aislado donde
+el host no capture la combinación (el controlador seguro actual usa
+`--no-global-shortcuts`); la invocación D-Bus no acredita la pulsación física.
+Con un reproductor MPRIS real (mpv requiere plugin MPRIS si la instalación no lo
+incluye), comprobar playerctl, anterior/pausa/siguiente y retirada del player;
+con dos, Automático y selección explícita, carátula y título largos, sin cambiar
+el alto del panel. Revisar foco/Escape/clic fuera y log QML. Conservar pendientes
+hasta ejecutar estos recorridos; no tocar la sesión KDE habitual.

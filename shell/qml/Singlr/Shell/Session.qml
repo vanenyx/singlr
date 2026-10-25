@@ -34,6 +34,7 @@ Item {
         launcherScreen = effectiveDockScreen;
         controlScreen = effectiveDockScreen;
         historyScreen = effectiveDockScreen;
+        clipboardScreen = effectiveDockScreen;
     }
     Instantiator {
         id: screenSurfaces
@@ -62,6 +63,47 @@ Item {
     Connections {
         target: session.systemBridge
         function onSessionActionCancelled(action: string) { session.reportSessionCancellation(action); }
+    }
+    ClipboardBackend { id: clipboardBackend; objectName: "clipboardBackend" }
+    property bool clipboardOpen: false
+    readonly property var clipboardPanel: clipboardContent.item
+    property var clipboardScreen: effectiveDockScreen
+    function toggleClipboard() {
+        const wasOpen = clipboardOpen;
+        closeMenus(); if (launcher) launcher.close(); launcherOpen = false;
+        clipboardScreen = effectiveDockScreen;
+        clipboardOpen = !wasOpen;
+        if (clipboardOpen) { clipboardPanel.open(); clipboardFocus.restart(); }
+    }
+    Timer { id: clipboardFocus; interval: 0; onTriggered: if (session.clipboardOpen) session.clipboardPanel.focusInput() }
+    DeferredLoader {
+        id: clipboardContent; objectName: "clipboardLoader"; opened: session.clipboardOpen
+        Component.onCompleted: setSource(Qt.resolvedUrl("ClipboardPanel.qml"), {history: clipboardBackend.history})
+        onLoaded: {
+            const panel = item as Item;
+            panel.parent = Qt.binding(() => clipboardSurface.item ? (clipboardSurface.item as Window).contentItem : session);
+            panel.visible = Qt.binding(() => session.clipboardOpen);
+        }
+    }
+    Connections { target: clipboardContent.item; function onClosed() { session.clipboardOpen = false; } }
+    Loader {
+        id: clipboardSurface; objectName: "clipboardSurface"; active: session.clipboardOpen
+        onLoaded: (item as Window).requestActivate()
+        sourceComponent: Component {
+            Window {
+                screen: session.clipboardScreen
+                transientParent: null; visible: true; width: 760; height: 542; color: "transparent"
+                property bool singlrBlur: true
+                property int singlrBlurRadius: 12
+                LayerShell.Window.layer: LayerShell.Window.LayerOverlay
+                LayerShell.Window.anchors: LayerShell.Window.AnchorNone
+                LayerShell.Window.exclusionZone: 0
+                LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
+                LayerShell.Window.activateOnShow: true
+                LayerShell.Window.scope: "utility"
+                onActiveChanged: if (!active && visible) session.clipboardOpen = false
+            }
+        }
     }
     property bool launcherOpen: false
     property bool controlOpen: false
@@ -142,6 +184,7 @@ Item {
         }
     }
     function closeMenus() {
+        session.clipboardOpen = false;
         closeBarMenus();
         dock.closeMenu();
         notifications.historyOpen = false;
