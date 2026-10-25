@@ -4,6 +4,7 @@
 #include <QDBusObjectPath>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QDebug>
 #include <QTemporaryDir>
 #include <QThread>
 #include <QUrl>
@@ -12,7 +13,8 @@
 
 #define CHECK(...) do { if (!(__VA_ARGS__)) throw std::runtime_error("line " + std::to_string(__LINE__) + ": " #__VA_ARGS__); } while (false)
 
-void until(std::function<bool()> condition)
+void until(std::function<bool()> condition, const QString &expected,
+           std::function<QString()> diagnostics = {})
 {
     QElapsedTimer timer;
     timer.start();
@@ -20,12 +22,19 @@ void until(std::function<bool()> condition)
         QCoreApplication::processEvents();
         QThread::msleep(1);
     }
-    CHECK(condition());
+    if (!condition())
+        throw std::runtime_error((QString("Timed out waiting for %1. %2")
+            .arg(expected, diagnostics ? diagnostics() : QString())).toStdString());
 }
 
 class Fixture : public QDBusVirtualObject {
 public:
     QStringList calls;
+    QStringList received; // Full history survives calls.clear() between test phases.
+    QString diagnostics() const
+    {
+        return "Received D-Bus calls:\n  " + received.join("\n  ");
+    }
     QString suspendCapability = "yes", hibernateCapability = "challenge";
     bool deny = false, accounts = true;
     QString icon;
@@ -33,6 +42,9 @@ public:
     bool handleMessage(const QDBusMessage &m, const QDBusConnection &bus) override
     {
         calls << m.member();
+        QString description;
+        QDebug(&description) << m;
+        received << description;
         QVariantList args;
         if (m.member() == "CanSuspend") args << suspendCapability;
         else if (m.member() == "CanHibernate") args << hibernateCapability;
@@ -94,10 +106,10 @@ int main(int argc, char **argv)
             for (const auto &property : {"canSuspend", "canHibernate", "userName", "userIcon"})
                 CHECK(system.metaObject()->indexOfProperty(property) >= 0);
             system.lockScreen();
-            until([&] { return failures == 1; });
+            until([&] { return failures == 1; }, "lockScreen failure on disconnected bus");
             CHECK(!system.sessionActionPending());
             system.suspend();
-            until([&] { return failures == 2; });
+            until([&] { return failures == 2; }, "suspend failure on disconnected bus");
             CHECK(!system.sessionActionPending());
             std::cout << "PASS offline\n";
             return 0;
@@ -119,7 +131,14 @@ int main(int argc, char **argv)
         System system(client, client);
         int failures = 0;
         QObject::connect(&system, &System::sessionActionFailed, &app, [&](const QString &, const QString &) { ++failures; });
-        until([&] { return system.canSuspend() && system.canHibernate() && system.userName() == "Test Person"; });
+        auto diagnostics = [&] {
+            return fixture.diagnostics() + QString("\nState: canSuspend=%1 canHibernate=%2 userName=%3 pending=%4 failures=%5")
+                .arg(system.canSuspend()).arg(system.canHibernate()).arg(system.userName())
+                .arg(system.sessionActionPending()).arg(failures);
+        };
+        until([&] { return system.canSuspend() && system.canHibernate() && system.userName() == "Test Person"; },
+              "login1.CanSuspend/CanHibernate replies and Accounts.FindUserById -> Properties.GetAll (Test Person)",
+              diagnostics);
         CHECK(system.userIcon() == QUrl::fromLocalFile(face.fileName()).toString());
         CHECK(fixture.calls.size() == 5); // only overview, two Can*, Accounts lookup + GetAll
         fixture.calls.clear();
@@ -127,8 +146,10 @@ int main(int argc, char **argv)
             const int count = fixture.calls.count(method);
             action();
             CHECK(system.sessionActionPending());
-            until([&] { return !system.sessionActionPending(); });
-            CHECK(fixture.calls.count(method) == count + 1);
+            until([&] { return !system.sessionActionPending(); }, method + " reply (action no longer pending)", diagnostics);
+            if (fixture.calls.count(method) != count + 1)
+                throw std::runtime_error((QString("Expected exactly one new D-Bus %1 call; before=%2 after=%3. %4")
+                    .arg(method).arg(count).arg(fixture.calls.count(method)).arg(diagnostics())).toStdString());
         };
         invoke([&] { system.lockScreen(); system.lockScreen(); }, "Lock"); // one in-flight action
         invoke([&] { system.suspend(); }, "Suspend");
@@ -137,12 +158,12 @@ int main(int argc, char **argv)
         fixture.suspendCapability = "no";
         int failed = failures;
         system.suspend();
-        until([&] { return failures == failed + 1; });
+        until([&] { return failures == failed + 1; }, "login1.CanSuspend(no) rejection without another Suspend", diagnostics);
         CHECK(!system.canSuspend() && fixture.calls.count("Suspend") == 1);
         fixture.hibernateCapability = "na";
         failed = failures;
         system.hibernate();
-        until([&] { return failures == failed + 1; });
+        until([&] { return failures == failed + 1; }, "login1.CanHibernate(na) rejection without another Hibernate", diagnostics);
         CHECK(!system.canHibernate() && fixture.calls.count("Hibernate") == 1);
         invoke([&] { system.reboot(); }, "Reboot");
         invoke([&] { system.powerOff(); }, "PowerOff");
@@ -162,7 +183,7 @@ int main(int argc, char **argv)
         qunsetenv("XDG_SESSION_ID");
         failed = failures;
         system.logout();
-        until([&] { return failures == failed + 1; });
+        until([&] { return failures == failed + 1; }, "logout failure without XDG_SESSION_ID", diagnostics);
         CHECK(fixture.calls.count("TerminateSession") == 1);
         qputenv("XDG_SESSION_DESKTOP", "Singlr");
         failed = failures;
@@ -170,14 +191,18 @@ int main(int argc, char **argv)
         CHECK(failures == failed + 1 && !fixture.calls.contains("StopUnit"));
         qputenv("XDG_SESSION_ID", "singlr-test-session");
         system.logout();
-        until([&] { return fixture.calls.contains("StopUnit"); });
+        until([&] { return fixture.calls.contains("StopUnit"); },
+              "systemd1.Manager.StopUnit(singlr-workspace.target, replace)", diagnostics);
         CHECK(system.sessionActionPending());
         CHECK(fixture.calls.count("TerminateSession") == 1); // supervisor, not dying shell, terminates installed session
         fixture.accounts = false;
+        const int lookups = fixture.calls.count("FindUserById");
         System fallback(client, client);
         CHECK(!fallback.userName().isEmpty());
         CHECK(fallback.userIcon() == QUrl::fromLocalFile(face.fileName()).toString());
-        until([&] { return fixture.calls.count("FindUserById") == 2; });
+        // The startup calls were cleared above; compare against this phase's baseline.
+        until([&] { return fixture.calls.count("FindUserById") == lookups + 1; },
+              "one additional Accounts.FindUserById for fallback identity", diagnostics);
         std::cout << "PASS session-actions\n";
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';
