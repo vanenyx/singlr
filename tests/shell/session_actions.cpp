@@ -192,6 +192,7 @@ int main(int argc, char **argv)
               "login1.CanSuspend/CanHibernate replies and Accounts.FindUserById -> Properties.GetAll (Test Person)",
               diagnostics);
         CHECK(system.userIcon() == QUrl::fromLocalFile(face.fileName()).toString());
+        fixture.calls.removeAll("ShowItems"); // checked above
         CHECK(fixture.calls.size() == 5); // only overview, two Can*, Accounts lookup + GetAll
         fixture.calls.clear();
         auto invoke = [&](std::function<void()> action, const QString &method) {
