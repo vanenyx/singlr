@@ -63,9 +63,9 @@ esas operaciones.
 /usr/lib/qt6/bin/qmllint -I shell/qml -i shell/qml/Singlr/Ui/qmldir \
   shell/qml/Shell.qml shell/qml/Singlr/Ui/*.qml \
   shell/qml/Singlr/Shell/*.qml shell/qml/tests/*.qml
-XDG_CACHE_HOME=/tmp/singlr-t203-cache QT_QPA_PLATFORM=offscreen \
-QT_QUICK_BACKEND=software QT_FORCE_STDERR_LOGGING=1 \
-  /usr/lib/qt6/bin/qmltestrunner -import shell/qml -input shell/qml/tests
+# Perfil KDE, XDG y bus temporales: el módulo Singlr.System migra y escribe la
+# apariencia de KDE, y nunca debe tocar la configuración ni la sesión del usuario.
+cmake --build build && tools/test-qml.sh
 ```
 
 ---
