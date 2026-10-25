@@ -73,7 +73,9 @@ def unload_network_module():
 def kwin_read(group, key):
     result = subprocess.run(['kreadconfig6', '--file', 'kwinrc', '--group', group, '--key', key],
                             capture_output=True, text=True)
-    return result.stdout.rstrip('\n') if result.stdout else None
+    # kreadconfig6 devuelve vacío si la clave no existe: se trata como ausente para borrarla al restaurar.
+    value = result.stdout.rstrip('\n')
+    return value or None
 
 
 def kwin_write(group, key, value):
@@ -98,7 +100,7 @@ def restore_kwin():
     if not KWIN_BACKUP.exists():
         return
     for group, key, value in json.loads(KWIN_BACKUP.read_text()):
-        kwin_write(group, key, value)
+        kwin_write(group, key, value or None)
     subprocess.run(['qdbus6', 'org.kde.KWin', '/KWin', 'reconfigure'], capture_output=True)
     KWIN_BACKUP.unlink(missing_ok=True)
     if AURORAE.is_symlink():
