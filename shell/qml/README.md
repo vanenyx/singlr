@@ -373,3 +373,33 @@ Validación: qmllint completo sin avisos; qmltestrunner offscreen/software **61
  es una composición QML con datos de prueba, revisada visualmente, no una captura
  de la sesión del creador. El log en vivo termina con carga correcta, sin errores
  QML nuevos; permanece el aviso previo de registro del portal para `singlr-shell`.
+
+### T216 — Listas de conectividad estables
+
+Corrección solicitada por el creador, sin decisiones visuales nuevas.
+`StableDeviceModel` conserva un `ListModel`: actualiza `payload` con
+`setProperty`, añade al final y elimina por clave, sin `clear` ni reasignación.
+Wi-Fi usa UUID o SSID + seguridad; al abrir fija el orden por señal y coloca
+la conexión activa primero. Solo vuelve a ordenar al abrir o cambiar la conexión.
+El cursor, la contraseña, el menú y la confirmación retienen cambios estructurales;
+al liberarlos se aplica la última instantánea. Las señales y estados siguen vivos.
+La contraseña y el menú se conservan en objetos por clave fuera del delegado;
+al cancelar, cerrar la página o desaparecer la red se limpia la contraseña.
+Bluetooth comparte el modelo estable por dirección y congela bajo el cursor.
+Ambas vistas usan `reuseItems: false`, sin transiciones estructurales ni navegación
+automática por índice. El alto del panel se actualiza como máximo cada 400 ms.
+
+Contratos: Qt 6.12.0 y plasma-nm 6.8.1 instalados; roles del `NetworkModel`
+contrastados en los qmltypes locales. APIs de
+[ListModel](https://doc.qt.io/qt-6/qml-qtqml-models-listmodel.html) y
+[ListView](https://doc.qt.io/qt-6/qml-qtquick-listview.html) verificadas en Qt oficial.
+
+Verificado: comando qmllint completo anterior, exit 0 sin avisos;
+qmltestrunner offscreen/software **70 passed / 0 failed**. El nuevo doble de
+NetworkModel cambia orden/señal cada 100 ms mientras se escribe: conserva objeto,
+clave y contraseña, actualiza señal y aplaza altas/bajas/movimientos. También
+comprueba menú/olvido, hover, reapertura y cambios de conexión.
+El log en vivo tras la recarga de 19:32:10 no presenta errores QML nuevos;
+permanece el aviso previo del portal. Los avisos D-Bus de la suite corresponden
+al sandbox. Queda la confirmación física del creador con su red y Bluetooth;
+las pruebas no conectan, desconectan ni olvidan dispositivos reales.

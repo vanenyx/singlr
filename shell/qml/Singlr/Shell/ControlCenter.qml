@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls.Basic as Controls
-import org.kde.kitemmodels as ItemModels
 import org.kde.kcmutils as KCMUtils
 import org.kde.plasma.private.volume as Volume
 import org.kde.plasma.private.battery as Battery
@@ -20,7 +19,10 @@ Controls.Control {
     signal closed()
     signal openRequested()
     implicitWidth: 340
-    implicitHeight: Math.min(760, (page === "main" ? content.implicitHeight : detailContent.implicitHeight) + 32)
+    property real requestedHeight: Math.min(760, (page === "main" ? content.implicitHeight : detailContent.implicitHeight) + 32)
+    implicitHeight: 400
+    onRequestedHeightChanged: if (!heightThrottle.running) heightThrottle.start()
+    Timer { id: heightThrottle; interval: 400; onTriggered: panel.implicitHeight = panel.requestedHeight }
     Behavior on implicitHeight { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
     property string page: "main"
     // Context property supplied only by the native session launcher.
@@ -93,10 +95,6 @@ Controls.Control {
     Network.Handler { id: networkHandler }
     Network.NetworkModel { id: networks }
     Network.AppletProxyModel { id: availableNetworks; sourceModel: networks }
-    ItemModels.KSortFilterProxyModel {
-        id: signalNetworks; sourceModel: availableNetworks
-        sortRoleName: "Signal"; sortOrder: Qt.DescendingOrder; sortColumn: 0
-    }
     Volume.SinkModel { id: sinks }
     Controls.ScrollView {
         x: panel.page === "main" ? 16 : -16; y: 16
@@ -283,48 +281,45 @@ Controls.Control {
             }
             Column {
                 width: parent.width; visible: panel.page === "wifi" && enabledConnections.wirelessEnabled
-                // Two groups preserve strict signal ordering after the active network.
-                Repeater {
-                    model: signalNetworks
-                    delegate: WifiRow {
-                        required property var model
-                        width: detailContent.width; networkData: model; handler: networkHandler
-                        visible: panel.page === "wifi" && eligible && connected && !(panel.secretId && networkData.Ssid === panel.secretSsid)
-                        height: visible ? implicitHeight : 0
-                        editing: visible && panel.opened && panel.editingWifi === identity
-                        onEditRequested: panel.editingWifi = identity
-                        onEditFinished: panel.editingWifi = ""
-                        onSettingsRequested: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement")
-                    }
-                }
-                Repeater {
-                    model: signalNetworks
-                    delegate: WifiRow {
-                        required property var model
-                        width: detailContent.width; networkData: model; handler: networkHandler
-                        visible: panel.page === "wifi" && eligible && !connected && !(panel.secretId && networkData.Ssid === panel.secretSsid)
-                        height: visible ? implicitHeight : 0
-                        editing: visible && panel.opened && panel.editingWifi === identity
-                        onEditRequested: panel.editingWifi = identity
-                        onEditFinished: panel.editingWifi = ""
-                        onSettingsRequested: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement")
-                    }
+                StableWifiList {
+                    width: detailContent.width
+                    sourceModel: availableNetworks
+                    handler: networkHandler
+                    pageActive: panel.opened && panel.page === "wifi"
+                    secretActive: !!panel.secretId
+                    suppressedSsid: panel.secretSsid
+                    onSettingsRequested: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement")
                 }
                 ControlRow { width: parent.width; glyph: "gear"; text: "Más ajustes de red…"; onClicked: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement") }
             }
             Column {
                 width: parent.width; visible: panel.page === "bluetooth" && panel.bluetoothEnabled
-                Repeater {
-                    model: Bluetooth.Manager.devices
+                ListView {
+                    id: bluetoothList
+                    width: parent.width; height: contentHeight
+                    interactive: false; reuseItems: false; currentIndex: -1
+                    cacheBuffer: 100000
+                    model: bluetoothStable.rows
+                    add: null; remove: null; displaced: null; move: null; populate: null
+                    HoverHandler { id: bluetoothHover }
+                    StableDeviceModel { id: bluetoothStable; frozen: bluetoothHover.hovered }
+                    function refresh() {
+                        const snapshot = Bluetooth.Manager.devices.filter(device => device.paired).map(device => ({
+                            deviceKey: device.address, payload: {name: device.friendlyName, connected: device.connected, device: device}, rank: 0, active: device.connected
+                        }));
+                        bluetoothStable.sync(snapshot);
+                    }
+                    Timer { interval: 100; running: panel.page === "bluetooth"; repeat: true; triggeredOnStart: true; onTriggered: bluetoothList.refresh() }
                     delegate: ControlRow {
-                        required property var modelData
-                        width: parent.width; height: visible ? 36 : 0
-                        visible: modelData.paired
+                        required property var payload
+                        width: bluetoothList.width; height: 36
                         glyph: "bluetooth"
-                        status: modelData.connected ? "Conectado" : ""
-                        text: modelData.friendlyName; clip: true
+                        status: payload.connected ? "Conectado" : ""
+                        text: payload.name; clip: true
                         onClicked: {
-                            const call = modelData.connected ? modelData.disconnectFromDevice() : modelData.connectToDevice();
+                            const device = payload.device;
+                            if (!device) return;
+                            const call = device.connected ? device.disconnectFromDevice() : device.connectToDevice();
                             call.finished.connect(function(result) { if (result.error) panel.errorText = result.errorText; });
                         }
                     }

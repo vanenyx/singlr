@@ -11,15 +11,27 @@ Column {
     property bool editing: false
     property string secretRequestId: ""
     property bool secretRetry: false
-    property bool menuOpen: false
-    property bool confirmingForget: false
+    property var rowState: QtObject {
+        property bool menuOpen: false
+        property bool confirmingForget: false
+        property string password: ""
+    }
+    property bool menuOpen: rowState.menuOpen
+    property bool confirmingForget: rowState.confirmingForget
+    onMenuOpenChanged: if (rowState.menuOpen !== menuOpen) rowState.menuOpen = menuOpen
+    onConfirmingForgetChanged: if (rowState.confirmingForget !== confirmingForget) rowState.confirmingForget = confirmingForget
+    Connections {
+        target: wifi.rowState
+        function onMenuOpenChanged() { wifi.menuOpen = wifi.rowState.menuOpen; }
+        function onConfirmingForgetChanged() { wifi.confirmingForget = wifi.rowState.confirmingForget; }
+    }
     signal secretSubmitted(string password)
     signal secretCancelled()
     onSecretRequestIdChanged: {
         password.clear();
         if (secretRequestId) Qt.callLater(function() { if (wifi.secretRequestId && wifi.editing) password.forceActiveFocus(); });
     }
-    readonly property string identity: networkData.DevicePath + ":" + networkData.Ssid
+    readonly property string identity: networkData.Uuid ? "uuid:" + networkData.Uuid : "ssid:" + JSON.stringify([networkData.Ssid, networkData.SecurityType])
     readonly property bool connected: networkData.ConnectionState === Network.Enums.Activated
     readonly property bool activating: networkData.ConnectionState === Network.Enums.Activating
     readonly property bool eligible: networkData.Type === Network.Enums.Wireless
@@ -37,7 +49,8 @@ Column {
     spacing: 4
     onVisibleChanged: if (!visible) { menuOpen = false; confirmingForget = false; }
     onEditingChanged: {
-        password.clear(); password.echoMode = TextInput.Password;
+        if (!editing) password.clear();
+        password.echoMode = TextInput.Password;
         if (editing) password.forceActiveFocus();
         else { menuOpen = false; confirmingForget = false; }
     }
@@ -123,6 +136,8 @@ Column {
             Controls.TextField {
                 id: password
                 objectName: "wifiPassword"
+                text: wifi.rowState.password
+                onTextChanged: if (wifi.rowState.password !== text) wifi.rowState.password = text
                 width: parent.width - 32; height: 32
                 placeholderText: "Contraseña de la red"; echoMode: TextInput.Password
                 font.family: Theme.family; font.pixelSize: 13

@@ -15,3 +15,5 @@ SystemControls 1.0 SystemControls.qml
 OnScreenDisplay 1.0 OnScreenDisplay.qml
 ControlCenter 1.0 ControlCenter.qml
 WifiRow 1.0 WifiRow.qml
+StableDeviceModel 1.0 StableDeviceModel.qml
+StableWifiList 1.0 StableWifiList.qml
