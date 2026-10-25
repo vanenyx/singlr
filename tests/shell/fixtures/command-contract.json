@@ -1,0 +1,272 @@
+{
+  "provenance": {
+    "kind": "contract-not-live-capture",
+    "notes": "Runner IDs verified from installed Plasma 6.8.1 metadata. Representative KRunner roles/ranges; scores are test inputs, not measured matches. Replace/supplement with capture-command-fixture.sh outside socket-restricted sandbox.",
+    "sources": [
+      "https://api.kde.org/krunner-querymatch.html",
+      "https://raw.githubusercontent.com/KDE/systemsettings/master/runner/systemsettingsrunner.cpp",
+      "https://raw.githubusercontent.com/KDE/plasma-workspace/master/runners/appstream/appstreamrunner.cpp",
+      "https://raw.githubusercontent.com/KDE/plasma-workspace/master/runners/services/servicerunner.cpp"
+    ]
+  },
+  "queries": [
+    {
+      "query": "bluetooth",
+      "general": [
+        {
+          "runnerId": "krunner_appstream",
+          "id": "krunner_appstream_WatchFlower",
+          "display": "Obtener WatchFlower…",
+          "subtext": "",
+          "category": "Centro de software",
+          "relevance": 0.7,
+          "categoryRelevance": 0,
+          "decoration": "",
+          "actions": [],
+          "urls": []
+        },
+        {
+          "runnerId": "krunner_appstream",
+          "id": "krunner_appstream_toolBLEx",
+          "display": "Obtener toolBLEx…",
+          "subtext": "",
+          "category": "Centro de software",
+          "relevance": 0.7,
+          "categoryRelevance": 0,
+          "decoration": "",
+          "actions": [],
+          "urls": []
+        },
+        {
+          "runnerId": "krunner_appstream",
+          "id": "krunner_appstream_BudsLink",
+          "display": "Obtener BudsLink…",
+          "subtext": "",
+          "category": "Centro de software",
+          "relevance": 0.7,
+          "categoryRelevance": 0,
+          "decoration": "",
+          "actions": [],
+          "urls": []
+        },
+        {
+          "runnerId": "krunner_systemsettings",
+          "id": "krunner_systemsettings_kcm_bluetooth",
+          "display": "Bluetooth",
+          "subtext": "",
+          "category": "Preferencias del sistema",
+          "relevance": 1,
+          "categoryRelevance": 100,
+          "decoration": "",
+          "actions": [],
+          "urls": [
+            "file:///usr/share/applications/kcm_bluetooth.desktop"
+          ]
+        },
+        {
+          "runnerId": "krunner_systemsettings",
+          "id": "krunner_systemsettings_kcm_app-permissions",
+          "display": "Permisos de la aplicación",
+          "subtext": "",
+          "category": "Preferencias del sistema",
+          "relevance": 0.5,
+          "categoryRelevance": 50,
+          "decoration": "",
+          "actions": [],
+          "urls": [
+            "file:///usr/share/applications/kcm_app-permissions.desktop"
+          ]
+        }
+      ],
+      "settings": [
+        {
+          "runnerId": "krunner_systemsettings",
+          "id": "krunner_systemsettings_kcm_bluetooth",
+          "display": "Bluetooth",
+          "subtext": "",
+          "category": "Preferencias del sistema",
+          "relevance": 1,
+          "categoryRelevance": 100,
+          "decoration": "",
+          "actions": [],
+          "urls": [
+            "file:///usr/share/applications/kcm_bluetooth.desktop"
+          ]
+        },
+        {
+          "runnerId": "krunner_systemsettings",
+          "id": "krunner_systemsettings_kcm_app-permissions",
+          "display": "Permisos de la aplicación",
+          "subtext": "",
+          "category": "Preferencias del sistema",
+          "relevance": 0.5,
+          "categoryRelevance": 50,
+          "decoration": "",
+          "actions": [],
+          "urls": [
+            "file:///usr/share/applications/kcm_app-permissions.desktop"
+          ]
+        },
+        {
+          "runnerId": "krunner_appstream",
+          "id": "krunner_appstream_WatchFlower",
+          "display": "Obtener WatchFlower…",
+          "subtext": "",
+          "category": "Centro de software",
+          "relevance": 0.7,
+          "categoryRelevance": 0,
+          "decoration": "",
+          "actions": [],
+          "urls": []
+        }
+      ]
+    },
+    {
+      "query": "wifi",
+      "general": [
+        {
+          "runnerId": "krunner_appstream",
+          "id": "krunner_appstream_wifi",
+          "display": "Obtener WiFi…",
+          "subtext": "",
+          "category": "Centro de software",
+          "relevance": 0.7,
+          "categoryRelevance": 0,
+          "decoration": "",
+          "actions": [],
+          "urls": []
+        },
+        {
+          "runnerId": "krunner_systemsettings",
+          "id": "krunner_systemsettings_kcm_networkmanagement",
+          "display": "Wifi y redes",
+          "subtext": "",
+          "category": "Preferencias del sistema",
+          "relevance": 0.5,
+          "categoryRelevance": 50,
+          "decoration": "",
+          "actions": [],
+          "urls": [
+            "file:///usr/share/applications/kcm_networkmanagement.desktop"
+          ]
+        }
+      ],
+      "settings": [
+        {
+          "runnerId": "krunner_systemsettings",
+          "id": "krunner_systemsettings_kcm_networkmanagement",
+          "display": "Wifi y redes",
+          "subtext": "",
+          "category": "Preferencias del sistema",
+          "relevance": 0.5,
+          "categoryRelevance": 50,
+          "decoration": "",
+          "actions": [],
+          "urls": [
+            "file:///usr/share/applications/kcm_networkmanagement.desktop"
+          ]
+        }
+      ]
+    },
+    {
+      "query": "fondo",
+      "general": [
+        {
+          "runnerId": "krunner_systemsettings",
+          "id": "krunner_systemsettings_kcm_wallpaper",
+          "display": "Fondo del escritorio",
+          "subtext": "",
+          "category": "Preferencias del sistema",
+          "relevance": 0.9,
+          "categoryRelevance": 70,
+          "decoration": "",
+          "actions": [],
+          "urls": [
+            "file:///usr/share/applications/kcm_wallpaper.desktop"
+          ]
+        }
+      ],
+      "settings": []
+    },
+    {
+      "query": "firefox",
+      "general": [
+        {
+          "runnerId": "krunner_appstream",
+          "id": "krunner_appstream_browser",
+          "display": "Obtener Firefox alternativa…",
+          "subtext": "",
+          "category": "Centro de software",
+          "relevance": 0.7,
+          "categoryRelevance": 0,
+          "decoration": "",
+          "actions": [],
+          "urls": []
+        },
+        {
+          "runnerId": "krunner_services",
+          "id": "exec:///usr/lib/firefox/firefox",
+          "display": "Firefox",
+          "subtext": "",
+          "category": "Aplicaciones",
+          "relevance": 1,
+          "categoryRelevance": 100,
+          "decoration": "",
+          "actions": [],
+          "urls": [
+            "file:///usr/share/applications/firefox.desktop"
+          ]
+        },
+        {
+          "runnerId": "baloosearch",
+          "id": "file:///tmp/firefox.txt",
+          "display": "firefox.txt",
+          "subtext": "",
+          "category": "Documentos",
+          "relevance": 0.8,
+          "categoryRelevance": 50,
+          "decoration": "",
+          "actions": [],
+          "urls": []
+        }
+      ],
+      "settings": []
+    },
+    {
+      "query": "2+2",
+      "general": [
+        {
+          "runnerId": "calculator",
+          "id": "calculator_4",
+          "display": "4",
+          "subtext": "",
+          "category": "Calculadora",
+          "relevance": 1,
+          "categoryRelevance": 100,
+          "decoration": "",
+          "actions": [],
+          "urls": []
+        }
+      ],
+      "settings": []
+    },
+    {
+      "query": "1 km in m",
+      "general": [
+        {
+          "runnerId": "unitconverter",
+          "id": "unitconverter_1000",
+          "display": "1000 m",
+          "subtext": "",
+          "category": "Conversor de unidades",
+          "relevance": 1,
+          "categoryRelevance": 100,
+          "decoration": "",
+          "actions": [],
+          "urls": []
+        }
+      ],
+      "settings": []
+    }
+  ]
+}

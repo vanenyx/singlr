@@ -1,0 +1,44 @@
+plasma-workspace 6.8.1-1
+milou 6.8.1-1
+krunner 6.31.0-1
+systemsettings 6.8.1-1
+PASS   : qmltestrunner::CommandSettings::initTestCase()
+PASS   : qmltestrunner::CommandSettings::test_mergeDispatchAndNoDuplicateKcm()
+PASS   : qmltestrunner::CommandSettings::test_originNotTextAndCap()
+PASS   : qmltestrunner::CommandSettings::test_pages(es)
+PASS   : qmltestrunner::CommandSettings::test_pages(en)
+PASS   : qmltestrunner::CommandSettings::test_pages(fondo)
+PASS   : qmltestrunner::CommandSettings::test_pages(material)
+PASS   : qmltestrunner::CommandSettings::test_runnerContracts(bluetooth)
+PASS   : qmltestrunner::CommandSettings::test_runnerContracts(wifi)
+PASS   : qmltestrunner::CommandSettings::test_runnerContracts(fondo)
+PASS   : qmltestrunner::CommandSettings::test_runnerContracts(firefox)
+PASS   : qmltestrunner::CommandSettings::test_runnerContracts(2+2)
+PASS   : qmltestrunner::CommandSettings::test_runnerContracts(1 km in m)
+PASS   : qmltestrunner::CommandSettings::test_synonyms()
+PASS   : qmltestrunner::CommandSettings::test_unknownHasNoInventedPages()
+PASS   : qmltestrunner::CommandSettings::cleanupTestCase()
+Totals: 204 passed, 0 failed, 3 skipped, 0 blacklisted, 23637ms
+Totals: 8 passed, 0 failed, 0 skipped, 0 blacklisted, 210ms
+
+Final targeted CommandSettings after fixture metadata correction:
+PASS   : qmltestrunner::CommandSettings::initTestCase()
+PASS   : qmltestrunner::CommandSettings::test_mergeDispatchAndNoDuplicateKcm()
+PASS   : qmltestrunner::CommandSettings::test_originNotTextAndCap()
+PASS   : qmltestrunner::CommandSettings::test_pages(es)
+PASS   : qmltestrunner::CommandSettings::test_pages(en)
+PASS   : qmltestrunner::CommandSettings::test_pages(fondo)
+PASS   : qmltestrunner::CommandSettings::test_pages(material)
+PASS   : qmltestrunner::CommandSettings::test_runnerContracts(bluetooth)
+PASS   : qmltestrunner::CommandSettings::test_runnerContracts(wifi)
+PASS   : qmltestrunner::CommandSettings::test_runnerContracts(fondo)
+PASS   : qmltestrunner::CommandSettings::test_runnerContracts(firefox)
+PASS   : qmltestrunner::CommandSettings::test_runnerContracts(2+2)
+PASS   : qmltestrunner::CommandSettings::test_runnerContracts(1 km in m)
+PASS   : qmltestrunner::CommandSettings::test_synonyms()
+PASS   : qmltestrunner::CommandSettings::test_unknownHasNoInventedPages()
+PASS   : qmltestrunner::CommandSettings::cleanupTestCase()
+Totals: 16 passed, 0 failed, 0 skipped, 0 blacklisted, 293ms
+
+qmllint CommandResults.qml with shell/qml and build/qml imports: exit 0, no diagnostics.
+check_setup.py: OK. git diff --check: OK.

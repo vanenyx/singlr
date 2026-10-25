@@ -17,6 +17,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBNM REQUIRED IMPORTED_TARGET libnm)
 
 add_subdirectory(shell/session)
+add_subdirectory(shell/command)
 include(cmake/InstallDesktop.cmake)
 include(cmake/InstallShellPackage.cmake)
 

@@ -1,0 +1,8 @@
+[  0%] Built target singlr-command-capture_autogen_timestamp_deps
+[ 25%] Automatic MOC for target singlr-command-capture
+[ 25%] Built target singlr-command-capture_autogen
+[ 50%] Building CXX object shell/command/CMakeFiles/singlr-command-capture.dir/__/__/tests/shell/command-capture.cpp.o
+[ 75%] Linking CXX executable singlr-command-capture
+[100%] Built target singlr-command-capture
+dbus-daemon[167]: Failed to start message bus: Failed to bind socket "/tmp/dbus-sGWd5Yg3iH": Operation not permitted
+dbus-run-session: EOF reading address from bus daemon

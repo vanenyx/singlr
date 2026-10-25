@@ -19,7 +19,7 @@ printf '[General]\nColorScheme=%s\n[KDE]\nAnimationDurationFactor=%s\n' "$scheme
 cp /usr/share/color-schemes/"$scheme".colors "$tmp/config/kdeglobals.colors" 2>/dev/null || true
 cat /usr/share/color-schemes/"$scheme".colors >> "$tmp/config/kdeglobals"
 export XDG_DATA_HOME="$tmp/data" XDG_RUNTIME_DIR="$tmp/runtime" XDG_CONFIG_HOME="$tmp/config" XDG_CACHE_HOME="$tmp/cache" XDG_STATE_HOME="$tmp/state" \
-       QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME=kde QT_QUICK_BACKEND=software \
+       QML_XHR_ALLOW_FILE_READ=1 QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME=kde QT_QUICK_BACKEND=software \
        DBUS_SESSION_BUS_ADDRESS="unix:path=$tmp/disabled-session-bus" DBUS_SYSTEM_BUS_ADDRESS="unix:path=$tmp/disabled-system-bus"
 # Stage the package exactly as installed, including fonts; use an enum-only
 # authenticator boundary for presentation tests (never PAM or the live greeter).
@@ -40,6 +40,7 @@ for source in (root / "shell/qml/tests").glob("*.qml"):
     text = source.read_text().replace('"../../../session/shell-package/org.singlr.desktop/contents/lockscreen"', f'"{lock.as_uri()}"')
     text = text.replace('"../../../apps/settings/Main.qml"', f'"{(root / "apps/settings/Main.qml").as_uri()}"')
     text = text.replace('"../../../session/kwin/tabbox/singlr/contents/ui"', f'"{(root / "session/kwin/tabbox/singlr/contents/ui").as_uri()}"')
+    text = text.replace('"../../../tests/shell/fixtures/command-contract.json"', f'"{(root / "tests/shell/fixtures/command-contract.json").as_uri()}"')
     (fixtures / source.name).write_text(text)
 imports = tmp / "imports/org/kde/kscreenlocker"
 imports.mkdir(parents=True)
