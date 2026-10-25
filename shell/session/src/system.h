@@ -27,6 +27,8 @@ public:
     QString userName() const { return m_userName; }
     QString userIcon() const { return m_userIcon; }
     bool sessionActionPending() const { return m_sessionActionPending; }
+    Q_INVOKABLE QVariantList commandSettingsPages() const;
+    Q_INVOKABLE bool openCommandSettings(const QString &page);
     Q_INVOKABLE QUrl launcherUrl(const QUrl &url) const;
     Q_INVOKABLE QVariantList applicationActions(const QUrl &launcher) const;
     Q_INVOKABLE bool launchApplicationAction(const QUrl &launcher, const QString &name);

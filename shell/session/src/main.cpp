@@ -23,6 +23,7 @@
 #include "system.h"
 #include "shortcuts.h"
 #include "launcherbridge.h"
+#include "splashbridge.h"
 #include <QCoreApplication>
 #include <QScopeGuard>
 #include <QJsonArray>
@@ -315,5 +316,6 @@ int main(int argc, char *argv[])
     for (QWindow *window : QGuiApplication::allWindows())
         if (auto *quick = qobject_cast<QQuickWindow *>(window))
             trackBlur(quick);
+    if (ownsPlasma) new SplashBridge(&app);
     return app.exec();
 }

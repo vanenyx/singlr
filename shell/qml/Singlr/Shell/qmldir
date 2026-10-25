@@ -29,3 +29,5 @@ singleton NightLight 1.0 NightLight.qml
 NightLightRow 1.0 NightLightRow.qml
 KeyboardIndicator 1.0 KeyboardIndicator.qml
 WorkspaceIndicator 1.0 WorkspaceIndicator.qml
+
+CommandResults 1.0 CommandResults.qml

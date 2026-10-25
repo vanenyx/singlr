@@ -37,6 +37,13 @@ def config_dirs():
     return ':'.join([str(defaults)] + [d for d in rest.split(':') if d and d != str(defaults)])
 
 
+def splash_enabled():
+    env = dict(os.environ, XDG_CONFIG_DIRS=config_dirs())
+    result = run('kreadconfig6', '--file', 'ksplashrc', '--group', 'KSplash',
+                 '--key', 'Engine', '--default', 'KSplashQML', capture_output=True, env=env)
+    return result.stdout.strip() == 'KSplashQML'
+
+
 # The user manager re-executes itself when packages install user units
 # (SIGRTMIN+25). While it does, systemctl/busctl fail: that is "no answer",
 # never "the session ended". Retry until it answers again.
@@ -166,6 +173,11 @@ def main():
             # from systemd AFTER the D-Bus update, so KWin selects DRM, not nesting.
             manager_call('systemctl', '--user', 'unset-environment', 'DISPLAY', 'WAYLAND_DISPLAY',
                 'WAYLAND_SOCKET', 'XAUTHORITY', 'SESSION_MANAGER', 'ICEAUTHORITY')
+            # As startplasma 6.8 does: use the stock, timeout-bounded KSplash unit.
+            # Do not wait for its oneshot completion before starting the shell.
+            manager_call('systemctl', '--user', 'start', 'plasma-kwin_wayland.service')
+            if splash_enabled():
+                manager_call('systemctl', '--user', '--no-block', 'start', 'plasma-ksplash.service')
             # KWin wrapper publishes the real display variables before its dbus readiness.
             manager_call('systemctl', '--user', 'start', 'singlr-workspace.target')
             started = True

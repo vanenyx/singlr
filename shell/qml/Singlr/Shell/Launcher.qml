@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import "ApplicationActions.js" as ApplicationActions
-import org.kde.milou as Milou
 import org.kde.kquickcontrolsaddons as Addons
 import Singlr.Ui
 FocusScope {
@@ -17,7 +16,7 @@ FocusScope {
     property bool applicationsMode: false
     property Item backdrop
     property var modelOverride: null
-    readonly property var resultsModel: modelOverride || (applicationsMode ? appsLoader.item : runnerLoader.item)
+    readonly property var resultsModel: modelOverride || (applicationsMode ? appsLoader.item : runnerLoader.item?.model)
     property alias query: input.text
     property alias selectedIndex: list.currentIndex
     readonly property int resultCount: list.count
@@ -29,7 +28,7 @@ FocusScope {
     property bool actionsOpen: false
     property int actionIndex: 0
     readonly property alias actionMenu: resultMenu
-    readonly property string emptyMessage: !query ? (applicationsMode ? "No hay aplicaciones disponibles" : "Busca o abre Todas las aplicaciones") : (resultsModel && resultsModel.querying) ? "Buscando…" : "Sin resultados"
+    readonly property string emptyMessage: !query ? (applicationsMode ? "No hay aplicaciones disponibles" : "Busca o abre Todas las aplicaciones") : (resultController && resultController.querying) ? "Buscando…" : "Sin resultados"
     signal closed()
     Keys.onUpPressed: { launcher.move(-1); if (list.currentItem) list.currentItem.forceActiveFocus(Qt.TabFocusReason); }
     Keys.onDownPressed: { launcher.move(1); if (list.currentItem) list.currentItem.forceActiveFocus(Qt.TabFocusReason); }
@@ -39,10 +38,9 @@ FocusScope {
         id: runnerLoader
         active: launcher.visible && !launcher.applicationsMode && launcher.query.length > 0 && !launcher.modelOverride
         sourceComponent: Component {
-            Milou.ResultsModel {
+            CommandResults {
                 queryString: launcher.query
-                limit: 40
-                favoriteIds: ["calculator", "unitconverter"]
+                bridge: launcher.systemBridge
                 onQueryStringChangeRequested: (queryString, pos) => { launcher.query = queryString; input.cursorPosition = pos; }
             }
         }
@@ -52,6 +50,7 @@ FocusScope {
         opened: launcher.visible && launcher.applicationsMode && !launcher.modelOverride
         sourceComponent: Component { ApplicationsModel { query: launcher.query } }
     }
+    readonly property var resultController: modelOverride || (applicationsMode ? appsLoader.item : runnerLoader.item)
     function showApplications() { applicationsMode = true; query = ""; selectedIndex = 0; actionsOpen = false; input.forceActiveFocus(); }
     function actionArray(value) {
         if (!value) return [];
@@ -79,16 +78,17 @@ FocusScope {
     function makeEntries() {
         if (!selectedResult) return [];
         const row = selectedResult.rowData;
+        if (!row) return [];
         const url = appUrl(row);
         // App menus share the desktop actions with the dock. KRunner actions
         // remain available for other result types without duplicating app actions.
-        let entries = url ? ApplicationActions.entries(systemBridge, url) : selectedActions.map((a, i) => ({label: String(a.text || "").replace(/&/g, ""),
+        let entries = row.category === "Configuración" ? [{label: "Abrir configuración", icon: "gear", action: "open-setting"}] : url ? ApplicationActions.entries(systemBridge, url) : (selectedActions || []).map((a, i) => ({label: String(a.text || "").replace(/&/g, ""),
             icon: "dots-three", enabled: a.enabled !== false, action: "runner", runnerAction: i}));
         const urls = resultUrls(row);
         if (!appUrl(row) && urls.length && urls.every(u => u.startsWith("file:")) && systemBridge) {
             entries.push({label: "Mostrar en carpeta", icon: "folder", action: "folder"});
         }
-        if (url && dockController) entries.push({label: dockController.isPinned(url) ? "Quitar del dock" : "Mantener en el dock",
+        if (url && dockController && row.category !== "Configuración") entries.push({label: dockController.isPinned(url) ? "Quitar del dock" : "Mantener en el dock",
             icon: "push-pin", action: "pin", separator: entries.length > 0, url: url, keep: !dockController.isPinned(url)});
         return entries;
     }
@@ -106,19 +106,20 @@ FocusScope {
     }
     function triggerAction(entry) {
         if (!entry || selectedIndex < 0) return;
-        const idx = resultsModel.index(selectedIndex, 0);
-        if (entry.action === "pin") dockController.setPinned(entry.url, entry.keep);
+        const idx = resultController.index(selectedIndex, 0);
+        if (entry.action === "open-setting") { if (resultController.run(idx)) close(); }
+        else if (entry.action === "pin") dockController.setPinned(entry.url, entry.keep);
         else if (entry.action === "application") {
             if (systemBridge.launchApplicationAction(entry.url, entry.name)) close();
         }
         else if (entry.action === "folder") { systemBridge.showInFolder(resultUrls(selectedResult.rowData)); close(); }
-        else if (resultsModel.runAction(idx, entry.runnerAction)) close();
+        else if (resultController.runAction(idx, entry.runnerAction)) close();
     }
     function run() {
         if (selectedIndex < 0 || selectedIndex >= list.count) return;
         if (actionsOpen) { triggerAction(contextEntries[actionIndex]); resultMenu.close(); return; }
         if (calculation) { clipboard.content = selectedResult.title; close(); return; }
-        if (resultsModel.run(resultsModel.index(selectedIndex, 0))) close();
+        if (resultController.run(resultController.index(selectedIndex, 0))) close();
         else input.forceActiveFocus();
     }
     onQueryChanged: { resultMenu.close(); selectedIndex = 0; actionsOpen = false; }
@@ -136,7 +137,7 @@ FocusScope {
         Accessible.role: Accessible.EditableText
         Accessible.description: "Flechas para seleccionar, Enter para abrir, Escape para cerrar"
         Rectangle { anchors.fill: parent; anchors.margins: -3; z: -1; radius: 4; color: "transparent"; border.color: parent.activeFocus ? Theme.accentText : "transparent" }
-        Accessible.name: launcher.applicationsMode ? "Buscar en todas las aplicaciones" : "Buscar aplicaciones, archivos y comandos"
+        Accessible.name: launcher.applicationsMode ? "Buscar en todas las aplicaciones" : "Buscar aplicaciones, archivos y configuraciones"
         Keys.onUpPressed: launcher.move(-1)
         Keys.onDownPressed: launcher.move(1)
         Keys.onReturnPressed: launcher.run()
@@ -145,7 +146,7 @@ FocusScope {
         Keys.onPressed: event => {
             if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_K) { launcher.openActions(); event.accepted = true; }
         }
-        UiText { anchors.fill: parent; text: launcher.applicationsMode ? "Buscar en todas las aplicaciones…" : "Buscar aplicaciones, archivos, comandos…"; font.pixelSize: 13; color: Theme.faint; visible: !input.text }
+        UiText { anchors.fill: parent; text: launcher.applicationsMode ? "Buscar en todas las aplicaciones…" : "Buscar aplicaciones, archivos, configuraciones…"; font.pixelSize: 13; color: Theme.faint; visible: !input.text }
     }
     ShortcutHint { x: parent.width-47; y: 27; text: "esc" }
     Rectangle { y: 76; width: parent.width; height: 1; color: Theme.border }
@@ -173,6 +174,7 @@ FocusScope {
             title: String(model.display || "")
             subtitle: launcher.applicationsMode ? "" : String(model.subtext || "")
             iconSource: model.decoration
+            Icon { x: 14; anchors.verticalCenter: parent.verticalCenter; width: 20; height: 20; name: "gear"; visible: result.model.category === "Configuración" && !result.model.decoration }
             selected: launcher.selectedIndex === index
             onClicked: { launcher.selectedIndex = index; launcher.run(); }
             TapHandler {

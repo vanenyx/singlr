@@ -1,2 +1,6 @@
 [kdeglobals][General]
 ColorScheme=BreezeLight
+
+[ksplashrc][KSplash]
+Engine=KSplashQML
+Theme=dev.singlr.light

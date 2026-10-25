@@ -1,2 +1,6 @@
 [kdeglobals][General]
 ColorScheme=BreezeDark
+
+[ksplashrc][KSplash]
+Engine=KSplashQML
+Theme=dev.singlr.dark

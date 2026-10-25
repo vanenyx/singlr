@@ -18,6 +18,9 @@ loader.exec_module(entry)
 
 class SessionEntryTests(unittest.TestCase):
     def setUp(self):
+        splash = patch.object(entry, 'splash_enabled', return_value=True)
+        splash.start()
+        self.addCleanup(splash.stop)
         patcher = patch.object(entry, 'MANAGER_TIMEOUT', 0)
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -269,7 +272,7 @@ class SessionEntryTests(unittest.TestCase):
                 with self.assertRaises(subprocess.CalledProcessError):
                     entry.main()
                 calls = [item.args for item in commands.call_args_list]
-                start_index = calls.index(('systemctl', '--user', 'start', 'singlr-workspace.target'))
+                start_index = calls.index(('systemctl', '--user', 'start', 'plasma-kwin_wayland.service'))
                 self.assertEqual(calls[start_index - 1], ('systemctl', '--user', 'unset-environment',
                                  'DISPLAY', 'WAYLAND_DISPLAY', 'WAYLAND_SOCKET', 'XAUTHORITY', 'SESSION_MANAGER', 'ICEAUTHORITY'))
                 self.assertIn(('systemctl', '--user', 'stop', 'singlr-workspace.target',
