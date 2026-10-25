@@ -131,6 +131,38 @@ class SessionEntryTests(unittest.TestCase):
                              and 'SINGLR_DEV_ROOT' in call)
                 self.assertNotIn('DISPLAY', unset)
 
+    def test_logout_supervisor_cleans_graph_before_terminating_session(self):
+        for cleanup_fails in (False, True):
+            with self.subTest(cleanup_fails=cleanup_fails), tempfile.TemporaryDirectory() as tmp:
+                binary = Path(tmp) / 'binary'
+                binary.touch(mode=0o755)
+                (Path(tmp) / 'Shell.qml').touch()
+
+                def command(*args, **kwargs):
+                    if cleanup_fails and args[:3] == ('systemctl', '--user', 'stop'):
+                        raise subprocess.CalledProcessError(1, args)
+
+                with patch.dict(os.environ, {'XDG_RUNTIME_DIR': tmp,
+                                             'XDG_SESSION_ID': 'test-session'}, clear=True), \
+                     patch('sys.argv', ['startsinglr-wayland']), \
+                     patch.object(entry, 'layout', return_value=(binary, Path(tmp))), \
+                     patch.object(entry.os, 'geteuid', return_value=1000), \
+                     patch.object(entry.signal, 'signal'), \
+                     patch.object(entry, 'active', return_value=False), \
+                     patch.object(entry, 'manager_environment', return_value={'DISPLAY': ':7'}), \
+                     patch.object(entry, 'run', side_effect=command) as commands:
+                    if cleanup_fails:
+                        with self.assertRaises(subprocess.CalledProcessError):
+                            entry.main()
+                    else:
+                        self.assertEqual(entry.main(), 0)
+                    calls = [item.args for item in commands.call_args_list]
+                    self.assertIn('XDG_SESSION_ID=test-session', calls[0])
+                    self.assertIn(('systemctl', '--user', 'stop', 'singlr-workspace.target',
+                                   'graphical-session.target'), calls)
+                    self.assertEqual(calls[-1], ('loginctl', 'terminate-session', 'test-session'))
+                    self.assertEqual(calls[-2], ('systemctl', '--user', 'set-environment', 'DISPLAY=:7'))
+
 
 if __name__ == '__main__':
     unittest.main()
