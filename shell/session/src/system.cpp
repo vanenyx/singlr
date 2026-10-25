@@ -1,4 +1,8 @@
 #include "system.h"
+#include <LayerShellQt/Window>
+#include <QGuiApplication>
+#include <QScreen>
+#include <QWindow>
 #include <malloc.h>
 #include <QDBusMessage>
 #include <QDBusPendingCallWatcher>
@@ -298,4 +302,25 @@ void System::logout()
             QStringLiteral("org.kde.Shutdown"), QStringLiteral("logout"));
         call(m_bus, message, [this](const QDBusMessage &reply) { finishAction(QStringLiteral("logout"), reply); }, 120000);
     });
+}
+
+void System::placeOnScreen(QObject *object, const QString &screenName)
+{
+    auto *window = qobject_cast<QWindow *>(object);
+    if (!window)
+        return;
+    QScreen *target = nullptr;
+    for (QScreen *screen : QGuiApplication::screens())
+        if (screen->name() == screenName)
+            target = screen;
+    // Siempre se recrea: QML puede haber asignado ya la pantalla sin que la superficie nativa la siga.
+    if (!target)
+        return;
+    const bool visible = window->isVisible();
+    window->destroy();
+    window->setScreen(target);
+    // LayerShellQt 6.8 decide la salida con su propia propiedad «screen» (no con QWindow::screen()).
+    LayerShellQt::Window::get(window)->setScreen(target);
+    if (visible)
+        window->show();
 }

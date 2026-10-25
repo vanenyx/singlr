@@ -12,10 +12,18 @@ Item {
     property string activeAppName: "Escritorio"
     readonly property bool menuOpen: bar.menuOpen || bar.tray.opened
     function closeMenus() { bar.closeMenu(); }
+    // Coloca la superficie en su pantalla (ver SinglrSystem.placeOnScreen).
+    function place(window) {
+        // qmllint disable unqualified
+        if (typeof SinglrSystem !== "undefined" && SinglrSystem.placeOnScreen && outputScreen)
+            Qt.callLater(() => SinglrSystem.placeOnScreen(window, outputScreen.name));
+        // qmllint enable unqualified
+    }
     Loader {
         id: backgroundSurface; objectName: "backgroundSurface"; active: surfaces.controller.showBackground
         sourceComponent: Component {
             Window {
+                Component.onCompleted: surfaces.place(this)
                 screen: surfaces.outputScreen; transientParent: null; visible: true; color: Theme.background
                 LayerShell.Window.layer: LayerShell.Window.LayerBackground
                 LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
@@ -27,6 +35,7 @@ Item {
         }
     }
     Window {
+        Component.onCompleted: surfaces.place(this)
         screen: surfaces.outputScreen; transientParent: null; visible: true; height: 28; property bool singlrBlur: true; property int singlrBlurRadius: 0; color: "transparent"
         LayerShell.Window.layer: LayerShell.Window.LayerTop
         LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
@@ -51,6 +60,7 @@ Item {
         id: barMenuSurface; objectName: "barMenuSurface"; active: bar.menuOpen
         sourceComponent: Component {
             Window {
+                Component.onCompleted: surfaces.place(this)
                 id: barMenuWindow
                 screen: surfaces.outputScreen; transientParent: null; visible: true; width: bar.menuWidth; height: bar.menuHeight; color: "transparent"
                 LayerShell.Window.layer: LayerShell.Window.LayerTop
@@ -71,6 +81,7 @@ Item {
         id: trayMenuSurface; objectName: "trayMenuSurface"; active: bar.tray.opened
         sourceComponent: Component {
             Window {
+                Component.onCompleted: surfaces.place(this)
                 id: trayMenuWindow
                 screen: surfaces.outputScreen; transientParent: null; visible: true
                 width: 240; height: bar.tray.menuHeight; color: "transparent"
@@ -91,6 +102,7 @@ Item {
         id: trayTooltipSurface; objectName: "trayTooltipSurface"; active: !!bar.tray.tooltipText && !bar.tray.opened
         sourceComponent: Component {
             Window {
+                Component.onCompleted: surfaces.place(this)
                 screen: surfaces.outputScreen; transientParent: null; visible: true
                 width: Math.ceil(trayTooltip.implicitWidth) + 16; height: 30; color: "transparent"
                 flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowTransparentForInput

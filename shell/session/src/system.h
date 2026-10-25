@@ -33,6 +33,9 @@ public:
     Q_INVOKABLE void invokeShortcut(const QString &component, const QString &action);
     // Devuelve al sistema la memoria libre del montículo tras liberar paneles (P-016).
     Q_INVOKABLE void trimMemory();
+    // LayerShellQt crea la superficie al procesar sus propiedades adjuntas, antes de que QML asigne
+    // Window.screen: se recrea la superficie nativa en la pantalla indicada.
+    Q_INVOKABLE void placeOnScreen(QObject *window, const QString &screenName);
 Q_SIGNALS:
     void overviewAvailableChanged();
     void canSuspendChanged();
