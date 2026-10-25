@@ -123,3 +123,14 @@ Las medidas reales y la revisión de logs quedan para Claude fuera del sandbox.
 | Revisión / equipo / fecha | Proceso | Escenario / fase | PSS MB | anon MB | file MB | RSS MB | Hilos | CPU % | Ventanas KWin | Turnos scheduler | Delta PSS MB | PASS/FAIL | Evidencia |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | | | | | | | | | | | | | | |
+
+## Resultados (25 oct 2026, Radeon 610M, 2560×1600 a 1,25)
+
+| Medida | plasmashell | singlr-shell |
+| --- | ---: | ---: |
+| Sesión aislada en reposo, PSS | 207 MB | 84 MB |
+| Sesión aislada tras abrir y cerrar paneles | — | 91 MB |
+| Sesión real del creador (sus widgets, fondo y bandeja), 60 s en reposo, PSS | 254 MB | 151 MB |
+| Sesión real, CPU en reposo (10 s) | 0 ticks | 1 tick (0,1 %) |
+
+Antes de la optimización (P-016), la sesión real de Singlr estaba en ~208 MB.
