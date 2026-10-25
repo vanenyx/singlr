@@ -75,7 +75,8 @@ def main():
                'XDG_CURRENT_DESKTOP': 'Singlr:KDE', 'XDG_MENU_PREFIX': 'plasma-',
                'KDE_FULL_SESSION': 'true', 'KDE_SESSION_VERSION': '6',
                'KDE_SESSION_UID': str(os.getuid()), 'QT_WAYLAND_RECONNECT': '1',
-               'SINGLR_DEV_ROOT': os.environ.get('SINGLR_DEV_ROOT', '')}
+               'SINGLR_DEV_ROOT': os.environ.get('SINGLR_DEV_ROOT', ''),
+               'XDG_SESSION_ID': os.environ.get('XDG_SESSION_ID', '')}
         # Include locale and XDG paths explicitly, never import the entire environment.
         env.update({key: value for key, value in os.environ.items()
                     if key in ('LANG', 'LANGUAGE', 'XDG_CONFIG_HOME', 'XDG_CONFIG_DIRS',
@@ -83,6 +84,7 @@ def main():
                     or key.startswith('LC_')})
         keys = set(env) | {'DISPLAY', 'WAYLAND_DISPLAY', 'WAYLAND_SOCKET', 'XAUTHORITY'}
         stopping = False
+        started = False
 
         def terminate(_signum, _frame):
             nonlocal stopping
@@ -100,22 +102,31 @@ def main():
                 'WAYLAND_SOCKET', 'XAUTHORITY')
             # KWin wrapper publishes the real display variables before its dbus readiness.
             run('systemctl', '--user', 'start', 'singlr-workspace.target')
+            started = True
             while not stopping and active('singlr-workspace.target'):
                 time.sleep(1)
             return 0
         finally:
-            # Only reached after refusing an existing graphical session, under our UID lock.
+            # The shell is part of the target and cannot finish logout itself.
+            # Stay alive through graph cleanup, then ask logind to reap this PAM
+            # session's remaining applications. Never terminate the entire UID.
             try:
-                run('systemctl', '--user', 'stop', 'singlr-workspace.target', 'graphical-session.target')
-            finally:
+                # Only reached after refusing an existing graphical session, under our UID lock.
                 try:
-                    run('dbus-update-activation-environment',
-                        *(f'{key}={old.get(key, "")}' for key in sorted(keys)))
+                    run('systemctl', '--user', 'stop', 'singlr-workspace.target', 'graphical-session.target')
                 finally:
-                    run('systemctl', '--user', 'unset-environment', *sorted(keys - old.keys()))
-                    previous = [f'{key}={old[key]}' for key in sorted(keys & old.keys())]
-                    if previous:
-                        run('systemctl', '--user', 'set-environment', *previous)
+                    try:
+                        run('dbus-update-activation-environment',
+                            *(f'{key}={old.get(key, "")}' for key in sorted(keys)))
+                    finally:
+                        run('systemctl', '--user', 'unset-environment', *sorted(keys - old.keys()))
+                        previous = [f'{key}={old[key]}' for key in sorted(keys & old.keys())]
+                        if previous:
+                            run('systemctl', '--user', 'set-environment', *previous)
+            finally:
+                session_id = os.environ.get('XDG_SESSION_ID')
+                if started and session_id:
+                    run('loginctl', 'terminate-session', session_id)
 
 
 if __name__ == '__main__':
