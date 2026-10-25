@@ -7,7 +7,7 @@ Singlr es una experiencia de escritorio completa y distribuible para Linux, con 
 
 ## Producto
 - Linear influye en UI y UX; macOS también. Mantén una identidad propia.
-- Base visual y de UX: Linear, con glassmorphism de macOS y la operativa de Raycast (P-005). Liquid Glass descartado (P-007). Esquinas moderadas; Phosphor Icons y marcas originales de aplicaciones.
+- Base visual y de UX: Linear, con glassmorphism de macOS y la operativa de Raycast (P-005). Liquid Glass opcional y configurable en la v1 (P-019, sustituye a P-007). Esquinas moderadas; Phosphor Icons y marcas originales de aplicaciones.
 - Distribución del escritorio, colores, tipografía, tokens, arquitectura detallada y presupuestos de rendimiento siguen abiertos.
 - Identifica cada decisión como explícita del creador, propuesta por validar o solución técnica derivada. Regístrala en `docs/decisions.md` cuando afecte a otros trabajos.
 

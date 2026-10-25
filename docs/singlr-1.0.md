@@ -65,9 +65,8 @@ demuestra merecerlo.
   márgenes consistentes, equilibrio entre espacio libre e información. Fuerte influencia de Linear.
 - **Superficies y materiales:** superficies sólidas elegantes para el contenido principal; materiales
   translúcidos y profundidad para elementos flotantes, menús y capas temporales. Los materiales son
-  capacidades configurables, no tratamientos indiscriminados.
-  **[Registro]** El texto original nombraba también Liquid Glass como capacidad configurable; P-007
-  lo descartó (24 oct), también como opción futura. Pendiente de confirmación del creador.
+  capacidades configurables, no tratamientos indiscriminados. Glassmorphism y Liquid Glass son
+  capacidades configurables del sistema de materiales (P-019, que sustituye a P-007).
 - **Tipografía, color e iconografía:** escala tipográfica ajustada; paleta neutral con acentos
   controlados; Phosphor Icons como base. Símbolos propios (p. ej. controles de ventana inspirados en
   la singularidad) como exploraciones de identidad, sujetas a pruebas de reconocimiento y legibilidad.
@@ -124,7 +123,7 @@ No basta con la laptop del creador: instalación limpia, al menos otra configura
 matriz de compatibilidad y procedimiento de recuperación probado. Distribución v1: paquete de Arch y
 repositorio de código. Licencia libre compatible con las dependencias; **GPL-3.0-or-later** como
 candidata tras revisar las licencias de los componentes. **[Registro]** P-002 (licencia y
-publicación) sigue pendiente de decisión del creador.
+publicación): el creador decidirá más adelante; sin licencia no se publica.
 
 ## 7. Punto de partida
 
