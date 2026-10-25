@@ -28,27 +28,41 @@ def layout():
     return binary, qml
 
 
+# The user manager re-executes itself when packages install user units
+# (SIGRTMIN+25). While it does, systemctl/busctl fail: that is "no answer",
+# never "the session ended". Retry until it answers again.
+MANAGER_TIMEOUT = 60
+
+
+def manager_call(*args):
+    deadline = time.monotonic() + MANAGER_TIMEOUT
+    while True:
+        try:
+            return run(*args, capture_output=True)
+        except subprocess.CalledProcessError:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(0.5)
+
+
 def active(unit):
-    result = subprocess.run(['systemctl', '--user', 'show', unit,
-                             '--property=ActiveState', '--value'],
-                            check=True, text=True, capture_output=True)
-    return result.stdout.strip() not in ('inactive', 'failed', '')
+    state = manager_call('systemctl', '--user', 'show', unit, '--property=ActiveState', '--value').stdout.strip()
+    return state not in ('inactive', 'failed')
 
 
 def manager_environment():
-    result = run('busctl', '--user', '--json=short', 'get-property',
-                 'org.freedesktop.systemd1', '/org/freedesktop/systemd1',
-                 'org.freedesktop.systemd1.Manager', 'Environment', capture_output=True)
+    result = manager_call('busctl', '--user', '--json=short', 'get-property',
+                          'org.freedesktop.systemd1', '/org/freedesktop/systemd1',
+                          'org.freedesktop.systemd1.Manager', 'Environment')
     return dict(item.split('=', 1) for item in json.loads(result.stdout)['data'])
 
 
 def shutdown_running():
     # NameHasOwner never activates plasma-shutdown. As in startplasma 6.8,
     # do not reap the login while it is still performing Reboot/PowerOff.
-    result = run('busctl', '--user', '--json=short', 'call',
-                 'org.freedesktop.DBus', '/org/freedesktop/DBus',
-                 'org.freedesktop.DBus', 'NameHasOwner', 's', 'org.kde.Shutdown',
-                 capture_output=True)
+    result = manager_call('busctl', '--user', '--json=short', 'call',
+                          'org.freedesktop.DBus', '/org/freedesktop/DBus',
+                          'org.freedesktop.DBus', 'NameHasOwner', 's', 'org.kde.Shutdown')
     return bool(json.loads(result.stdout)['data'][0])
 
 
@@ -87,6 +101,13 @@ def main():
     # The user manager and KDE D-Bus names are per UID, not per login session.
     with (runtime / 'singlr-session.lock').open('w') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        # We hold the per-UID lock, so no Singlr login is alive: an active
+        # workspace graph was left behind by a session that ended without
+        # cleanup. Stop it, with its applications, before starting anew.
+        if active('singlr-workspace.target'):
+            print('Singlr: cerrando la sesión anterior que quedó sin terminar', file=sys.stderr)
+            manager_call('systemctl', '--user', 'stop', 'singlr-workspace.target', 'graphical-session.target',
+                         'plasma-ksmserver.service', 'plasma-kwin_wayland.service')
         for unit in ('graphical-session.target', 'plasma-workspace.target',
                      'plasma-kwin_wayland.service', 'plasma-plasmashell.service',
                      'plasma-krunner.service', 'plasma-ksmserver.service', 'singlr-workspace.target'):
@@ -128,15 +149,15 @@ def main():
             signal.signal(sig, terminate)
         try:
             singlr_kwin.apply(recover_pending=True)
-            run('dbus-update-activation-environment', '--systemd',
+            manager_call('dbus-update-activation-environment', '--systemd',
                 *(f'{key}={value}' for key, value in env.items()),
                 'DISPLAY=', 'WAYLAND_DISPLAY=', 'WAYLAND_SOCKET=', 'XAUTHORITY=', 'SESSION_MANAGER=', 'ICEAUTHORITY=')
             # Empty still counts as "set" to KWin's backend detection. Remove these
             # from systemd AFTER the D-Bus update, so KWin selects DRM, not nesting.
-            run('systemctl', '--user', 'unset-environment', 'DISPLAY', 'WAYLAND_DISPLAY',
+            manager_call('systemctl', '--user', 'unset-environment', 'DISPLAY', 'WAYLAND_DISPLAY',
                 'WAYLAND_SOCKET', 'XAUTHORITY', 'SESSION_MANAGER', 'ICEAUTHORITY')
             # KWin wrapper publishes the real display variables before its dbus readiness.
-            run('systemctl', '--user', 'start', 'singlr-workspace.target')
+            manager_call('systemctl', '--user', 'start', 'singlr-workspace.target')
             started = True
             wait_for_session_end(lambda: stopping)
             return 0
@@ -147,7 +168,7 @@ def main():
             try:
                 # Only reached after refusing an existing graphical session, under our UID lock.
                 try:
-                    run('systemctl', '--user', 'stop', 'singlr-workspace.target', 'graphical-session.target')
+                    manager_call('systemctl', '--user', 'stop', 'singlr-workspace.target', 'graphical-session.target')
                 finally:
                     try:
                         singlr_kwin.restore()
@@ -183,13 +204,13 @@ def keyboard_environment():
 
 def restore_environment(old, keys):
     try:
-        run('dbus-update-activation-environment',
+        manager_call('dbus-update-activation-environment',
             *(f'{key}={old.get(key, "")}' for key in sorted(keys)))
     finally:
-        run('systemctl', '--user', 'unset-environment', *sorted(keys - old.keys()))
+        manager_call('systemctl', '--user', 'unset-environment', *sorted(keys - old.keys()))
         previous = [f'{key}={old[key]}' for key in sorted(keys & old.keys())]
         if previous:
-            run('systemctl', '--user', 'set-environment', *previous)
+            manager_call('systemctl', '--user', 'set-environment', *previous)
 
 
 if __name__ == '__main__':

@@ -18,6 +18,9 @@ loader.exec_module(entry)
 
 class SessionEntryTests(unittest.TestCase):
     def setUp(self):
+        patcher = patch.object(entry, 'MANAGER_TIMEOUT', 0)
+        patcher.start()
+        self.addCleanup(patcher.stop)
         patcher = patch.object(entry, 'shutdown_running', return_value=False)
         self.real_shutdown_running = entry.shutdown_running
         self.shutdown_mock = patcher.start()
@@ -190,11 +193,54 @@ class SessionEntryTests(unittest.TestCase):
                  patch('sys.argv', ['startsinglr-wayland']), \
                  patch.object(entry, 'layout', return_value=(binary, Path(tmp))), \
                  patch.object(entry.os, 'geteuid', return_value=1000), \
-                 patch.object(entry, 'active', return_value=True), \
+                 patch.object(entry, 'active', side_effect=lambda unit: unit != 'singlr-workspace.target'), \
                  patch.object(entry, 'run') as commands:
                 with self.assertRaisesRegex(RuntimeError, 'Otra sesión'):
                     entry.main()
                 commands.assert_not_called()
+
+    def test_orphaned_singlr_graph_is_stopped_before_a_new_login(self):
+        # A previous supervisor died without cleanup (e.g. user manager re-exec):
+        # under our lock no Singlr login is alive, so its graph is stopped, not refused.
+        state = {'singlr-workspace.target': True}
+
+        def command(*args, **kwargs):
+            if args[:3] == ('systemctl', '--user', 'stop') and 'singlr-workspace.target' in args:
+                state['singlr-workspace.target'] = False
+
+        with tempfile.TemporaryDirectory() as tmp:
+            binary = Path(tmp) / 'binary'
+            binary.touch(mode=0o755)
+            (Path(tmp) / 'Shell.qml').touch()
+            with patch.dict(os.environ, {'XDG_RUNTIME_DIR': tmp}, clear=True), \
+                 patch('sys.argv', ['startsinglr-wayland']), \
+                 patch.object(entry, 'layout', return_value=(binary, Path(tmp))), \
+                 patch.object(entry.os, 'geteuid', return_value=1000), \
+                 patch.object(entry.signal, 'signal'), \
+                 patch.object(entry, 'active', side_effect=lambda unit: state.get(unit, False)), \
+                 patch.object(entry, 'manager_environment', return_value={}), \
+                 patch.object(entry, 'run', side_effect=command) as commands:
+                self.assertEqual(entry.main(), 0)
+                calls = [item.args for item in commands.call_args_list]
+                stale = calls.index(('systemctl', '--user', 'stop', 'singlr-workspace.target', 'graphical-session.target',
+                                     'plasma-ksmserver.service', 'plasma-kwin_wayland.service'))
+                self.assertLess(stale, calls.index(('systemctl', '--user', 'start', 'singlr-workspace.target')))
+
+    def test_manager_reexec_is_not_the_end_of_the_session(self):
+        # systemctl fails while the user manager re-executes; keep waiting until it answers.
+        answers = iter([subprocess.CalledProcessError(1, 'systemctl'), subprocess.CalledProcessError(1, 'systemctl'),
+                        subprocess.CompletedProcess('systemctl', 0, 'active\n')])
+
+        def command(*args, **kwargs):
+            answer = next(answers)
+            if isinstance(answer, Exception):
+                raise answer
+            return answer
+
+        with patch.object(entry, 'MANAGER_TIMEOUT', 5), patch.object(entry.time, 'sleep'), \
+             patch.object(entry, 'run', side_effect=command) as commands:
+            self.assertTrue(entry.active('singlr-workspace.target'))
+            self.assertEqual(commands.call_count, 3)
 
     def test_failed_start_stops_graph_and_restores_environment(self):
         def command(*args, **kwargs):
