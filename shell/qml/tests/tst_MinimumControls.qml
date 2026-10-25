@@ -88,7 +88,7 @@ Item {
         }
         function test_clickAndMenuShareConnectionPath(data) {
             const panel = createTemporaryObject(panelFactory, fixture);
-            wait(60); panel.height = panel.implicitHeight; panel.openPage("wifi"); wait(150);
+            wait(60); panel.height = panel.implicitHeight; panel.openPage("wifi"); tryCompare(panel.navigation, "busy", false);
             const list = panel.wifiView; const n = network(data.uuid, data.security);
             list.stableModel.sync([{deviceKey: "test", payload: n, active: false, rank: 70}]); list.forceLayout();
             const row = list.itemAtIndex(0); const y = row.y;
@@ -112,8 +112,9 @@ Item {
         function test_bluetoothClickPairAndMenu() {
             const panel = createTemporaryObject(panelFactory, fixture);
             wait(60); panel.height = panel.implicitHeight; const height = panel.height;
-            panel.openPage("bluetooth"); wait(150);
-            const row = findChild(panel, "bluetoothDeviceRow"); verify(row);
+            panel.openPage("bluetooth"); tryCompare(panel.navigation, "busy", false);
+            tryVerify(() => findChild(panel, "bluetoothDeviceRow") !== null);
+            const row = findChild(panel, "bluetoothDeviceRow");
             mouseClick(row); compare(handler.operation, "connectBluetooth");
             pending.finished({error: false}); device.connected = true;
             wait(120); mouseClick(row); compare(handler.operation, "disconnectBluetooth");

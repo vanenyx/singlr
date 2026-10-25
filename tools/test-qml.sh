@@ -13,7 +13,9 @@ scheme=BreezeDark; [[ $mode == dark ]] || scheme=BreezeLight
 tmp=$(mktemp -d); trap 'rm -rf -- "$tmp"' EXIT
 mkdir -p "$tmp/config" "$tmp/data" "$tmp/runtime"
 chmod 700 "$tmp/runtime"
-printf '[General]\nColorScheme=%s\n' "$scheme" > "$tmp/config/kdeglobals"
+factor=${SINGLR_TEST_ANIMATION_FACTOR:-1}
+[[ "$factor" =~ ^[0-9]+([.][0-9]+)?$ ]] || { echo "Factor de animación inválido" >&2; exit 2; }
+printf '[General]\nColorScheme=%s\n[KDE]\nAnimationDurationFactor=%s\n' "$scheme" "$factor" > "$tmp/config/kdeglobals"
 cp /usr/share/color-schemes/"$scheme".colors "$tmp/config/kdeglobals.colors" 2>/dev/null || true
 cat /usr/share/color-schemes/"$scheme".colors >> "$tmp/config/kdeglobals"
 export XDG_DATA_HOME="$tmp/data" XDG_RUNTIME_DIR="$tmp/runtime" XDG_CONFIG_HOME="$tmp/config" XDG_CACHE_HOME="$tmp/cache" XDG_STATE_HOME="$tmp/state" \

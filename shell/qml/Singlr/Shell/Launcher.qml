@@ -6,6 +6,8 @@ import org.kde.kquickcontrolsaddons as Addons
 import Singlr.Ui
 FocusScope {
     id: launcher
+    Accessible.role: Accessible.Pane
+    Accessible.name: "Lanzador"
     property var dockController: null
     // qmllint disable unqualified
     property var systemBridge: typeof SinglrSystem !== "undefined" ? SinglrSystem : null
@@ -29,6 +31,8 @@ FocusScope {
     readonly property alias actionMenu: resultMenu
     readonly property string emptyMessage: !query ? (applicationsMode ? "No hay aplicaciones disponibles" : "Busca o abre Todas las aplicaciones") : (resultsModel && resultsModel.querying) ? "Buscando…" : "Sin resultados"
     signal closed()
+    Keys.onUpPressed: { launcher.move(-1); if (list.currentItem) list.currentItem.forceActiveFocus(Qt.TabFocusReason); }
+    Keys.onDownPressed: { launcher.move(1); if (list.currentItem) list.currentItem.forceActiveFocus(Qt.TabFocusReason); }
     Keys.onEscapePressed: { if (actionsOpen) resultMenu.close(); else close(); }
     width: 760; height: 542
     Loader {
@@ -123,11 +127,15 @@ FocusScope {
     MouseArea { anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton; onPressed: launcher.focusInput() }
     Icon { x: 24; y: 25; width: 20; height: 20; font.pixelSize: 20; name: "magnifying-glass" }
     TextInput {
+        activeFocusOnTab: true
         id: input; objectName: "launcherInput"
         x: 62; y: 18; width: parent.width-124; height: 40
         color: Theme.text; selectionColor: Theme.selection; selectedTextColor: Theme.text
         font.family: Theme.family; font.pixelSize: 13; clip: true; focus: true
         verticalAlignment: TextInput.AlignVCenter
+        Accessible.role: Accessible.EditableText
+        Accessible.description: "Flechas para seleccionar, Enter para abrir, Escape para cerrar"
+        Rectangle { anchors.fill: parent; anchors.margins: -3; z: -1; radius: 4; color: "transparent"; border.color: parent.activeFocus ? Theme.accentText : "transparent" }
         Accessible.name: launcher.applicationsMode ? "Buscar en todas las aplicaciones" : "Buscar aplicaciones, archivos y comandos"
         Keys.onUpPressed: launcher.move(-1)
         Keys.onDownPressed: launcher.move(1)
@@ -158,6 +166,7 @@ FocusScope {
             id: result
             required property var model
             required property int index
+            onActiveFocusChanged: if (activeFocus) launcher.selectedIndex = index
             readonly property var rowData: model
             resultActions: launcher.actionArray(model.actions)
             width: ListView.view.width

@@ -9,11 +9,14 @@ Rectangle {
     signal dismissed()
     signal invoked(string action)
     width: 360; height: content.height + 24; radius: 10
-    color: sessionMode ? Theme.surface : Theme.raised; border.color: Theme.border
+    color: sessionMode ? Theme.surface : Theme.raised; border.color: activeFocus ? Theme.accentText : Theme.border
     HoverHandler { id: hover }
     Accessible.role: Accessible.Button
     Accessible.name: entry.app + ": " + entry.title + ". " + entry.body
     activeFocusOnTab: true
+    Accessible.onPressAction: if (entry.defaultAction) invoked("default")
+    Keys.onEnterPressed: if (entry.defaultAction) invoked("default")
+    Keys.onSpacePressed: if (entry.defaultAction) invoked("default")
     Keys.onReturnPressed: if (entry.defaultAction) invoked("default")
     MouseArea { anchors.fill: parent; enabled: card.entry.defaultAction; onClicked: card.invoked("default") }
     Column {

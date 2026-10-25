@@ -53,6 +53,22 @@ class ProcTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 m['cpu_percent'](before, value, 30, 100)
 
+    def test_budget_distinguishes_open_cpu_and_auxiliary_pss(self):
+        budget = m['budget_result']
+        self.assertEqual(budget('singlr-shell', 'idle', 119_999_999, 0.49), 'PASS')
+        self.assertEqual(budget('singlr-shell', 'idle', 120_000_000, 0), 'FAIL')
+        self.assertEqual(budget('singlr-shell', 'idle', 80_000_000, 0.5), 'FAIL')
+        self.assertEqual(budget('singlr-shell', 'open-toggleLauncher', 80_000_000, 2), 'PASS')
+        self.assertEqual(budget('ksmserver', 'idle', 121_000_000, 0), 'PASS')
+        self.assertEqual(budget('ksmserver', 'idle', 20_000_000, 0.5), 'FAIL')
+
+    def test_explicit_pid_does_not_accept_unrelated_process(self):
+        import os
+        with self.assertRaises(ValueError):
+            m['validate_selected_pids']([os.getpid()])
+        with self.assertRaises(ValueError):
+            m['validate_selected_pids']([os.getpid(), os.getpid()])
+
     def test_exact_environment_and_comm_and_zombies(self):
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)

@@ -19,6 +19,8 @@ Rectangle {
     Controls.ToolTip.text: description
     Accessible.role: Accessible.Button
     Accessible.name: description
+    Accessible.onPressAction: clicked()
+    Keys.onEnterPressed: clicked()
     Keys.onReturnPressed: clicked()
     Keys.onSpacePressed: clicked()
     Row { anchors.centerIn: parent; spacing: 7

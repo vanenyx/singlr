@@ -206,6 +206,8 @@ void registerActions(QObject *parent, QObject *session)
     }
     struct Entry { const char *name; const char *method; QKeyCombination key; };
     const Entry entries[] = {{"Mostrar notificaciones", "toggleNotifications", Qt::META | Qt::Key_N},
+                             {"Foco en el dock", "focusDock", Qt::META | Qt::ALT | Qt::Key_D},
+                             {"Menú de sesión", "showSessionMenu", Qt::META | Qt::ALT | Qt::Key_S},
                              {"Centro de control", "toggleControlCenter", Qt::META | Qt::Key_A},
                              {"Historial del portapapeles", "toggleClipboard", Qt::META | Qt::Key_V}};
     for (const auto &entry : entries) {

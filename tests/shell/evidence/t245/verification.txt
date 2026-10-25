@@ -1,0 +1,61 @@
+T245 — extractos de resultados ejecutados (25 oct 2026)
+Base de la rama al iniciar: de48b4688ef933350c8887d9e71b4abc203da3b2
+Sin commit; main puede avanzar de forma independiente durante la tarea.
+
+SINGLR_TEST_ANIMATION_FACTOR=0 tools/test-qml.sh
+PASS   : qmltestrunner::Accessibility::initTestCase()
+PASS   : qmltestrunner::Accessibility::test_clipboardRowKeyboardAndContext()
+PASS   : qmltestrunner::Accessibility::test_controlAndNotificationInitialFocus()
+PASS   : qmltestrunner::Accessibility::test_dockArrowTraversalAndWrap()
+PASS   : qmltestrunner::Accessibility::test_launcherTabArrowsAndEnter()
+PASS   : qmltestrunner::Accessibility::test_menuFocusSkipsDisabledAndReturns()
+QDEBUG : qmltestrunner::Accessibility::test_motionUsesPlatformUnits() debug qml: T245 motion enabled=false duration=0
+PASS   : qmltestrunner::Accessibility::test_motionUsesPlatformUnits()
+PASS   : qmltestrunner::Accessibility::test_rowAndDecorativeGlyph()
+PASS   : qmltestrunner::Accessibility::test_standardControlsEnter()
+PASS   : qmltestrunner::Accessibility::test_toolKeyboardAndAssistiveAction()
+PASS   : qmltestrunner::Accessibility::cleanupTestCase()
+Totals: 166 passed, 0 failed, 0 skipped, 0 blacklisted, 21076ms
+Totals: 7 passed, 0 failed, 0 skipped, 0 blacklisted, 307ms
+
+SINGLR_TEST_ANIMATION_FACTOR=2 tools/test-qml.sh
+PASS   : qmltestrunner::Accessibility::initTestCase()
+PASS   : qmltestrunner::Accessibility::test_clipboardRowKeyboardAndContext()
+PASS   : qmltestrunner::Accessibility::test_controlAndNotificationInitialFocus()
+PASS   : qmltestrunner::Accessibility::test_dockArrowTraversalAndWrap()
+PASS   : qmltestrunner::Accessibility::test_launcherTabArrowsAndEnter()
+PASS   : qmltestrunner::Accessibility::test_menuFocusSkipsDisabledAndReturns()
+QDEBUG : qmltestrunner::Accessibility::test_motionUsesPlatformUnits() debug qml: T245 motion enabled=true duration=240
+PASS   : qmltestrunner::Accessibility::test_motionUsesPlatformUnits()
+PASS   : qmltestrunner::Accessibility::test_rowAndDecorativeGlyph()
+PASS   : qmltestrunner::Accessibility::test_standardControlsEnter()
+PASS   : qmltestrunner::Accessibility::test_toolKeyboardAndAssistiveAction()
+PASS   : qmltestrunner::Accessibility::cleanupTestCase()
+Totals: 166 passed, 0 failed, 0 skipped, 0 blacklisted, 24477ms
+Totals: 7 passed, 0 failed, 0 skipped, 0 blacklisted, 306ms
+
+PYTHONPATH=tests/shell python3 -m unittest test_resources test_shortcuts -v
+test_budget_distinguishes_open_cpu_and_auxiliary_pss (test_resources.ProcTests.test_budget_distinguishes_open_cpu_and_auxiliary_pss) ... ok
+test_cpu_one_core_and_pid_reuse (test_resources.ProcTests.test_cpu_one_core_and_pid_reuse) ... ok
+test_exact_environment_and_comm_and_zombies (test_resources.ProcTests.test_exact_environment_and_comm_and_zombies) ... ok
+test_explicit_pid_does_not_accept_unrelated_process (test_resources.ProcTests.test_explicit_pid_does_not_accept_unrelated_process) ... ok
+test_rollup_bytes_and_optional_breakdown (test_resources.ProcTests.test_rollup_bytes_and_optional_breakdown) ... ok
+test_rollup_missing_invalid_units_and_negative (test_resources.ProcTests.test_rollup_missing_invalid_units_and_negative) ... ok
+test_schedstat_timeslices_not_wakeups (test_resources.ProcTests.test_schedstat_timeslices_not_wakeups) ... ok
+test_stat_spaces_and_parentheses (test_resources.ProcTests.test_stat_spaces_and_parentheses) ... ok
+test_truncated_stat_fails (test_resources.ProcTests.test_truncated_stat_fails) ... ok
+test_backup_and_conflicts (test_shortcuts.ShortcutTests.test_backup_and_conflicts) ... ok
+test_isolated_dbus_restoration (test_shortcuts.ShortcutTests.test_isolated_dbus_restoration) ... skipped 'sandbox prevents private D-Bus socket; run outside sandbox'
+
+----------------------------------------------------------------------
+Ran 11 tests in 3.539s
+
+OK (skipped=1)
+
+shell/session/build.sh: exit 0 (binario emitido)
+/home/sunw/Projects/singlr-worktrees/codex-2/shell/session/build/singlr-shell
+cmake --build build -j2: exit 0
+[100%] Built target singlr-shell
+python3 -m py_compile tools/check-atspi.py tools/measure-resources.py: exit 0
+bash -n tools/test-qml.sh: exit 0
+git diff --check: exit 0

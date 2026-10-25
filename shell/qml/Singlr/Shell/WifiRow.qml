@@ -121,7 +121,7 @@ Item {
             placeholderText: wifi.failed ? "Contraseña incorrecta" : "Contraseña"
             color: Theme.text; placeholderTextColor: Theme.secondary; font.family: Theme.family; font.pixelSize: 13
             Accessible.name: "Contraseña de " + wifi.networkData.Name
-            background: Item {}
+            background: Rectangle { color: "transparent"; radius: 4; border.color: password.activeFocus ? Theme.accentText : "transparent" }
             onAccepted: wifi.submit()
             Keys.onEscapePressed: wifi.closePassword()
             Tool {

@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
+import "../Ui/Focus.js" as Focus
 import QtQuick.Controls as Controls
 import QtQuick.Effects
 import QtCore
@@ -10,6 +12,11 @@ import org.kde.taskmanager as TaskManager
 import Singlr.Ui
 Rectangle {
     id: dock
+    function focusFirst() { Focus.advance(dock, dock, true); }
+    Keys.onTabPressed: Focus.advance(dock, Window.window.activeFocusItem, true)
+    Keys.onBacktabPressed: Focus.advance(dock, Window.window.activeFocusItem, false)
+    Keys.onLeftPressed: Focus.advance(dock, Window.window.activeFocusItem, false)
+    Keys.onRightPressed: Focus.advance(dock, Window.window.activeFocusItem, true)
     readonly property var dockMenu: dockMenuLoader.item
     property bool sessionMode: false
     // Available only when the session bridge confirms the loaded effect.

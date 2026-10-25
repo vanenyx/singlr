@@ -3,6 +3,8 @@ import QtQuick
 import QtQuick.Controls.Basic as Controls
 Controls.AbstractButton {
     id: row
+    Keys.onReturnPressed: row.click()
+    Keys.onEnterPressed: row.click()
     property string glyph: ""
     property string secondaryText: ""
     property string status: ""
@@ -14,10 +16,10 @@ Controls.AbstractButton {
     leftPadding: 8; rightPadding: 8
     hoverEnabled: true
     Accessible.name: text + (secondaryText ? ", " + secondaryText : "") + (status ? ", " + status : "")
-    background: Rectangle { radius: 6; color: row.hovered || row.visualFocus ? Theme.hover : "transparent"; border.color: row.visualFocus ? Theme.focusBorder : "transparent" }
+    background: Rectangle { radius: 6; color: row.hovered || row.visualFocus ? Theme.hover : "transparent"; border.color: row.visualFocus ? Theme.accentText : "transparent" }
     contentItem: Item {
         Icon { x: 0; anchors.verticalCenter: parent.verticalCenter; width: 16; height: 16; font.pixelSize: 16; name: row.busy ? "circle-dashed" : row.glyph
-            RotationAnimator on rotation { from: 0; to: 360; duration: 1500; loops: Animation.Infinite; running: row.busy && row.visible }
+            RotationAnimator on rotation { from: 0; to: 360; duration: Motion.spinnerDuration; loops: Animation.Infinite; running: Motion.enabled && row.busy && row.visible }
         }
         UiText { x: 26; height: parent.height; width: Math.max(0, trailing.x - x - 8); text: row.text; horizontalAlignment: Text.AlignLeft; font.pixelSize: 13 }
         Row {
@@ -29,7 +31,7 @@ Controls.AbstractButton {
                 id: action; height: parent.height; visible: !!row.actionText && (row.hovered || row.activeFocus || hovered || activeFocus)
                 text: row.actionText; Accessible.name: row.actionText === "…" ? "Más acciones de " + row.text : row.actionText; leftPadding: 6; rightPadding: 6
                 contentItem: UiText { text: action.text; font.pixelSize: 11; color: Theme.secondary }
-                background: Rectangle { color: action.hovered ? Theme.raised : "transparent"; radius: 4 }
+                background: Rectangle { color: action.hovered ? Theme.raised : "transparent"; radius: 4; border.color: action.visualFocus ? Theme.accentText : "transparent" }
                 onClicked: row.actionTriggered()
             }
         }

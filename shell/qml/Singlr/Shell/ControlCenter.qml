@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
+import "../Ui/Focus.js" as Focus
 import QtQuick.Controls.Basic as Controls
 import org.kde.kcmutils as KCMUtils
 import org.kde.plasma.private.volume as Volume
@@ -14,6 +15,13 @@ import Singlr.Ui
 
 Controls.Control {
     id: panel
+    function focusFirst() { Focus.advance(panel, panel, true); }
+    Keys.onTabPressed: Focus.advance(panel, Window.window.activeFocusItem, true)
+    Keys.onBacktabPressed: Focus.advance(panel, Window.window.activeFocusItem, false)
+    Keys.onUpPressed: Focus.advance(panel, Window.window.activeFocusItem, false)
+    Keys.onDownPressed: Focus.advance(panel, Window.window.activeFocusItem, true)
+    Accessible.role: Accessible.Pane
+    Accessible.name: "Centro de control"
 
     // Qt's screen list is maintained by KWin; use the standard KScreen KCM.
     property int outputCount: Qt.application.screens.length
@@ -198,12 +206,12 @@ Controls.Control {
     Controls.StackView {
         id: pages; anchors.fill: parent; anchors.margins: 16; clip: true
         initialItem: mainComponent
-        pushEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 120 } }
-        pushExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 120 } }
-        popEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 120 } }
-        popExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 120 } }
-        replaceEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 120 } }
-        replaceExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 120 } }
+        pushEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Motion.duration } }
+        pushExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: Motion.duration } }
+        popEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Motion.duration } }
+        popExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: Motion.duration } }
+        replaceEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Motion.duration } }
+        replaceExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: Motion.duration } }
     }
     Component {
         id: mainComponent
