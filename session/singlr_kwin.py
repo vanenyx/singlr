@@ -24,7 +24,7 @@ KWIN_SETTINGS = [
     ('Plugins', 'singlr-overviewEnabled', 'true'),
     ('Plugins', 'singlr-gesturesEnabled', 'true'),
     ('Plugins', 'singlr-liquidglassEnabled', 'true'),
-    ('Effect-singlrliquidglass', 'Enabled', 'false'),
+    ('Effect-singlrliquidglass', 'Enabled', 'true'),
     ('Effect-singlrliquidglass', 'Intensity', '65'),
 ]
 
@@ -49,8 +49,8 @@ def material_settings():
         reduce = config.getboolean('Accessibility', 'reduceTransparency', fallback=False)
     except ValueError:
         reduce = False
-    liquid = config.get('Appearance', 'material', fallback='glass') == 'liquid'
-    return [('Effect-singlrliquidglass', 'Enabled', str(liquid and intensity > 0 and not reduce).lower()),
+    glass = config.get('Appearance', 'material', fallback='glass') in ('glass', 'liquid')
+    return [('Effect-singlrliquidglass', 'Enabled', str(glass and intensity > 0 and not reduce).lower()),
             ('Effect-singlrliquidglass', 'Intensity', str(intensity))]
 
 

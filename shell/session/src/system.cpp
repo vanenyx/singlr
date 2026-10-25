@@ -458,7 +458,7 @@ QVariantList System::commandSettingsPages() const
     return {
         QVariantMap{{"page", "appearance"}, {"label", "Apariencia"}, {"keywords", "appearance theme tema oscuro dark claro light color acento accent transparencia transparency animacion motion"}},
         QVariantMap{{"page", "wallpaper"}, {"label", "Fondo de escritorio"}, {"keywords", "wallpaper background fondo imagen"}},
-        QVariantMap{{"page", "material"}, {"label", "Material"}, {"keywords", "material glass vidrio liquid solido solid intensidad intensity"}}
+        QVariantMap{{"page", "material"}, {"label", "Material"}, {"keywords", "material glass vidrio solido solid intensidad intensity"}}
     };
 }
 

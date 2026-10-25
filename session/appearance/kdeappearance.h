@@ -21,7 +21,7 @@ class KDEAppearance : public QObject {
     Q_PROPERTY(QString material READ material NOTIFY changed)
     Q_PROPERTY(int intensity READ intensity NOTIFY changed)
     Q_PROPERTY(bool reduceTransparency READ reduceTransparency NOTIFY changed)
-    Q_PROPERTY(bool liquidAvailable READ liquidAvailable NOTIFY changed)
+    Q_PROPERTY(bool glassAvailable READ glassAvailable NOTIFY changed)
     Q_PROPERTY(bool busy READ busy NOTIFY changed)
     Q_PROPERTY(QString error READ error NOTIFY changed)
 public:
@@ -34,7 +34,7 @@ public:
     QString material() const;
     int intensity() const;
     bool reduceTransparency() const;
-    bool liquidAvailable() const { return m_liquidAvailable; }
+    bool glassAvailable() const { return m_glassAvailable; }
     Q_INVOKABLE void setMaterial(const QString &material);
     Q_INVOKABLE void setIntensity(int intensity);
     Q_INVOKABLE void setReduceTransparency(bool reduce);
@@ -53,11 +53,11 @@ private:
     void finishMigration();
     void migrate();
     void applyMaterial();
-    void checkLiquid();
+    void checkGlass();
     KSharedConfig::Ptr m_materialConfig;
     KConfigWatcher::Ptr m_materialWatcher;
-    bool m_liquidAvailable = false;
-    bool m_checkingLiquid = false;
+    bool m_glassAvailable = false;
+    bool m_checkingGlass = false;
     KSharedConfig::Ptr m_config;
     KConfigWatcher::Ptr m_watcher;
     QProcess m_process;

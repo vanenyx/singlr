@@ -50,3 +50,13 @@ Para nuevas entradas: ID, clase, estado, motivo, evidencia/autor y consecuencias
 | T-251 | Técnica derivada del encargo T251 | Implementada; comprobación anidada pendiente | Command expone el origen real mediante KRunner QueryMatch, usa el ID instalado `krunner_systemsettings`, deduplica por ID global y prioriza operaciones, aplicaciones instaladas y KCM sobre ofertas AppStream/Discover; estas quedan en sección final con máximo tres. No clasifica por el texto. Metadatos capturados y fixture de contrato diferenciada de consultas vivas. Ver [entrega y límites](handoffs/T251-command-fix.md). |
 
 | T-252 | Técnica derivada / propuesta visual del encargo T252 | Implementada; revisión KWin y P-016 pendientes | Intensidad con transmisión nominal lineal hasta 85 %. Corrección de Claude: se retiran las placas opacas y contornos; la legibilidad depende de la adaptación suave de luminancia local del material en el compositor. Vidrio y Liquid comparten pase; Liquid añade lente normal a SDF, brillo por forma y dispersión periférica. Sin timers de render ni lectura GPU→CPU en producto. Parámetros y contorno requieren revisión visual del creador. Matriz EGL verificada; bus anidado bloqueado. Ver [corrección vigente y procedimiento](handoffs/T252-material-correction.md). |
+
+## T253 — solución técnica derivada de P-020/P-021
+
+Se conserva el ID técnico `singlr-liquidglass` y su grupo kwinrc para no romper los
+journals existentes ni exigir migrar y revertir dos juegos de claves/binarios. Nombre
+visible: Singlr Glass; función: difusión y adaptación de luminancia para Vidrio. La
+preferencia antigua `material=liquid` se persiste como `glass` al cargar Appearance.
+El radio real se consulta asíncronamente al shell por ID de superficie Wayland;
+KDE blur/ext-background-effect-v1 no incluyen radio. Adaptador Qt privado aislado,
+revisable al actualizar Qt. Detalle y límites en `kwin/effects/singlr-liquidglass/README.md`.

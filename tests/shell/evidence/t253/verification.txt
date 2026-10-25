@@ -1,0 +1,21 @@
+T253 / 2026-10-25 / day3/codex2-glass-aa / sin commit
+Qt 6.12.0; KWin 6.8.1 ABI exacta; wayland-client 1.26.0.
+
+cmake build (shell, efecto, tests): PASS
+singlr-appearance-test: 11 passed
+singlr-liquidglass-test: 7 passed
+singlr-material-settings-test: 6 passed
+singlr-material-optics-test (software EGL): PASS; optics.json
+QML dark: 206 + 8 passed, 3 optional capture skips
+QML light: 206 + 8 passed, 3 optional capture skips
+unittest test_kwin.py: 14 passed
+unittest test_material_review.py: 5 passed
+tools/check-cmake.sh: PASS build, DESTDIR, payload y plugin
+
+KWin anidado: BLOCKED (exit 127)
+dbus-daemon: Failed to bind socket "/tmp/dbus-p8z4QrTdvF": Operation not permitted
+dbus-run-session: EOF reading address from bus daemon
+SINGLR_CLEANUP remaining=[] {}
+SINGLR_HOST_CONFIG files_before=30 files_after=30 equal=True
+Capturas reales 1x/2x y recortes 8x: pendientes, no generados.
+Procedimiento y límites: docs/handoffs/T253-glass-aa.md

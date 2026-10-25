@@ -46,7 +46,7 @@ def apply_material(run, mode, material, intensity, without_effect=False, diagnos
         str(not without_effect).lower())
     # A repeat invocation keeps the transaction snapshot, but must still update live parameters.
     run('kwriteconfig6', '--file', 'kwinrc', '--group', 'Effect-singlrliquidglass', '--key', 'Enabled', '--notify',
-        str(material == 'liquid' and intensity > 0 and not without_effect).lower())
+        str(material == 'glass' and intensity > 0 and not without_effect).lower())
     run('kwriteconfig6', '--file', 'kwinrc', '--group', 'Effect-singlrliquidglass', '--key', 'Intensity', '--notify', str(intensity))
     run('qdbus6', 'org.kde.KWin', '/KWin', 'org.kde.KWin.reconfigure')
     run('qdbus6', 'org.kde.KWin', '/Effects', 'org.kde.kwin.Effects.' +
@@ -54,7 +54,7 @@ def apply_material(run, mode, material, intensity, without_effect=False, diagnos
     loaded = run('qdbus6', 'org.kde.KWin', '/Effects', 'org.kde.kwin.Effects.isEffectLoaded', 'singlr-liquidglass')
     if without_effect and loaded == 'true':
         raise RuntimeError('El plugin sigue cargado: baseline inválido')
-    if material == 'liquid' and intensity > 0 and not without_effect and loaded != 'true':
+    if material == 'glass' and intensity > 0 and not without_effect and loaded != 'true':
         raise RuntimeError('El plugin no está cargado: esta sesión solo demuestra Vidrio de respaldo')
     run('qdbus6', 'org.kde.plasmashell', '/PlasmaShell', 'org.kde.PlasmaShell.singlrReloadSettings')
     run('kwriteconfig6', '--file', 'kwinrc', '--group', 'Effect-singlrliquidglass',
@@ -139,13 +139,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('descriptor', type=Path, nargs='?')
     parser.add_argument('--mode', choices=('dark', 'light'))
-    parser.add_argument('--material', choices=('solid', 'glass', 'liquid'))
+    parser.add_argument('--material', choices=('solid', 'glass'))
     parser.add_argument('--intensity', type=int, default=65)
     parser.add_argument('--surface', choices=('control-center', 'launcher', 'clipboard', 'dock'), help='Close panels and open this surface')
     parser.add_argument('--capture', type=Path)
-    parser.add_argument('--suite', type=Path, help='Capture all three materials on all three surfaces, with edge crops and diagnostics')
+    parser.add_argument('--suite', type=Path, help='Capture both materials on all three surfaces, with edge crops and diagnostics')
     parser.add_argument('--shader-fixture', type=Path, help='Render production GLSL via software EGL; explicitly NOT compositor evidence')
-    parser.add_argument('--sweep', type=Path, help='Capture glass/liquid at 0/25/50/75/100 on all three surfaces')
+    parser.add_argument('--sweep', type=Path, help='Capture glass at 0/25/50/75/100 on all three surfaces')
     parser.add_argument('--matrix', type=Path, help='Both themes, warm/white/black backdrops and three panels at five intensities')
     parser.add_argument('--wallpaper', type=Path, help='Warm wallpaper for --matrix or --shader-fixture')
     parser.add_argument('--edge-rect', type=int, nargs=4, metavar=('X', 'Y', 'WIDTH', 'HEIGHT'), help='Override edge crop in screenshot pixels')
@@ -222,7 +222,7 @@ def main():
                 result['edgeCapture'] = str(crop_edge(path, rect, args.edge_zoom))
             path.with_suffix('.json').write_text(json.dumps(result, indent=2) + '\n')
         print(json.dumps(result))
-        if material in ('glass', 'liquid') and args.intensity > 0 and surface and loaded and not args.without_effect:
+        if material == 'glass' and args.intensity > 0 and surface and loaded and not args.without_effect:
             if not any(w['draws'] > 0 for w in panel_windows(diagnostic, surface)):
                 raise RuntimeError('Plugin cargado pero sin pases del panel; revisar diagnóstico .json')
     if args.suite or args.sweep:
@@ -233,7 +233,7 @@ def main():
             rect = args.edge_rect or panel_edge(effect_diagnostics(run, loaded), surface)
             for intensity in ([0, 25, 50, 75, 100] if args.sweep else [args.intensity]):
                 args.intensity = intensity
-                for material in (('glass', 'liquid') if args.sweep else ('solid', 'glass', 'liquid')):
+                for material in (('glass',) if args.sweep else ('solid', 'glass')):
                     loaded = apply(material)
                     suffix = f'-{intensity:03}' if args.sweep else ''
                     save(material, loaded, (args.sweep or args.suite) / f'{surface}-{material}-{args.mode}{suffix}.png',

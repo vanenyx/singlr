@@ -15,8 +15,8 @@ Item {
     readonly property string material: KDEAppearance.material
     readonly property int intensity: KDEAppearance.intensity
     readonly property bool reduceTransparency: KDEAppearance.reduceTransparency
-    readonly property bool liquidAvailable: KDEAppearance.liquidAvailable
-    readonly property string effectiveMaterial: reduceTransparency || intensity === 0 || material === "solid" ? "solid" : material === "liquid" && liquidAvailable ? "liquid" : "glass"
+    readonly property bool glassAvailable: KDEAppearance.glassAvailable
+    readonly property string effectiveMaterial: reduceTransparency || intensity === 0 || material === "solid" ? "solid" : "glass"
     property string wallpaper: "singlr:linear"
     Settings { id: settings; location: appearance.location; category: "Appearance" }
     function reload() {

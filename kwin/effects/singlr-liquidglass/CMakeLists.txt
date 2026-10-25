@@ -5,6 +5,8 @@ add_library(singlr-liquidglass MODULE liquidglass.cpp liquidglass.h)
 # KWin effect plugins have no "lib" prefix: the file name is the plugin id, as kcoreaddons_add_plugin does.
 set_target_properties(singlr-liquidglass PROPERTIES CXX_STANDARD 23 PREFIX "")
 target_link_libraries(singlr-liquidglass PRIVATE KWin::kwin KF6::ConfigCore Qt6::OpenGL)
+# Shares the shell's rounded blur rasterization to recover the exact corner radius.
+target_include_directories(singlr-liquidglass PRIVATE "${PROJECT_SOURCE_DIR}/shell/session/src")
 target_link_options(singlr-liquidglass PRIVATE "LINKER:--no-undefined")
 install(TARGETS singlr-liquidglass DESTINATION "${KDE_INSTALL_PLUGINDIR}/kwin/effects/plugins")
 add_executable(singlr-liquidglass-test EXCLUDE_FROM_ALL tests/config.cpp)

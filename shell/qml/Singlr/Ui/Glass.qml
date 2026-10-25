@@ -24,7 +24,7 @@ Item {
                     textureSize: Qt.size(Math.ceil((glass.width+128)/4),Math.ceil((glass.height+128)/4))
                     live: glass.visible && glass.canBlur
                 }
-                Rectangle { id: mask; anchors.fill: parent; radius: glass.radius; color: "white"; visible: false; layer.enabled: glass.rhi }
+                Rectangle { id: mask; anchors.fill: parent; radius: glass.radius; antialiasing: true; color: "white"; visible: false; layer.enabled: glass.rhi }
                 // The UV crop is provided through a second texture source, after overscan.
                 MultiEffect {
                     id: blur; x:-64; y:-64; width:glass.width+128; height:glass.height+128
@@ -48,7 +48,7 @@ Item {
     }
     // Explicit opaque reduced-effects material on software: no fake CPU blur.
     Rectangle {
-        anchors.fill: parent; radius: glass.radius
+        anchors.fill: parent; radius: glass.radius; antialiasing: true
         color: !glass.rhi || !Theme.translucent ? Theme.raised : glass.compositorBlur ? Theme.surface : glass.canBlur ? Palette.alpha(Theme.raised, Palette.materialOpacity(Theme.materialStrength, false)) : Theme.raised
         // Flat material (P-020): a faint hairline only; no sheen line, bevel or rim.
         border.width: 1; border.color: Theme.translucent ? Theme.faintBorder : Theme.border

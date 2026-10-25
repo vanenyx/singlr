@@ -23,4 +23,4 @@ target_link_libraries(singlr-appearance-test PRIVATE Qt6::Gui Qt6::Quick Qt6::Qm
 
 add_executable(singlr-material-settings-test EXCLUDE_FROM_ALL
     ../../kwin/effects/singlr-liquidglass/tests/config.cpp)
-target_link_libraries(singlr-material-settings-test PRIVATE Qt6::Test KF6::ConfigCore)
+target_link_libraries(singlr-material-settings-test PRIVATE Qt6::Gui Qt6::Test KF6::ConfigCore)

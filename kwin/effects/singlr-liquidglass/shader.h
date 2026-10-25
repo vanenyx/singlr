@@ -9,7 +9,7 @@ uniform vec2 sourceExtent;
 uniform vec2 inset;
 uniform float radius;
 uniform float strength;
-uniform float liquid;
+uniform float deviceScale;
 uniform float dark;
 uniform float diagnosticOverlay;
 in vec2 texcoord0;
@@ -20,7 +20,7 @@ float sdf(vec2 p) {
 }
 vec3 diffuse(vec2 uv, float spread) {
     // Symmetric, fixed work. Native KWin blur supplies the low frequencies;
-    // intensity controls this additional diffusion (Liquid keeps a cleaner body).
+    // intensity controls this additional diffusion.
     vec2 stepSize = vec2(spread) / sourceExtent;
     vec3 c = texture(sampler, uv).rgb * 0.20;
     const vec2 offsets[12] = vec2[12](
@@ -56,30 +56,10 @@ float softLimit(float value, float ceiling) {
 void main() {
     vec2 p = vec2(texcoord0.x, 1.0 - texcoord0.y) * sourceExtent - inset;
     float d = sdf(p);
-    if (d > 0.0) discard;
-    vec2 n = normalize(vec2(sdf(p + vec2(0.5,0.0)) - sdf(p - vec2(0.5,0.0)),
-                            sdf(p + vec2(0.0,0.5)) - sdf(p - vec2(0.0,0.5))) + vec2(0.00001));
-    // Flat material (P-020): a narrow lens band, never a thick raised rim.
-    float width = min(14.0, min(extent.x, extent.y) / 4.0);
-    float edge = 1.0 - smoothstep(0.0, width, -d);
-    // Convex cross-section: steep at the perimeter, flat through the body.
-    // SDF normals rotate continuously around each corner; all four sides lens.
-    vec2 bend = n * pow(edge, 1.65) * (24.0 * strength * liquid) / sourceExtent;
-    bend.y = -bend.y;
-    vec2 uv = texcoord0 - bend;
-    // Keep every diffusion sample inside the surface: near the perimeter the
-    // spread shrinks to the distance to the edge, so no outside tone bleeds in
-    // as a darker or lighter band (P-020: flat, no rim).
-    vec3 color = diffuse(uv, min(strength * mix(14.0, 5.0, liquid), max(0.0, -d - 1.0)));
-    vec2 dispersion = bend * 0.055;
-    color.r += (texture(sampler, uv + dispersion).r - texture(sampler, uv).r) * edge;
-    color.b += (texture(sampler, uv - dispersion).b - texture(sampler, uv).b) * edge;
-    // Flat material (P-020): no broad lobes or bounce light that read as relief;
-    // only a hairline Fresnel crest, faint and uniform around the perimeter.
-    float crest = exp(-pow((-d-0.5)/0.6, 2.0));
-    float specular = 0.10 * crest;
-    color += vec3(specular * liquid * strength);
-    color = clamp(color, vec3(0.0), vec3(1.0));
+    float coverage = clamp(0.5 - d * deviceScale, 0.0, 1.0);
+    if (coverage <= 0.0) discard;
+    // Flat diffusion: shrink samples at the perimeter, avoiding a tonal rim.
+    vec3 color = diffuse(texcoord0, min(strength * 14.0, max(0.0, -d - 1.0)));
     // Vibrancy is a local material response, not a field or glyph rectangle.
     // Native blur + diffusion supply low-frequency luminance. A smooth shoulder
     // only compresses the unsafe range; dark details keep their original slope.
@@ -108,6 +88,6 @@ void main() {
     color = toDisplay(linearColor);
     if (diagnosticOverlay > 0.5 && d > -8.0)
         color = vec3(1.0, 0.0, 1.0);
-    fragColor = vec4(color, 1.0);
+    fragColor = vec4(color * coverage, coverage);
 }
 )GLSL";

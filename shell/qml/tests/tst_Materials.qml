@@ -14,10 +14,10 @@ Item {
             Appearance.save("intensity", 65);
         }
         function test_preferencesAndSoftwareFallback() {
-            Appearance.save("material", "liquid");
+            Appearance.save("material", "glass");
             Appearance.save("intensity", 77);
-            compare(Appearance.material, "liquid"); compare(Appearance.intensity, 77);
-            Appearance.reload(); compare(Appearance.material, "liquid");
+            compare(Appearance.material, "glass"); compare(Appearance.intensity, 77);
+            Appearance.reload(); compare(Appearance.material, "glass");
             compare(Appearance.effectiveMaterial, "glass"); // private test bus has no KWin
             // All surfaces, including bar/dock/menu, become opaque with software rendering.
             compare(Theme.surface.a, 1); compare(Theme.dockSurface.a, 1); compare(Theme.barSurface.a, 1);

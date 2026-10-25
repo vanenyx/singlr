@@ -44,7 +44,7 @@ Item {
     }
     Window {
         Component.onCompleted: surfaces.place(this)
-        screen: surfaces.outputScreen; transientParent: null; visible: true; height: 28; property bool singlrBlur: Theme.translucent; property int singlrBlurRadius: 0; color: "transparent"
+        screen: surfaces.outputScreen; transientParent: null; visible: true; height: 28; property bool singlrBlur: Theme.translucent; property real singlrBlurRadius: 0; color: "transparent"
         LayerShell.Window.layer: LayerShell.Window.LayerTop
         LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
         LayerShell.Window.exclusionZone: 28
@@ -72,7 +72,7 @@ Item {
                 Component.onCompleted: surfaces.place(this)
                 id: barMenuWindow
                 property bool singlrBlur: Theme.translucent
-                property int singlrBlurRadius: 8
+                property real singlrBlurRadius: 8
                 screen: surfaces.outputScreen; transientParent: null; visible: true; width: bar.menuWidth; height: bar.menuHeight; color: "transparent"
                 LayerShell.Window.layer: LayerShell.Window.LayerTop
                 LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft
@@ -95,7 +95,7 @@ Item {
                 Component.onCompleted: surfaces.place(this)
                 id: trayMenuWindow
                 property bool singlrBlur: Theme.translucent
-                property int singlrBlurRadius: 8
+                property real singlrBlurRadius: 8
                 screen: surfaces.outputScreen; transientParent: null; visible: true
                 width: 240; height: bar.keyboard.opened ? bar.keyboard.menuHeight : bar.tray.menuHeight; color: "transparent"
                 LayerShell.Window.layer: LayerShell.Window.LayerTop
