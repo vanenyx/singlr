@@ -1,11 +1,11 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls as Controls
 import Singlr.Ui
-import org.kde.plasma.private.kicker as Kicker
 Rectangle {
     id: bar
     readonly property var menu: menuLoader.item
+    readonly property real menuHeight: menu ? menu.entriesHeight : 249
+    readonly property real menuWidth: 292
     property bool sessionMode: false
     property Item menuHost: null
     function closeMenu() { menuOpen = false; systemTray.close(); }
@@ -45,20 +45,18 @@ Rectangle {
         UiText { height: 28; text: bar.now.toLocaleString(Qt.locale("es_ES"), "ddd d MMM  HH:mm"); weight: 510; color: Theme.secondary }
     }
     DeferredLoader {
-        onLoaded: if (bar.menuOpen) (item as Controls.Popup).forceActiveFocus()
+        onLoaded: if (bar.menuOpen) bar.menu.forceActiveFocus()
         id: menuLoader; objectName: "TopBarMenuLoader"; opened: bar.menuOpen
         sourceComponent: Component {
-            Controls.Popup {
-                Kicker.SimpleFavoritesModel { id: singlrSettings; favorites: ["singlr-settings.desktop"] }
-                id: menu; visible: bar.menuOpen; onClosed: bar.menuOpen = false; onAboutToShow: systemTray.close(); parent: bar.menuHost || bar; x: bar.menuHost ? 0 : 16; y: bar.menuHost ? 0 : 32; width: 220; height: 116; padding: 4; focus: true
-                popupType: Controls.Popup.Item
-                closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
-                background: Rectangle { radius: 8; color: Theme.raised; border.color: Theme.border }
-                contentItem: Column {
-                    Tool { width: parent.width; height: 36; icon: "squares-four"; label: "Todas las aplicaciones"; onClicked: { bar.menuOpen = false; bar.applicationsRequested(); } }
-                    Tool { width: parent.width; height: 36; icon: "gear"; label: "Ajustes de Singlr"; onClicked: { if (singlrSettings.count > 0 && singlrSettings.trigger(0, "", null)) bar.menuOpen = false; } }
-                    Tool { width: parent.width; height: 36; icon: "power"; label: "Salir de Singlr"; onClicked: Qt.quit() }
-                }
+            SessionMenu {
+                id: menu
+                sessionMode: bar.sessionMode
+                visible: bar.menuOpen
+                onClosed: bar.menuOpen = false
+                onAboutToShow: systemTray.close()
+                parent: bar.menuHost || bar
+                x: bar.menuHost ? 0 : 16
+                y: bar.menuHost ? 0 : 32
             }
         }
     }

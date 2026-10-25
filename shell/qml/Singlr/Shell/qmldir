@@ -20,3 +20,5 @@ StableWifiList 1.0 StableWifiList.qml
 BatteryRow 1.0 BatteryRow.qml
 SystemTray 1.0 SystemTray.qml
 DeferredLoader 1.0 DeferredLoader.qml
+SessionMenu 1.0 SessionMenu.qml
+ScreenSurfaces 1.0 ScreenSurfaces.qml

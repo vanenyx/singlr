@@ -6,9 +6,11 @@ import QtQuick.Controls.Basic as Controls
 Controls.Popup {
     id: menu
     property var entries: []
+    property string headerName: ""
+    property url headerIcon: ""
     property int currentIndex: 0
     property real fixedHeight: 0
-    readonly property real entriesHeight: 8 + entries.reduce((sum, entry) => sum + (entry.separatorOnly ? 9 : 28 + (entry.separator ? 9 : 0)), 0)
+    readonly property real entriesHeight: 8 + (headerName ? 45 : 0) + entries.reduce((sum, entry) => sum + (entry.separatorOnly ? 9 : 28 + (entry.separator ? 9 : 0)), 0)
     property int confirmingIndex: -1
     property Item returnFocus: null
     property point actionPosition: Qt.point(0, 0)
@@ -88,6 +90,16 @@ Controls.Popup {
         Column {
         id: rows
         width: viewport.width
+        Item {
+            width: rows.width; height: menu.headerName ? 45 : 0; visible: !!menu.headerName
+            Rectangle {
+                x: 6; y: 6; width: 24; height: 24; radius: 12; color: Theme.hover
+                UiText { anchors.centerIn: parent; text: menu.headerName.charAt(0).toUpperCase(); visible: avatar.status !== Image.Ready }
+                Image { id: avatar; anchors.fill: parent; source: menu.headerIcon; sourceSize: Qt.size(24, 24); fillMode: Image.PreserveAspectCrop; visible: status === Image.Ready }
+            }
+            UiText { x: 38; y: 4; height: 28; width: parent.width - 44; text: menu.headerName; elide: Text.ElideRight; weight: 590 }
+            Rectangle { x: 4; y: 40; width: parent.width - 8; height: 1; color: Theme.border }
+        }
         Repeater {
             id: menuRows
             model: menu.entries

@@ -668,3 +668,69 @@ Evidencia local (Qt 6.12.0, 25 oct 2026):
 Contratos contrastados con documentación oficial de Qt:
 [Loader](https://doc.qt.io/qt-6/qml-qtquick-loader.html) y
 [Image.sourceSize](https://doc.qt.io/qt-6/qml-qtquick-image.html#sourceSize-prop).
+
+### T233 — sesión y pantallas (25 oct 2026)
+
+Solución técnica derivada del encargo: `SessionMenu.qml` reutiliza `ContextMenu`
+(P-012), con avatar/inicial de 24 px, usuario, atajo Meta+L y confirmación en la
+misma fila para reiniciar, apagar y cerrar sesión. `typeof` protege tanto las
+capacidades como las llamadas a `SinglrSystem`; las acciones en modo ventana
+solo escriben `SESSION_ACTION windowed` en el log, incluidos los ajustes.
+Las capacidades se actualizan al abrir el menú y quedan congeladas hasta el
+siguiente acceso para que los datos en segundo plano no cambien su tamaño.
+Se conservan tipografía, material, colores y filas de 28 px del menú existente;
+la confirmación usa `Theme.error`. Navegación por flechas/Enter y cierre con
+Escape o clic fuera siguen a cargo de `ContextMenu`.
+
+`Session.screens` usa `Qt.application.screens`. Un `Instantiator` administra
+`ScreenSurfaces` (barra, fondo y superficies perezosas para sus menús) por salida,
+con `Window.screen` explícito. `dockScreen` permite cambiar la política; por
+defecto usa la primera pantalla y vuelve a ella si desaparece la seleccionada.
+Dock, sus menús y OSD siguen esa pantalla. Las notificaciones emergentes también;
+el historial (que oculta los popups mientras está abierto), el lanzador y el
+centro de control siguen la pantalla del botón solicitante. Solo existe una
+instancia de cada panel compartido. Los atajos globales conservan sus funciones
+sin argumentos para las invocaciones C++ y usan la pantalla del dock.
+Al cambiar el inventario se cierran paneles/menús; Instantiator retira los objetos
+y ventanas de las salidas eliminadas. Los paneles siguen usando DeferredLoader.
+
+Contratos contrastados con Qt local **6.12.0** y documentación oficial:
+[Instantiator y propiedad de sus objetos](https://doc.qt.io/qt-6/qml-qtqml-models-instantiator.html),
+[Window.screen](https://doc.qt.io/qt-6/qml-qtquick-window.html#screen-prop).
+
+Verificación ejecutada:
+
+- qmllint completo con los imports del comando anterior: exit 0, sin avisos.
+- qmltestrunner offscreen/software: **115 passed, 0 failed**. Incluye protección
+  sin bridge, capacidades opcionales, confirmación, cancelación, tamaño estable,
+  modo ventana y alta/baja del inventario de pantallas. Offscreen solo ofrece un
+  QScreen real: la prueba repite ese QScreen para comprobar el ciclo de objetos;
+  no demuestra colocación en dos salidas físicas.
+- Preview del menú renderizado e inspeccionado: `/tmp/t233-menu.png`.
+- Log en vivo vigilado: las últimas recargas no muestran errores QML ni avisos
+  de funciones de sesión ausentes; persiste el aviso previo del portal sobre el
+  identificador `singlr-shell`.
+- `tools/measure-resources.sh --output /tmp/t233-resources` intentado: **bloqueado**
+  al crear el D-Bus privado (`Failed to bind socket … Operation not permitted`).
+  No se acredita PSS/CPU ni el presupuesto P-016 con esta ejecución.
+
+Validación pendiente para Claude, fuera del sandbox, sin tocar la sesión KDE:
+
+1. En el controlador aislado de `tools/session-runtime.py`, ejecutar KWin con los
+   mismos argumentos privados y añadir `--output-count 2` (opción confirmada con
+   `kwin_wayland --help`). La línea del compositor queda:
+   `kwin_wayland --wayland-display <display-padre> --socket singlr-wayland --width 1280 --height 800 --scale 1 --output-count 2 --no-lockscreen --no-global-shortcuts --no-kactivities`.
+   Mantener el D-Bus, XDG y arranque del cliente privados del controlador;
+   no ejecutar el cliente contra el bus de la sesión habitual.
+2. Comprobar fondo/barra en ambas ventanas de salida, un solo dock en la primera,
+   avisos/OSD en ella y menús/lanzador/centro/historial en la salida solicitante.
+   Abrir el panel en una salida y después desde la otra; revisar Escape, clic
+   fuera, foco y confirmación en sitio sin ejecutar acciones destructivas reales.
+3. Deshabilitar y rehabilitar la segunda salida con `kscreen-doctor` **dentro del
+   entorno privado**, con sus identificadores obtenidos mediante `kscreen-doctor
+   -o`. Repetir con un menú y un panel abiertos. Verificar que no quedan ventanas
+   huérfanas y que el dock vuelve a la primera salida disponible si se retira su
+   pantalla. Revisar el log QML tras cada cambio.
+4. Repetir la medición P-016 con el controlador normal y con dos salidas, en
+   reposo, con panel abierto y después de cerrarlo. Guardar informe; este encargo
+   no declara cumplido el presupuesto ni validada la integración multisalida.

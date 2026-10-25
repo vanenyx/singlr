@@ -186,7 +186,7 @@ def inside(base, source, width, height, client_kind="singlr"):
         compositor_env['WAYLAND_DISPLAY'] = parent
         compositor = subprocess.Popen([
             'kwin_wayland', '--wayland-display', parent, '--socket', 'singlr-wayland',
-            '--width', str(width), '--height', str(height), '--scale', '1',
+            '--width', str(width), '--height', str(height), '--scale', '1', '--output-count', os.environ.get('SINGLR_OUTPUTS', '1'),
             '--no-lockscreen', '--no-global-shortcuts', '--no-kactivities'], env=compositor_env)
         deadline = time.monotonic() + 15
         socket = Path(env['XDG_RUNTIME_DIR']) / 'singlr-wayland'

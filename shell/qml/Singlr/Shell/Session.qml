@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
+import QtQml.Models
 import org.kde.layershell as LayerShell
 import Singlr.Ui
 // transientParent: null es imprescindible: si no, Qt ata cada Window a la ventana del
@@ -10,6 +11,41 @@ import Singlr.Ui
 // ventanas normales: aparecen en la multitarea y en Alt+Tab.
 Item {
     id: session
+    // First entry is Qt's primary screen; dockScreen remains an overridable policy.
+    property var screens: Qt.application.screens
+    property var dockScreen: screens.length ? screens[0] : null
+    readonly property var effectiveDockScreen: screens.indexOf(dockScreen) >= 0 ? dockScreen : (screens.length ? screens[0] : null)
+    property var launcherScreen: effectiveDockScreen
+    property var controlScreen: effectiveDockScreen
+    property var historyScreen: effectiveDockScreen
+    property bool notificationRemapping: false
+    readonly property bool barMenuOpen: {
+        let opened = false;
+        for (let i = 0; i < screenSurfaces.count; ++i) {
+            const surface = screenSurfaces.objectAt(i) as ScreenSurfaces;
+            if (surface && surface.menuOpen) opened = true;
+        }
+        return opened;
+    }
+    onScreensChanged: {
+        closeMenus();
+        if (launcher) launcher.close();
+        launcherOpen = false;
+        launcherScreen = effectiveDockScreen;
+        controlScreen = effectiveDockScreen;
+        historyScreen = effectiveDockScreen;
+    }
+    Instantiator {
+        id: screenSurfaces
+        objectName: "screenSurfaces"
+        model: session.screens
+        delegate: ScreenSurfaces {
+            required property var modelData
+            outputScreen: modelData
+            controller: session
+            activeAppName: dock.activeAppName
+        }
+    }
     readonly property var notificationCenter: notifications
     property bool launcherOpen: false
     property bool controlOpen: false
@@ -74,26 +110,47 @@ Item {
     }
     NotificationCenter {
         id: notifications; parent: notificationSurface.item ? (notificationSurface.item as Window).contentItem : session; live: true; sessionMode: true
-        onHistoryOpenChanged: if (historyOpen) Qt.callLater(function() { if (notifications.historyOpen) if (session.notificationsWindow) session.notificationsWindow.requestActivate(); })
+        onHistoryOpenChanged: {
+            // Recreate layer-shell routing both when opening history and returning to toasts.
+            session.notificationRemapping = true;
+            session.notificationRemapping = false;
+            if (historyOpen) Qt.callLater(function() { if (notifications.historyOpen && session.notificationsWindow) session.notificationsWindow.requestActivate(); });
+        }
     }
     function reloadSettings() { Theme.reloadSettings(); }
-    function closeMenus() { bar.closeMenu(); dock.closeMenu(); notifications.historyOpen = false; session.controlOpen = false; }
+    function closeDockMenu() { dock.closeMenu(); }
+    function closeBarMenus() {
+        for (let i = 0; i < screenSurfaces.count; ++i) {
+            const surface = screenSurfaces.objectAt(i) as ScreenSurfaces;
+            if (surface) surface.closeMenus();
+        }
+    }
+    function closeMenus() {
+        closeBarMenus();
+        dock.closeMenu();
+        notifications.historyOpen = false;
+        session.controlOpen = false;
+    }
     // Invocado desde C++ (tecla Meta, Alt+Espacio) a través de D-Bus.
     function showApplications() { openLauncher(true); }
     function activateDockEntry(n) { return dock.activateEntry(n); }
-    function toggleNotifications() {
-        const wasOpen = notifications.historyOpen;
+    function toggleNotifications() { toggleNotificationsOnScreen(effectiveDockScreen); }
+    function toggleNotificationsOnScreen(targetScreen) {
+        const wasOpen = notifications.historyOpen && historyScreen === targetScreen;
+        historyScreen = targetScreen;
         closeMenus(); if (launcher) launcher.close(); session.launcherOpen = false;
         if (!wasOpen) notifications.toggle();
     }
     function toggleLauncher() { if (session.launcherOpen) launcher.close(); else openLauncher(false); }
-    function openLauncher(apps = false) { closeMenus(); session.launcherOpen = true; launcher.open(apps); overlay.requestActivate(); focusTimer.restart(); }
+    function openLauncher(apps = false, targetScreen = effectiveDockScreen) { closeMenus(); if (launcherScreen !== targetScreen) session.launcherOpen = false; launcherScreen = targetScreen; session.launcherOpen = true; launcher.open(apps); overlay.requestActivate(); focusTimer.restart(); }
     Timer { id: focusTimer; interval: 0; onTriggered: if (session.launcher && session.launcherOpen) session.launcher.focusInput() }
     function globalAction(component, name) { systemControls.globalAction(component, name); }
     function osdRequest(method, args) { osd.request(method, args); }
-    function toggleControlCenter() {
-        if (session.controlOpen) { session.controlOpen = false; return; }
+    function toggleControlCenter() { toggleControlCenterOnScreen(effectiveDockScreen); }
+    function toggleControlCenterOnScreen(targetScreen) {
+        if (session.controlOpen && controlScreen === targetScreen) { session.controlOpen = false; return; }
         closeMenus(); if (launcher) launcher.close(); session.launcherOpen = false;
+        controlScreen = targetScreen;
         session.controlOpen = true;
     }
     SystemControls { id: systemControls; onFeedback: (icon, percent, text) => osd.show(icon, percent, text) }
@@ -102,6 +159,7 @@ Item {
         id: osdSurface; objectName: "osdSurface"; active: osd.surfaceVisible
         sourceComponent: Component {
             Window {
+                screen: session.effectiveDockScreen
                 id: osdWindow
                 transientParent: null; visible: true; width: 240; height: 44; color: "transparent"
                 property bool singlrBlur: true
@@ -122,6 +180,7 @@ Item {
         onLoaded: { (item as Window).requestActivate(); controlFocus.restart(); }
         sourceComponent: Component {
             Window {
+                screen: session.controlScreen
                 objectName: "controlCenterWindow"
                 transientParent: null; visible: true; width: 340
                 height: Math.min(screen.height - 64, session.controlPanel ? session.controlPanel.implicitHeight : 560); color: "transparent"
@@ -142,31 +201,8 @@ Item {
     }
     // --no-background: sobre una sesión Plasma real se conserva el fondo del usuario.
     readonly property bool showBackground: Qt.application.arguments.indexOf("--no-background") < 0
-    Loader {
-        id: backgroundSurface; objectName: "backgroundSurface"; active: session.showBackground
-        sourceComponent: Component {
-            Window {
-                transientParent: null; visible: true; color: Theme.background
-                LayerShell.Window.layer: LayerShell.Window.LayerBackground
-                LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
-                LayerShell.Window.exclusionZone: -1
-                LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
-                LayerShell.Window.scope: "desktop"
-                Background { anchors.fill: parent; TapHandler { onTapped: session.closeMenus() } }
-            }
-        }
-    }
     Window {
-        transientParent: null; visible: true; height: 28; property bool singlrBlur: true; property int singlrBlurRadius: 0; color: "transparent"
-        LayerShell.Window.layer: LayerShell.Window.LayerTop
-        LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
-        LayerShell.Window.exclusionZone: 28
-        LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
-        LayerShell.Window.scope: "dock"
-        TopBar { id: bar; notificationsUnread: notifications.unread; onControlCenterRequested: session.toggleControlCenter(); onNotificationsRequested: session.toggleNotifications(); sessionMode: true; menuHost: barMenuSurface.item ? (barMenuSurface.item as Window).contentItem : null; trayMenuHost: trayMenuSurface.item ? (trayMenuSurface.item as Window).contentItem : null; width: parent.width; height: 28; activeAppName: dock.activeAppName; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.showApplications() }
-        Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
-    }
-    Window {
+        screen: session.effectiveDockScreen
         id: dockWindow; transientParent: null; visible: true; width: dock.width; height: dock.height; property bool singlrBlur: true; property int singlrBlurRadius: 14; color: "transparent"
         LayerShell.Window.layer: LayerShell.Window.LayerTop  // Top: el dock queda por encima de las ventanas, como en macOS.
         LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
@@ -178,10 +214,11 @@ Item {
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
     }
     Loader {
-        id: notificationSurface; objectName: "notificationSurface"; active: notifications.historyOpen || notifications.popups.length > 0
+        id: notificationSurface; objectName: "notificationSurface"; active: !session.notificationRemapping && (notifications.historyOpen || notifications.popups.length > 0)
         sourceComponent: Component {
             Window {
                 transientParent: null; visible: true
+                screen: session.notificationCenter.historyOpen ? session.historyScreen : session.effectiveDockScreen
                 width: 360; height: Math.max(1, notifications.height); color: "transparent"
                 property bool singlrBlur: true
                 property int singlrBlurRadius: 10
@@ -201,6 +238,7 @@ Item {
         id: dockMenuSurface; objectName: "dockMenuSurface"; active: dock.menuOpen
         sourceComponent: Component {
             Window {
+                screen: session.effectiveDockScreen
                 id: dockMenuWindow
                 transientParent: null; visible: true; width: 240; height: dock.menuHeight; color: "transparent"
                 LayerShell.Window.layer: LayerShell.Window.LayerTop
@@ -210,15 +248,16 @@ Item {
                 LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
                 LayerShell.Window.scope: "utility"
                 LayerShell.Window.activateOnShow: true
-                onVisibleChanged: if (visible) { bar.closeMenu(); requestActivate(); }
+                onVisibleChanged: if (visible) { session.closeBarMenus(); requestActivate(); }
                 onActiveChanged: if (!active && visible) dock.closeMenu()
             }
         }
     }
     Loader {
-        id: tooltipSurface; objectName: "tooltipSurface"; active: !!dock.tooltipText && !dock.menuOpen && !bar.menuOpen && !bar.tray.opened && !session.launcherOpen
+        id: tooltipSurface; objectName: "tooltipSurface"; active: !!dock.tooltipText && !dock.menuOpen && !session.barMenuOpen && !session.launcherOpen
         sourceComponent: Component {
             Window {
+                screen: session.effectiveDockScreen
                 id: tooltipWindow
                 transientParent: null; visible: true
                 width: Math.ceil(tooltipLabel.implicitWidth) + 16; height: Math.ceil(tooltipLabel.implicitHeight) + 16
@@ -236,68 +275,10 @@ Item {
         }
     }
     Loader {
-        id: barMenuSurface; objectName: "barMenuSurface"; active: bar.menuOpen
-        sourceComponent: Component {
-            Window {
-                id: barMenuWindow
-                transientParent: null; visible: true; width: 220; height: 116; color: "transparent"
-                LayerShell.Window.layer: LayerShell.Window.LayerTop
-                LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft
-                // KWin already positions this surface below the topbar's exclusive zone.
-                LayerShell.Window.margins.top: 4
-                LayerShell.Window.margins.left: 16
-                LayerShell.Window.exclusionZone: 0
-                LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
-                LayerShell.Window.scope: "utility"
-                LayerShell.Window.activateOnShow: true
-                onVisibleChanged: if (visible) { dock.closeMenu(); requestActivate(); }
-                onActiveChanged: if (!active && visible) bar.closeMenu()
-            }
-        }
-    }
-    Loader {
-        id: trayMenuSurface; objectName: "trayMenuSurface"; active: bar.tray.opened
-        sourceComponent: Component {
-            Window {
-                id: trayMenuWindow
-                transientParent: null; visible: true
-                width: 240; height: bar.tray.menuHeight; color: "transparent"
-                LayerShell.Window.layer: LayerShell.Window.LayerTop
-                LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft
-                LayerShell.Window.margins.top: 4
-                LayerShell.Window.margins.left: Math.round(Math.max(4, Math.min(screen.width - width - 4, bar.tray.menuX)))
-                LayerShell.Window.exclusionZone: 0
-                LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
-                LayerShell.Window.scope: "utility"
-                LayerShell.Window.activateOnShow: true
-                onVisibleChanged: if (visible) { dock.closeMenu(); requestActivate(); }
-                onActiveChanged: if (!active && visible) bar.tray.close()
-            }
-        }
-    }
-    Loader {
-        id: trayTooltipSurface; objectName: "trayTooltipSurface"; active: !!bar.tray.tooltipText && !bar.tray.opened
-        sourceComponent: Component {
-            Window {
-                transientParent: null; visible: true
-                width: Math.ceil(trayTooltip.implicitWidth) + 16; height: 30; color: "transparent"
-                flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowTransparentForInput
-                LayerShell.Window.layer: LayerShell.Window.LayerTop
-                LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft
-                LayerShell.Window.margins.top: 4
-                LayerShell.Window.margins.left: Math.round(Math.max(4, Math.min(screen.width - width - 4, bar.tray.tooltipX - width / 2)))
-                LayerShell.Window.exclusionZone: 0
-                LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
-                LayerShell.Window.scope: "tooltip"
-                Rectangle { anchors.fill: parent; radius: 8; color: Theme.raised; border.color: Theme.border }
-                UiText { id: trayTooltip; anchors.centerIn: parent; text: bar.tray.tooltipText; font.pixelSize: 12 }
-            }
-        }
-    }
-    Loader {
         id: launcherSurface; objectName: "launcherSurface"; active: session.launcherOpen
         sourceComponent: Component {
             Window {
+                screen: session.launcherScreen
                 objectName: "launcherWindow"; transientParent: null; visible: true; color: "transparent"
                 LayerShell.Window.layer: LayerShell.Window.LayerOverlay
                 LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
