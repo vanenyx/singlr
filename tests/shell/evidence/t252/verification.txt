@@ -1,0 +1,53 @@
+T252 / 2026-10-25 / day3/codex2-material-polish / sin commit
+Entorno: Arch; kwin 6.8.1-2; qt6-base 6.12.0-3; mesa 1:26.2.5-1;
+vulkan-headers 1:1.4.363.0-1 instalado. Build normal SINGLR_BUILD_LIQUIDGLASS=ON.
+Sin instalación, reload del escritorio, paquetes nuevos ni cambios de sesión activa.
+
+tools/test-qml.sh:
+PASS   : qmltestrunner::Materials::test_glyphBackingRendersWithoutAnExtraLayer()
+QINFO  : qmltestrunner::Materials::test_transparencyAndWorstBackdropAA() info qml: Material SDR worst-backdrop AA minimum: 4.748310282834636
+Totals: 206 passed, 0 failed, 3 skipped, 0 blacklisted, 23677ms
+Totals: 8 passed, 0 failed, 0 skipped, 0 blacklisted, 213ms
+
+tools/test-qml.sh --light:
+PASS   : qmltestrunner::Materials::test_glyphBackingRendersWithoutAnExtraLayer()
+QINFO  : qmltestrunner::Materials::test_transparencyAndWorstBackdropAA() info qml: Material SDR worst-backdrop AA minimum: 4.748310282834636
+Totals: 206 passed, 0 failed, 3 skipped, 0 blacklisted, 23712ms
+Totals: 8 passed, 0 failed, 0 skipped, 0 blacklisted, 215ms
+
+singlr-liquidglass-test:
+Totals: 6 passed, 0 failed, 0 skipped, 0 blacklisted, 2ms
+
+singlr-material-settings-test:
+Totals: 5 passed, 0 failed, 0 skipped, 0 blacklisted, 1ms
+
+Python: python3 -m unittest tests/shell/test_material_review.py tests/shell/test_kwin.py tests/shell/test_gtk_integration.py
+.....................
+----------------------------------------------------------------------
+Ran 21 tests in 1.723s
+
+OK
+
+tools/material-review.py --shader-fixture tests/shell/evidence/t252/shader-fixture: PASS
+GLSL real compilado y ejecutado vía surfaceless EGL; llvmpipe (LLVM 23.1.3, 256 bits)
+3264000 píxeles en fondos negro/blanco/R/G/B, límites de compresión correctos.
+Delta medio de cada cuarto de intensidad (escala RGB 0..255): 14.894..19.848.
+Delta medio Liquid/Vidrio en cada lado del perímetro (RGB 0..255): 9.392..54.959.
+60 fixtures + 60 recortes; misma geometría/fondo en cada fila. NO son capturas KWin.
+No demuestran contraste real integrado, gestión de color, HDR ni rendimiento GPU.
+
+tools/check-cmake.sh:
+-- Installing: /tmp/singlr-cmake.A8DmKU/usr/lib/qt6/plugins/kwin/effects/plugins/singlr-liquidglass.so
+PASS staged payload, executable modes, fonts and session paths
+CMake: plugin externo Liquid Glass incluido en staging.
+CMake: compilación e instalación DESTDIR verificadas (staging temporal eliminado).
+
+scripts/check_setup.py y git diff --check: comprobación final tras completar evidencia.
+
+KWin/frames/P-016: BLOQUEADOS. Probe tools/run-singlr.sh --duration 2:
+dbus-daemon[7]: Failed to start message bus: Failed to bind socket "/tmp/dbus-FXMw35YBH8": Operation not permitted
+dbus-run-session: EOF reading address from bus daemon
+SINGLR_CLEANUP remaining=[] {}
+SINGLR_HOST_CONFIG files_before=30 files_after=30 equal=True
+No hay tiempos de frame inventados ni medidas de CPU/GPU/PSS atribuibles al efecto.
+Procedimiento de captura --sweep y medición: docs/handoffs/T252-material-polish.md.

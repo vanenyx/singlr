@@ -40,8 +40,21 @@ class ReviewEnvironmentTests(unittest.TestCase):
             dict(eligible=False, visible=True, region=[0, 0, 340, 560], position=[1692, 36])
         ]}
         self.assertEqual(review['panel_edge'](diagnostic, 'launcher'), [652, 274, 256, 96])
+        self.assertEqual(review['panel_edge'](diagnostic, 'dock'), [912, 1210, 200, 48])
         with self.assertRaisesRegex(RuntimeError, 'No hay región'):
             review['panel_edge'](diagnostic, 'control-center')
+
+    def test_clipboard_opens_its_endpoint_and_uses_its_own_region(self):
+        from unittest.mock import patch
+        calls = []
+        with patch('time.sleep'):
+            review['open_surface'](lambda *args: calls.append(args), 'clipboard')
+        self.assertTrue(calls[-1][-1].endswith('.toggleClipboard'))
+        diagnostic = {'windows': [
+            dict(eligible=True, visible=True, region=[664,286,720,490], position=[0,0]),
+            dict(eligible=True, visible=True, region=[0,0,760,542], position=[640,300])
+        ]}
+        self.assertEqual(review['panel_edge'](diagnostic, 'clipboard'), [628,288,256,96])
 
     def test_crop_maps_logical_geometry_to_spectacle_pixels(self):
         diagnostic = dict(screenCount=1, virtualGeometry=[0, 0, 2048, 1280])

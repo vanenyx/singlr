@@ -8,6 +8,12 @@ int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
     const auto args = app.arguments();
+    if (args.size() == 4 && args[1] == "--solid") {
+        if (args[3] != "white" && args[3] != "black") return 2;
+        QImage image(16, 16, QImage::Format_RGB32);
+        image.fill(args[3] == "white" ? Qt::white : Qt::black);
+        return image.save(args[2], "PNG") ? 0 : 1;
+    }
     if (args.size() != 8) {
         QTextStream(stderr) << "Usage: singlr-material-image INPUT OUTPUT X Y WIDTH HEIGHT ZOOM\n";
         return 2;

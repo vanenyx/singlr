@@ -42,6 +42,9 @@ private:
     bool accepts(EffectWindow *) const;
     void render(const RenderTarget &, const RenderViewport &, EffectWindow *, const Region &);
     KConfigWatcher::Ptr m_watcher;
+    KSharedConfig::Ptr m_materialConfig, m_paletteConfig;
+    KConfigWatcher::Ptr m_materialWatcher, m_paletteWatcher;
+    bool m_dark = true;
     SinglrGlass::Settings m_settings;
     std::unique_ptr<GLShader> m_shader;
     std::map<EffectWindow *, Surface> m_surfaces;

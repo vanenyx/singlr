@@ -1,3 +1,19 @@
+# T252 — pulido de materiales
+
+Estado vigente: [corrección T252](../../../docs/handoffs/T252-material-correction.md).
+El plugin procesa Vidrio y Liquid y lee `singlr/singlr.conf` y `kdeglobals` por eventos.
+`Enabled` en kwinrc sigue gobernando la óptica Liquid. La difusión variable se añade
+al blur nativo. El material ajusta su luminancia local para AA, sin placas ni contornos.
+Prueba explícita sin instalar, usando el GLSL de producción sobre EGL surfaceless:
+
+```sh
+cmake --build build --target singlr-material-optics-test
+python3 tools/material-review.py --shader-fixture /tmp/singlr-optics
+```
+
+No equivale a captura ni medición de KWin. Las notas T248/T249 siguientes son históricas;
+T252 sustituye sus cifras de opacidad, filtro y refracción.
+
 # Singlr Liquid Glass — T248
 
 T249 corrige la opacidad del tinte, amplía la refracción/brillo y añade diagnóstico

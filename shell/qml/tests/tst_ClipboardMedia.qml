@@ -61,6 +61,8 @@ Item {
             closed.target = panel; closed.clear(); panel.open();
             tryCompare(panel, "resultCount", 3);
             const input = findChild(panel, "clipboardSearch"); verify(input.activeFocus);
+            for (const child of input.children)
+                if (child.z < 0 && child.color !== undefined) compare(child.color.a, 0);
             keyClick(Qt.Key_Down); compare(panel.selectedIndex, 1);
             keyClick(Qt.Key_Up); compare(panel.selectedIndex, 0);
             panel.query = "[test]"; tryCompare(panel, "resultCount", 1);

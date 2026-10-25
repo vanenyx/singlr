@@ -1,0 +1,275 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><title>T252 — corrección del material</title><style>
+body{font:14px system-ui;background:#171717;color:#eee;margin:24px}h1{font-size:24px}h2{margin-top:36px}p{max-width:1050px;line-height:1.5}.grid{display:grid;grid-template-columns:repeat(5,minmax(180px,1fr));gap:8px;min-width:1000px}img{width:100%;display:block}figure{margin:0}figcaption{padding:8px 0}a{color:#b9cfff}.scroll{overflow:auto}.notice{padding:16px;background:#302b1b}
+</style><h1>T252 — material adaptativo, sin placas</h1><p class="notice"><b>Fixtures del GLSL real sobre EGL, no capturas KWin.</b> Fondo cálido original del creador, blanco y negro; 0/25/50/75/100 %, ambos temas, Vidrio y Liquid, tres geometrías. Texto y sombra ilustrativos, sin placas ni contornos. No incluyen el blur nativo previo, widgets reales ni gestión de color KWin.</p>
+<p>El material limita suavemente la luminancia en cada zona para sostener la lectura. No hay una superficie distinta tras la búsqueda. <a href="egl/optics.json">Datos y renderer</a> · <a href="../../../../../docs/handoffs/T252-material-correction.md">Entrega y matriz pendiente de KWin</a> · <a href="../nested-claude/glass-100.png">Fallo inicial en KWin de Claude</a>.</p>
+<h2>warm · dark · launcher</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/warm/launcher-glass-dark-000.png"><img src="egl/warm/launcher-glass-dark-000.png" alt="warm/launcher-glass-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/warm/launcher-glass-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/launcher-glass-dark-025.png"><img src="egl/warm/launcher-glass-dark-025.png" alt="warm/launcher-glass-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/warm/launcher-glass-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/launcher-glass-dark-050.png"><img src="egl/warm/launcher-glass-dark-050.png" alt="warm/launcher-glass-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/warm/launcher-glass-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/launcher-glass-dark-075.png"><img src="egl/warm/launcher-glass-dark-075.png" alt="warm/launcher-glass-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/warm/launcher-glass-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/launcher-glass-dark-100.png"><img src="egl/warm/launcher-glass-dark-100.png" alt="warm/launcher-glass-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/warm/launcher-glass-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/warm/launcher-liquid-dark-000.png"><img src="egl/warm/launcher-liquid-dark-000.png" alt="warm/launcher-liquid-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/warm/launcher-liquid-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/launcher-liquid-dark-025.png"><img src="egl/warm/launcher-liquid-dark-025.png" alt="warm/launcher-liquid-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/warm/launcher-liquid-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/launcher-liquid-dark-050.png"><img src="egl/warm/launcher-liquid-dark-050.png" alt="warm/launcher-liquid-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/warm/launcher-liquid-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/launcher-liquid-dark-075.png"><img src="egl/warm/launcher-liquid-dark-075.png" alt="warm/launcher-liquid-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/warm/launcher-liquid-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/launcher-liquid-dark-100.png"><img src="egl/warm/launcher-liquid-dark-100.png" alt="warm/launcher-liquid-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/warm/launcher-liquid-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>warm · dark · control-center</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/warm/control-center-glass-dark-000.png"><img src="egl/warm/control-center-glass-dark-000.png" alt="warm/control-center-glass-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/warm/control-center-glass-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/control-center-glass-dark-025.png"><img src="egl/warm/control-center-glass-dark-025.png" alt="warm/control-center-glass-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/warm/control-center-glass-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/control-center-glass-dark-050.png"><img src="egl/warm/control-center-glass-dark-050.png" alt="warm/control-center-glass-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/warm/control-center-glass-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/control-center-glass-dark-075.png"><img src="egl/warm/control-center-glass-dark-075.png" alt="warm/control-center-glass-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/warm/control-center-glass-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/control-center-glass-dark-100.png"><img src="egl/warm/control-center-glass-dark-100.png" alt="warm/control-center-glass-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/warm/control-center-glass-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/warm/control-center-liquid-dark-000.png"><img src="egl/warm/control-center-liquid-dark-000.png" alt="warm/control-center-liquid-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/warm/control-center-liquid-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/control-center-liquid-dark-025.png"><img src="egl/warm/control-center-liquid-dark-025.png" alt="warm/control-center-liquid-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/warm/control-center-liquid-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/control-center-liquid-dark-050.png"><img src="egl/warm/control-center-liquid-dark-050.png" alt="warm/control-center-liquid-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/warm/control-center-liquid-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/control-center-liquid-dark-075.png"><img src="egl/warm/control-center-liquid-dark-075.png" alt="warm/control-center-liquid-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/warm/control-center-liquid-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/control-center-liquid-dark-100.png"><img src="egl/warm/control-center-liquid-dark-100.png" alt="warm/control-center-liquid-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/warm/control-center-liquid-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>warm · dark · clipboard</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/warm/clipboard-glass-dark-000.png"><img src="egl/warm/clipboard-glass-dark-000.png" alt="warm/clipboard-glass-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/warm/clipboard-glass-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/clipboard-glass-dark-025.png"><img src="egl/warm/clipboard-glass-dark-025.png" alt="warm/clipboard-glass-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/warm/clipboard-glass-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/clipboard-glass-dark-050.png"><img src="egl/warm/clipboard-glass-dark-050.png" alt="warm/clipboard-glass-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/warm/clipboard-glass-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/clipboard-glass-dark-075.png"><img src="egl/warm/clipboard-glass-dark-075.png" alt="warm/clipboard-glass-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/warm/clipboard-glass-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/clipboard-glass-dark-100.png"><img src="egl/warm/clipboard-glass-dark-100.png" alt="warm/clipboard-glass-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/warm/clipboard-glass-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/warm/clipboard-liquid-dark-000.png"><img src="egl/warm/clipboard-liquid-dark-000.png" alt="warm/clipboard-liquid-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/warm/clipboard-liquid-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/clipboard-liquid-dark-025.png"><img src="egl/warm/clipboard-liquid-dark-025.png" alt="warm/clipboard-liquid-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/warm/clipboard-liquid-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/clipboard-liquid-dark-050.png"><img src="egl/warm/clipboard-liquid-dark-050.png" alt="warm/clipboard-liquid-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/warm/clipboard-liquid-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/clipboard-liquid-dark-075.png"><img src="egl/warm/clipboard-liquid-dark-075.png" alt="warm/clipboard-liquid-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/warm/clipboard-liquid-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/clipboard-liquid-dark-100.png"><img src="egl/warm/clipboard-liquid-dark-100.png" alt="warm/clipboard-liquid-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/warm/clipboard-liquid-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>warm · light · launcher</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/warm/launcher-glass-light-000.png"><img src="egl/warm/launcher-glass-light-000.png" alt="warm/launcher-glass-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/warm/launcher-glass-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/launcher-glass-light-025.png"><img src="egl/warm/launcher-glass-light-025.png" alt="warm/launcher-glass-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/warm/launcher-glass-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/launcher-glass-light-050.png"><img src="egl/warm/launcher-glass-light-050.png" alt="warm/launcher-glass-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/warm/launcher-glass-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/launcher-glass-light-075.png"><img src="egl/warm/launcher-glass-light-075.png" alt="warm/launcher-glass-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/warm/launcher-glass-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/launcher-glass-light-100.png"><img src="egl/warm/launcher-glass-light-100.png" alt="warm/launcher-glass-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/warm/launcher-glass-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/warm/launcher-liquid-light-000.png"><img src="egl/warm/launcher-liquid-light-000.png" alt="warm/launcher-liquid-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/warm/launcher-liquid-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/launcher-liquid-light-025.png"><img src="egl/warm/launcher-liquid-light-025.png" alt="warm/launcher-liquid-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/warm/launcher-liquid-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/launcher-liquid-light-050.png"><img src="egl/warm/launcher-liquid-light-050.png" alt="warm/launcher-liquid-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/warm/launcher-liquid-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/launcher-liquid-light-075.png"><img src="egl/warm/launcher-liquid-light-075.png" alt="warm/launcher-liquid-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/warm/launcher-liquid-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/launcher-liquid-light-100.png"><img src="egl/warm/launcher-liquid-light-100.png" alt="warm/launcher-liquid-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/warm/launcher-liquid-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>warm · light · control-center</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/warm/control-center-glass-light-000.png"><img src="egl/warm/control-center-glass-light-000.png" alt="warm/control-center-glass-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/warm/control-center-glass-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/control-center-glass-light-025.png"><img src="egl/warm/control-center-glass-light-025.png" alt="warm/control-center-glass-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/warm/control-center-glass-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/control-center-glass-light-050.png"><img src="egl/warm/control-center-glass-light-050.png" alt="warm/control-center-glass-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/warm/control-center-glass-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/control-center-glass-light-075.png"><img src="egl/warm/control-center-glass-light-075.png" alt="warm/control-center-glass-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/warm/control-center-glass-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/control-center-glass-light-100.png"><img src="egl/warm/control-center-glass-light-100.png" alt="warm/control-center-glass-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/warm/control-center-glass-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/warm/control-center-liquid-light-000.png"><img src="egl/warm/control-center-liquid-light-000.png" alt="warm/control-center-liquid-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/warm/control-center-liquid-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/control-center-liquid-light-025.png"><img src="egl/warm/control-center-liquid-light-025.png" alt="warm/control-center-liquid-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/warm/control-center-liquid-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/control-center-liquid-light-050.png"><img src="egl/warm/control-center-liquid-light-050.png" alt="warm/control-center-liquid-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/warm/control-center-liquid-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/control-center-liquid-light-075.png"><img src="egl/warm/control-center-liquid-light-075.png" alt="warm/control-center-liquid-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/warm/control-center-liquid-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/control-center-liquid-light-100.png"><img src="egl/warm/control-center-liquid-light-100.png" alt="warm/control-center-liquid-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/warm/control-center-liquid-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>warm · light · clipboard</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/warm/clipboard-glass-light-000.png"><img src="egl/warm/clipboard-glass-light-000.png" alt="warm/clipboard-glass-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/warm/clipboard-glass-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/clipboard-glass-light-025.png"><img src="egl/warm/clipboard-glass-light-025.png" alt="warm/clipboard-glass-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/warm/clipboard-glass-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/clipboard-glass-light-050.png"><img src="egl/warm/clipboard-glass-light-050.png" alt="warm/clipboard-glass-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/warm/clipboard-glass-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/clipboard-glass-light-075.png"><img src="egl/warm/clipboard-glass-light-075.png" alt="warm/clipboard-glass-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/warm/clipboard-glass-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/clipboard-glass-light-100.png"><img src="egl/warm/clipboard-glass-light-100.png" alt="warm/clipboard-glass-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/warm/clipboard-glass-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/warm/clipboard-liquid-light-000.png"><img src="egl/warm/clipboard-liquid-light-000.png" alt="warm/clipboard-liquid-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/warm/clipboard-liquid-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/clipboard-liquid-light-025.png"><img src="egl/warm/clipboard-liquid-light-025.png" alt="warm/clipboard-liquid-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/warm/clipboard-liquid-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/clipboard-liquid-light-050.png"><img src="egl/warm/clipboard-liquid-light-050.png" alt="warm/clipboard-liquid-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/warm/clipboard-liquid-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/clipboard-liquid-light-075.png"><img src="egl/warm/clipboard-liquid-light-075.png" alt="warm/clipboard-liquid-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/warm/clipboard-liquid-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/warm/clipboard-liquid-light-100.png"><img src="egl/warm/clipboard-liquid-light-100.png" alt="warm/clipboard-liquid-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/warm/clipboard-liquid-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>white · dark · launcher</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/white/launcher-glass-dark-000.png"><img src="egl/white/launcher-glass-dark-000.png" alt="white/launcher-glass-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/white/launcher-glass-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/launcher-glass-dark-025.png"><img src="egl/white/launcher-glass-dark-025.png" alt="white/launcher-glass-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/white/launcher-glass-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/launcher-glass-dark-050.png"><img src="egl/white/launcher-glass-dark-050.png" alt="white/launcher-glass-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/white/launcher-glass-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/launcher-glass-dark-075.png"><img src="egl/white/launcher-glass-dark-075.png" alt="white/launcher-glass-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/white/launcher-glass-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/launcher-glass-dark-100.png"><img src="egl/white/launcher-glass-dark-100.png" alt="white/launcher-glass-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/white/launcher-glass-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/white/launcher-liquid-dark-000.png"><img src="egl/white/launcher-liquid-dark-000.png" alt="white/launcher-liquid-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/white/launcher-liquid-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/launcher-liquid-dark-025.png"><img src="egl/white/launcher-liquid-dark-025.png" alt="white/launcher-liquid-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/white/launcher-liquid-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/launcher-liquid-dark-050.png"><img src="egl/white/launcher-liquid-dark-050.png" alt="white/launcher-liquid-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/white/launcher-liquid-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/launcher-liquid-dark-075.png"><img src="egl/white/launcher-liquid-dark-075.png" alt="white/launcher-liquid-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/white/launcher-liquid-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/launcher-liquid-dark-100.png"><img src="egl/white/launcher-liquid-dark-100.png" alt="white/launcher-liquid-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/white/launcher-liquid-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>white · dark · control-center</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/white/control-center-glass-dark-000.png"><img src="egl/white/control-center-glass-dark-000.png" alt="white/control-center-glass-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/white/control-center-glass-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/control-center-glass-dark-025.png"><img src="egl/white/control-center-glass-dark-025.png" alt="white/control-center-glass-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/white/control-center-glass-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/control-center-glass-dark-050.png"><img src="egl/white/control-center-glass-dark-050.png" alt="white/control-center-glass-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/white/control-center-glass-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/control-center-glass-dark-075.png"><img src="egl/white/control-center-glass-dark-075.png" alt="white/control-center-glass-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/white/control-center-glass-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/control-center-glass-dark-100.png"><img src="egl/white/control-center-glass-dark-100.png" alt="white/control-center-glass-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/white/control-center-glass-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/white/control-center-liquid-dark-000.png"><img src="egl/white/control-center-liquid-dark-000.png" alt="white/control-center-liquid-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/white/control-center-liquid-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/control-center-liquid-dark-025.png"><img src="egl/white/control-center-liquid-dark-025.png" alt="white/control-center-liquid-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/white/control-center-liquid-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/control-center-liquid-dark-050.png"><img src="egl/white/control-center-liquid-dark-050.png" alt="white/control-center-liquid-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/white/control-center-liquid-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/control-center-liquid-dark-075.png"><img src="egl/white/control-center-liquid-dark-075.png" alt="white/control-center-liquid-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/white/control-center-liquid-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/control-center-liquid-dark-100.png"><img src="egl/white/control-center-liquid-dark-100.png" alt="white/control-center-liquid-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/white/control-center-liquid-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>white · dark · clipboard</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/white/clipboard-glass-dark-000.png"><img src="egl/white/clipboard-glass-dark-000.png" alt="white/clipboard-glass-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/white/clipboard-glass-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/clipboard-glass-dark-025.png"><img src="egl/white/clipboard-glass-dark-025.png" alt="white/clipboard-glass-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/white/clipboard-glass-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/clipboard-glass-dark-050.png"><img src="egl/white/clipboard-glass-dark-050.png" alt="white/clipboard-glass-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/white/clipboard-glass-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/clipboard-glass-dark-075.png"><img src="egl/white/clipboard-glass-dark-075.png" alt="white/clipboard-glass-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/white/clipboard-glass-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/clipboard-glass-dark-100.png"><img src="egl/white/clipboard-glass-dark-100.png" alt="white/clipboard-glass-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/white/clipboard-glass-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/white/clipboard-liquid-dark-000.png"><img src="egl/white/clipboard-liquid-dark-000.png" alt="white/clipboard-liquid-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/white/clipboard-liquid-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/clipboard-liquid-dark-025.png"><img src="egl/white/clipboard-liquid-dark-025.png" alt="white/clipboard-liquid-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/white/clipboard-liquid-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/clipboard-liquid-dark-050.png"><img src="egl/white/clipboard-liquid-dark-050.png" alt="white/clipboard-liquid-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/white/clipboard-liquid-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/clipboard-liquid-dark-075.png"><img src="egl/white/clipboard-liquid-dark-075.png" alt="white/clipboard-liquid-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/white/clipboard-liquid-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/clipboard-liquid-dark-100.png"><img src="egl/white/clipboard-liquid-dark-100.png" alt="white/clipboard-liquid-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/white/clipboard-liquid-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>white · light · launcher</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/white/launcher-glass-light-000.png"><img src="egl/white/launcher-glass-light-000.png" alt="white/launcher-glass-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/white/launcher-glass-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/launcher-glass-light-025.png"><img src="egl/white/launcher-glass-light-025.png" alt="white/launcher-glass-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/white/launcher-glass-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/launcher-glass-light-050.png"><img src="egl/white/launcher-glass-light-050.png" alt="white/launcher-glass-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/white/launcher-glass-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/launcher-glass-light-075.png"><img src="egl/white/launcher-glass-light-075.png" alt="white/launcher-glass-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/white/launcher-glass-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/launcher-glass-light-100.png"><img src="egl/white/launcher-glass-light-100.png" alt="white/launcher-glass-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/white/launcher-glass-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/white/launcher-liquid-light-000.png"><img src="egl/white/launcher-liquid-light-000.png" alt="white/launcher-liquid-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/white/launcher-liquid-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/launcher-liquid-light-025.png"><img src="egl/white/launcher-liquid-light-025.png" alt="white/launcher-liquid-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/white/launcher-liquid-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/launcher-liquid-light-050.png"><img src="egl/white/launcher-liquid-light-050.png" alt="white/launcher-liquid-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/white/launcher-liquid-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/launcher-liquid-light-075.png"><img src="egl/white/launcher-liquid-light-075.png" alt="white/launcher-liquid-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/white/launcher-liquid-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/launcher-liquid-light-100.png"><img src="egl/white/launcher-liquid-light-100.png" alt="white/launcher-liquid-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/white/launcher-liquid-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>white · light · control-center</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/white/control-center-glass-light-000.png"><img src="egl/white/control-center-glass-light-000.png" alt="white/control-center-glass-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/white/control-center-glass-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/control-center-glass-light-025.png"><img src="egl/white/control-center-glass-light-025.png" alt="white/control-center-glass-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/white/control-center-glass-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/control-center-glass-light-050.png"><img src="egl/white/control-center-glass-light-050.png" alt="white/control-center-glass-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/white/control-center-glass-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/control-center-glass-light-075.png"><img src="egl/white/control-center-glass-light-075.png" alt="white/control-center-glass-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/white/control-center-glass-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/control-center-glass-light-100.png"><img src="egl/white/control-center-glass-light-100.png" alt="white/control-center-glass-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/white/control-center-glass-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/white/control-center-liquid-light-000.png"><img src="egl/white/control-center-liquid-light-000.png" alt="white/control-center-liquid-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/white/control-center-liquid-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/control-center-liquid-light-025.png"><img src="egl/white/control-center-liquid-light-025.png" alt="white/control-center-liquid-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/white/control-center-liquid-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/control-center-liquid-light-050.png"><img src="egl/white/control-center-liquid-light-050.png" alt="white/control-center-liquid-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/white/control-center-liquid-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/control-center-liquid-light-075.png"><img src="egl/white/control-center-liquid-light-075.png" alt="white/control-center-liquid-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/white/control-center-liquid-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/control-center-liquid-light-100.png"><img src="egl/white/control-center-liquid-light-100.png" alt="white/control-center-liquid-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/white/control-center-liquid-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>white · light · clipboard</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/white/clipboard-glass-light-000.png"><img src="egl/white/clipboard-glass-light-000.png" alt="white/clipboard-glass-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/white/clipboard-glass-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/clipboard-glass-light-025.png"><img src="egl/white/clipboard-glass-light-025.png" alt="white/clipboard-glass-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/white/clipboard-glass-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/clipboard-glass-light-050.png"><img src="egl/white/clipboard-glass-light-050.png" alt="white/clipboard-glass-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/white/clipboard-glass-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/clipboard-glass-light-075.png"><img src="egl/white/clipboard-glass-light-075.png" alt="white/clipboard-glass-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/white/clipboard-glass-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/clipboard-glass-light-100.png"><img src="egl/white/clipboard-glass-light-100.png" alt="white/clipboard-glass-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/white/clipboard-glass-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/white/clipboard-liquid-light-000.png"><img src="egl/white/clipboard-liquid-light-000.png" alt="white/clipboard-liquid-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/white/clipboard-liquid-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/clipboard-liquid-light-025.png"><img src="egl/white/clipboard-liquid-light-025.png" alt="white/clipboard-liquid-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/white/clipboard-liquid-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/clipboard-liquid-light-050.png"><img src="egl/white/clipboard-liquid-light-050.png" alt="white/clipboard-liquid-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/white/clipboard-liquid-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/clipboard-liquid-light-075.png"><img src="egl/white/clipboard-liquid-light-075.png" alt="white/clipboard-liquid-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/white/clipboard-liquid-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/white/clipboard-liquid-light-100.png"><img src="egl/white/clipboard-liquid-light-100.png" alt="white/clipboard-liquid-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/white/clipboard-liquid-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>black · dark · launcher</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/black/launcher-glass-dark-000.png"><img src="egl/black/launcher-glass-dark-000.png" alt="black/launcher-glass-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/black/launcher-glass-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/launcher-glass-dark-025.png"><img src="egl/black/launcher-glass-dark-025.png" alt="black/launcher-glass-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/black/launcher-glass-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/launcher-glass-dark-050.png"><img src="egl/black/launcher-glass-dark-050.png" alt="black/launcher-glass-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/black/launcher-glass-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/launcher-glass-dark-075.png"><img src="egl/black/launcher-glass-dark-075.png" alt="black/launcher-glass-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/black/launcher-glass-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/launcher-glass-dark-100.png"><img src="egl/black/launcher-glass-dark-100.png" alt="black/launcher-glass-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/black/launcher-glass-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/black/launcher-liquid-dark-000.png"><img src="egl/black/launcher-liquid-dark-000.png" alt="black/launcher-liquid-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/black/launcher-liquid-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/launcher-liquid-dark-025.png"><img src="egl/black/launcher-liquid-dark-025.png" alt="black/launcher-liquid-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/black/launcher-liquid-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/launcher-liquid-dark-050.png"><img src="egl/black/launcher-liquid-dark-050.png" alt="black/launcher-liquid-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/black/launcher-liquid-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/launcher-liquid-dark-075.png"><img src="egl/black/launcher-liquid-dark-075.png" alt="black/launcher-liquid-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/black/launcher-liquid-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/launcher-liquid-dark-100.png"><img src="egl/black/launcher-liquid-dark-100.png" alt="black/launcher-liquid-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/black/launcher-liquid-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>black · dark · control-center</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/black/control-center-glass-dark-000.png"><img src="egl/black/control-center-glass-dark-000.png" alt="black/control-center-glass-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/black/control-center-glass-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/control-center-glass-dark-025.png"><img src="egl/black/control-center-glass-dark-025.png" alt="black/control-center-glass-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/black/control-center-glass-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/control-center-glass-dark-050.png"><img src="egl/black/control-center-glass-dark-050.png" alt="black/control-center-glass-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/black/control-center-glass-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/control-center-glass-dark-075.png"><img src="egl/black/control-center-glass-dark-075.png" alt="black/control-center-glass-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/black/control-center-glass-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/control-center-glass-dark-100.png"><img src="egl/black/control-center-glass-dark-100.png" alt="black/control-center-glass-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/black/control-center-glass-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/black/control-center-liquid-dark-000.png"><img src="egl/black/control-center-liquid-dark-000.png" alt="black/control-center-liquid-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/black/control-center-liquid-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/control-center-liquid-dark-025.png"><img src="egl/black/control-center-liquid-dark-025.png" alt="black/control-center-liquid-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/black/control-center-liquid-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/control-center-liquid-dark-050.png"><img src="egl/black/control-center-liquid-dark-050.png" alt="black/control-center-liquid-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/black/control-center-liquid-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/control-center-liquid-dark-075.png"><img src="egl/black/control-center-liquid-dark-075.png" alt="black/control-center-liquid-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/black/control-center-liquid-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/control-center-liquid-dark-100.png"><img src="egl/black/control-center-liquid-dark-100.png" alt="black/control-center-liquid-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/black/control-center-liquid-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>black · dark · clipboard</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/black/clipboard-glass-dark-000.png"><img src="egl/black/clipboard-glass-dark-000.png" alt="black/clipboard-glass-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/black/clipboard-glass-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/clipboard-glass-dark-025.png"><img src="egl/black/clipboard-glass-dark-025.png" alt="black/clipboard-glass-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/black/clipboard-glass-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/clipboard-glass-dark-050.png"><img src="egl/black/clipboard-glass-dark-050.png" alt="black/clipboard-glass-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/black/clipboard-glass-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/clipboard-glass-dark-075.png"><img src="egl/black/clipboard-glass-dark-075.png" alt="black/clipboard-glass-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/black/clipboard-glass-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/clipboard-glass-dark-100.png"><img src="egl/black/clipboard-glass-dark-100.png" alt="black/clipboard-glass-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/black/clipboard-glass-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/black/clipboard-liquid-dark-000.png"><img src="egl/black/clipboard-liquid-dark-000.png" alt="black/clipboard-liquid-dark-000" loading="lazy"></a><figcaption>0% · <a href="egl/black/clipboard-liquid-dark-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/clipboard-liquid-dark-025.png"><img src="egl/black/clipboard-liquid-dark-025.png" alt="black/clipboard-liquid-dark-025" loading="lazy"></a><figcaption>25% · <a href="egl/black/clipboard-liquid-dark-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/clipboard-liquid-dark-050.png"><img src="egl/black/clipboard-liquid-dark-050.png" alt="black/clipboard-liquid-dark-050" loading="lazy"></a><figcaption>50% · <a href="egl/black/clipboard-liquid-dark-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/clipboard-liquid-dark-075.png"><img src="egl/black/clipboard-liquid-dark-075.png" alt="black/clipboard-liquid-dark-075" loading="lazy"></a><figcaption>75% · <a href="egl/black/clipboard-liquid-dark-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/clipboard-liquid-dark-100.png"><img src="egl/black/clipboard-liquid-dark-100.png" alt="black/clipboard-liquid-dark-100" loading="lazy"></a><figcaption>100% · <a href="egl/black/clipboard-liquid-dark-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>black · light · launcher</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/black/launcher-glass-light-000.png"><img src="egl/black/launcher-glass-light-000.png" alt="black/launcher-glass-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/black/launcher-glass-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/launcher-glass-light-025.png"><img src="egl/black/launcher-glass-light-025.png" alt="black/launcher-glass-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/black/launcher-glass-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/launcher-glass-light-050.png"><img src="egl/black/launcher-glass-light-050.png" alt="black/launcher-glass-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/black/launcher-glass-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/launcher-glass-light-075.png"><img src="egl/black/launcher-glass-light-075.png" alt="black/launcher-glass-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/black/launcher-glass-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/launcher-glass-light-100.png"><img src="egl/black/launcher-glass-light-100.png" alt="black/launcher-glass-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/black/launcher-glass-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/black/launcher-liquid-light-000.png"><img src="egl/black/launcher-liquid-light-000.png" alt="black/launcher-liquid-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/black/launcher-liquid-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/launcher-liquid-light-025.png"><img src="egl/black/launcher-liquid-light-025.png" alt="black/launcher-liquid-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/black/launcher-liquid-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/launcher-liquid-light-050.png"><img src="egl/black/launcher-liquid-light-050.png" alt="black/launcher-liquid-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/black/launcher-liquid-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/launcher-liquid-light-075.png"><img src="egl/black/launcher-liquid-light-075.png" alt="black/launcher-liquid-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/black/launcher-liquid-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/launcher-liquid-light-100.png"><img src="egl/black/launcher-liquid-light-100.png" alt="black/launcher-liquid-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/black/launcher-liquid-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>black · light · control-center</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/black/control-center-glass-light-000.png"><img src="egl/black/control-center-glass-light-000.png" alt="black/control-center-glass-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/black/control-center-glass-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/control-center-glass-light-025.png"><img src="egl/black/control-center-glass-light-025.png" alt="black/control-center-glass-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/black/control-center-glass-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/control-center-glass-light-050.png"><img src="egl/black/control-center-glass-light-050.png" alt="black/control-center-glass-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/black/control-center-glass-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/control-center-glass-light-075.png"><img src="egl/black/control-center-glass-light-075.png" alt="black/control-center-glass-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/black/control-center-glass-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/control-center-glass-light-100.png"><img src="egl/black/control-center-glass-light-100.png" alt="black/control-center-glass-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/black/control-center-glass-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/black/control-center-liquid-light-000.png"><img src="egl/black/control-center-liquid-light-000.png" alt="black/control-center-liquid-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/black/control-center-liquid-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/control-center-liquid-light-025.png"><img src="egl/black/control-center-liquid-light-025.png" alt="black/control-center-liquid-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/black/control-center-liquid-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/control-center-liquid-light-050.png"><img src="egl/black/control-center-liquid-light-050.png" alt="black/control-center-liquid-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/black/control-center-liquid-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/control-center-liquid-light-075.png"><img src="egl/black/control-center-liquid-light-075.png" alt="black/control-center-liquid-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/black/control-center-liquid-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/control-center-liquid-light-100.png"><img src="egl/black/control-center-liquid-light-100.png" alt="black/control-center-liquid-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/black/control-center-liquid-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h2>black · light · clipboard</h2>
+<h3>glass</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/black/clipboard-glass-light-000.png"><img src="egl/black/clipboard-glass-light-000.png" alt="black/clipboard-glass-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/black/clipboard-glass-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/clipboard-glass-light-025.png"><img src="egl/black/clipboard-glass-light-025.png" alt="black/clipboard-glass-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/black/clipboard-glass-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/clipboard-glass-light-050.png"><img src="egl/black/clipboard-glass-light-050.png" alt="black/clipboard-glass-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/black/clipboard-glass-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/clipboard-glass-light-075.png"><img src="egl/black/clipboard-glass-light-075.png" alt="black/clipboard-glass-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/black/clipboard-glass-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/clipboard-glass-light-100.png"><img src="egl/black/clipboard-glass-light-100.png" alt="black/clipboard-glass-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/black/clipboard-glass-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+<h3>liquid</h3><div class="scroll"><div class="grid">
+<figure><a href="egl/black/clipboard-liquid-light-000.png"><img src="egl/black/clipboard-liquid-light-000.png" alt="black/clipboard-liquid-light-000" loading="lazy"></a><figcaption>0% · <a href="egl/black/clipboard-liquid-light-000-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/clipboard-liquid-light-025.png"><img src="egl/black/clipboard-liquid-light-025.png" alt="black/clipboard-liquid-light-025" loading="lazy"></a><figcaption>25% · <a href="egl/black/clipboard-liquid-light-025-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/clipboard-liquid-light-050.png"><img src="egl/black/clipboard-liquid-light-050.png" alt="black/clipboard-liquid-light-050" loading="lazy"></a><figcaption>50% · <a href="egl/black/clipboard-liquid-light-050-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/clipboard-liquid-light-075.png"><img src="egl/black/clipboard-liquid-light-075.png" alt="black/clipboard-liquid-light-075" loading="lazy"></a><figcaption>75% · <a href="egl/black/clipboard-liquid-light-075-edge.png">borde 2×</a></figcaption></figure>
+<figure><a href="egl/black/clipboard-liquid-light-100.png"><img src="egl/black/clipboard-liquid-light-100.png" alt="black/clipboard-liquid-light-100" loading="lazy"></a><figcaption>100% · <a href="egl/black/clipboard-liquid-light-100-edge.png">borde 2×</a></figcaption></figure>
+</div></div>
+</html>

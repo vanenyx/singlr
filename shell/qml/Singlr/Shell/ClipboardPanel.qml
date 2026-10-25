@@ -51,7 +51,7 @@ FocusScope {
         font.family: Theme.family; font.pixelSize: 13; verticalAlignment: TextInput.AlignVCenter
         Accessible.role: Accessible.EditableText
         Accessible.description: "Flechas para seleccionar, Enter para abrir, Escape para cerrar"
-        Rectangle { anchors.fill: parent; anchors.margins: -3; z: -1; radius: 4; color: "transparent"; border.color: parent.activeFocus ? Theme.accentText : "transparent" }
+        Rectangle { anchors.fill: parent; anchors.margins: -3; z: -1; radius: Theme.radius; color: "transparent"; border.color: parent.activeFocus ? Theme.accentText : "transparent" }
         Accessible.name: "Buscar en el portapapeles"
         Keys.onUpPressed: panel.move(-1)
         Keys.onDownPressed: panel.move(1)

@@ -24,10 +24,10 @@ function level(base,offset,contrast) {
     var b=lch(base); return color(b[0]+offset*contrast,Math.min(.7,b[1]),b[2]);
 }
 function alpha(c,a) { return Qt.rgba(c.r,c.g,c.b,a); }
-// Saturating curve: 0 is opaque; 65 transmits 25.8% of the backdrop; 100
-// transmits 30%. The floor bounds the worst white/black backdrop for AA text.
-function materialOpacity(strength) {
-    return 1 - .30 * Math.pow(Math.max(0, Math.min(1, strength)), .35);
+// Linear display-space transmission. The compositor conditions the backdrop for
+// AA; without that pass retain a conservative, also linear, fallback.
+function materialOpacity(strength, conditioned = true) {
+    return 1 - (conditioned ? .85 : .30) * Math.max(0, Math.min(1, strength));
 }
 function materialInk(base,dark,role,strength,contrast) {
     if (strength > 0)

@@ -1,0 +1,488 @@
+{
+    "boundedPixelsChecked": 3264000,
+    "comparisons": [
+        {
+            "dark": false,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 15.903304211469534,
+            "surface": "control-center"
+        },
+        {
+            "dark": false,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 17.394121863799285,
+            "surface": "control-center"
+        },
+        {
+            "dark": false,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 15.844352598566308,
+            "surface": "control-center"
+        },
+        {
+            "dark": false,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 16.686534498207884,
+            "surface": "control-center"
+        },
+        {
+            "dark": false,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 15.782627688172044,
+            "surface": "control-center"
+        },
+        {
+            "dark": false,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 17.156019265232974,
+            "surface": "control-center"
+        },
+        {
+            "dark": false,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 15.298718637992831,
+            "surface": "control-center"
+        },
+        {
+            "dark": false,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 16.34828853046595,
+            "surface": "control-center"
+        },
+        {
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 54.958603896103895,
+            "side": 0,
+            "surface": "control-center"
+        },
+        {
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 30.892857142857142,
+            "side": 1,
+            "surface": "control-center"
+        },
+        {
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 30.75068306010929,
+            "side": 2,
+            "surface": "control-center"
+        },
+        {
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 25.760245901639344,
+            "side": 3,
+            "surface": "control-center"
+        },
+        {
+            "dark": false,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 15.89752587730371,
+            "surface": "launcher"
+        },
+        {
+            "dark": false,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 17.387301186569047,
+            "surface": "launcher"
+        },
+        {
+            "dark": false,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 15.83440945047547,
+            "surface": "launcher"
+        },
+        {
+            "dark": false,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 16.680820289489187,
+            "surface": "launcher"
+        },
+        {
+            "dark": false,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 15.778045316839181,
+            "surface": "launcher"
+        },
+        {
+            "dark": false,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 17.151912395859632,
+            "surface": "launcher"
+        },
+        {
+            "dark": false,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 15.28620823866027,
+            "surface": "launcher"
+        },
+        {
+            "dark": false,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 16.33747475385004,
+            "surface": "launcher"
+        },
+        {
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 54.05285045219638,
+            "side": 0,
+            "surface": "launcher"
+        },
+        {
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 27.626211240310077,
+            "side": 1,
+            "surface": "launcher"
+        },
+        {
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 30.353165938864628,
+            "side": 2,
+            "surface": "launcher"
+        },
+        {
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 25.128942261038333,
+            "side": 3,
+            "surface": "launcher"
+        },
+        {
+            "dark": false,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 15.618472222222222,
+            "surface": "dock"
+        },
+        {
+            "dark": false,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 17.08773148148148,
+            "surface": "dock"
+        },
+        {
+            "dark": false,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 15.506851851851852,
+            "surface": "dock"
+        },
+        {
+            "dark": false,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 16.40763888888889,
+            "surface": "dock"
+        },
+        {
+            "dark": false,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 15.536203703703704,
+            "surface": "dock"
+        },
+        {
+            "dark": false,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 16.834606481481483,
+            "surface": "dock"
+        },
+        {
+            "dark": false,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 14.894189814814816,
+            "surface": "dock"
+        },
+        {
+            "dark": false,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 15.90363425925926,
+            "surface": "dock"
+        },
+        {
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 54.045824195906434,
+            "side": 0,
+            "surface": "dock"
+        },
+        {
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 29.568210891812864,
+            "side": 1,
+            "surface": "dock"
+        },
+        {
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 9.39236111111111,
+            "side": 2,
+            "surface": "dock"
+        },
+        {
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 38.932291666666664,
+            "side": 3,
+            "surface": "dock"
+        },
+        {
+            "dark": true,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 18.85581317204301,
+            "surface": "control-center"
+        },
+        {
+            "dark": true,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 18.802972670250895,
+            "surface": "control-center"
+        },
+        {
+            "dark": true,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 19.77423387096774,
+            "surface": "control-center"
+        },
+        {
+            "dark": true,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 19.141270161290322,
+            "surface": "control-center"
+        },
+        {
+            "dark": true,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 18.77668682795699,
+            "surface": "control-center"
+        },
+        {
+            "dark": true,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 18.519789426523296,
+            "surface": "control-center"
+        },
+        {
+            "dark": true,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 19.396532258064518,
+            "surface": "control-center"
+        },
+        {
+            "dark": true,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 18.78242383512545,
+            "surface": "control-center"
+        },
+        {
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 43.9549062049062,
+            "side": 0,
+            "surface": "control-center"
+        },
+        {
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 26.924783549783548,
+            "side": 1,
+            "surface": "control-center"
+        },
+        {
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 26.82172131147541,
+            "side": 2,
+            "surface": "control-center"
+        },
+        {
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 20.39896402550091,
+            "side": 3,
+            "surface": "control-center"
+        },
+        {
+            "dark": true,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 18.85921694858201,
+            "surface": "launcher"
+        },
+        {
+            "dark": true,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 18.803523941765548,
+            "surface": "launcher"
+        },
+        {
+            "dark": true,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 19.77575843642178,
+            "surface": "launcher"
+        },
+        {
+            "dark": true,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 19.14787301186569,
+            "surface": "launcher"
+        },
+        {
+            "dark": true,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 18.77906988975848,
+            "surface": "launcher"
+        },
+        {
+            "dark": true,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 18.520468316081796,
+            "surface": "launcher"
+        },
+        {
+            "dark": true,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 19.39333922410166,
+            "surface": "launcher"
+        },
+        {
+            "dark": true,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 18.775102036522764,
+            "surface": "launcher"
+        },
+        {
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 42.84257913436692,
+            "side": 0,
+            "surface": "launcher"
+        },
+        {
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 22.737322351421188,
+            "side": 1,
+            "surface": "launcher"
+        },
+        {
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 23.47295002426007,
+            "side": 2,
+            "surface": "launcher"
+        },
+        {
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 20.069868995633186,
+            "side": 3,
+            "surface": "launcher"
+        },
+        {
+            "dark": true,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 18.99627314814815,
+            "surface": "dock"
+        },
+        {
+            "dark": true,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 18.871435185185184,
+            "surface": "dock"
+        },
+        {
+            "dark": true,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 19.848263888888887,
+            "surface": "dock"
+        },
+        {
+            "dark": true,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 19.242638888888887,
+            "surface": "dock"
+        },
+        {
+            "dark": true,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 18.948101851851852,
+            "surface": "dock"
+        },
+        {
+            "dark": true,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 18.684467592592593,
+            "surface": "dock"
+        },
+        {
+            "dark": true,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 19.531319444444446,
+            "surface": "dock"
+        },
+        {
+            "dark": true,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 18.910925925925927,
+            "surface": "dock"
+        },
+        {
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 41.15899122807018,
+            "side": 0,
+            "surface": "dock"
+        },
+        {
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 22.681514985380115,
+            "side": 1,
+            "surface": "dock"
+        },
+        {
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 9.72048611111111,
+            "side": 2,
+            "surface": "dock"
+        },
+        {
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 27.14236111111111,
+            "side": 3,
+            "surface": "dock"
+        }
+    ],
+    "kind": "surfaceless-EGL-production-shader-fixture-NOT-KWin",
+    "renderer": "llvmpipe (LLVM 23.1.3, 256 bits)",
+    "version": "4.6 (Compatibility Profile) Mesa 26.2.5-arch1.1"
+}
