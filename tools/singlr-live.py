@@ -89,6 +89,28 @@ def kwin_write(group, key, value):
     subprocess.run(command + (['--delete'] if value is None else [value]), capture_output=True)
 
 
+SETTINGS_LINKS = [
+    (Path.home() / '.local/bin/singlr-settings', 'apps/settings/singlr-settings'),
+    (Path.home() / '.local/share/applications/singlr-settings.desktop', 'apps/settings/singlr-settings.desktop'),
+]
+
+
+def apply_settings_app():
+    # Enlaces de desarrollo para que «Ajustes de Singlr» aparezca en el lanzador; se retiran al parar.
+    root = Path(__file__).resolve().parents[1]
+    for link, source in SETTINGS_LINKS:
+        link.parent.mkdir(parents=True, exist_ok=True)
+        if not link.exists() and not link.is_symlink():
+            link.symlink_to(root / source)
+
+
+def remove_settings_app():
+    root = Path(__file__).resolve().parents[1]
+    for link, source in SETTINGS_LINKS:
+        if link.is_symlink() and link.resolve() == (root / source).resolve():
+            link.unlink()
+
+
 def apply_kwin():
     theme = Path(__file__).resolve().parents[1] / 'decoration/aurorae/Singlr'
     if not (theme / 'decoration.svg').exists() or KWIN_BACKUP.exists():
@@ -235,6 +257,7 @@ def main():
             if takeover:
                 unload_network_module()
                 apply_kwin()
+                apply_settings_app()
                 if plasma('is-active').stdout.strip() == 'active':
                     PLASMA_MARK.write_text('1')
                     plasma('stop')
