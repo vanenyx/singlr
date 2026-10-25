@@ -7,6 +7,7 @@ Rectangle {
     readonly property real menuHeight: menu ? menu.entriesHeight : 249
     readonly property real menuWidth: 292
     property bool sessionMode: false
+    property string screenName: ""
     property Item menuHost: null
     function closeMenu() { menuOpen = false; systemTray.close(); indicators.keyboard.close(); }
     property alias nightLightBackend: indicators.nightLightBackend
@@ -37,6 +38,7 @@ Rectangle {
     }
     Row {
         id: trailing; anchors.right: parent.right; anchors.rightMargin: 16; height: 28; spacing: 14
+        WorkspaceIndicator { screenName: bar.screenName; anchors.verticalCenter: parent.verticalCenter }
         SystemTray { id: systemTray; menuHost: bar.trayMenuHost; onOpenedChanged: if (opened) { bar.menuOpen = false; indicators.keyboard.close(); } }
         Tool {
             y: 3; width: 24; height: 22; icon: "bell"; iconSize: 15; description: "Notificaciones"

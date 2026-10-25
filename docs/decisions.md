@@ -34,4 +34,6 @@ La fuente de producto es [la recuperación original](../SINGLR_recuperacion_desd
 | T-009 | Técnica derivada | Vigente | Pantalla de inicio: el greeter de Plasma Login Manager 6.8.1 compila su QML y no admite temas; solo fondo. Un diseño propio requeriría otro gestor de inicio (decisión del creador). |
 | T-010 | Técnica derivada | En curso | Apariencia (T241): KDE es la fuente única de claro/oscuro y acento (incluido el cambio automático de `lookandfeelautoswitcher`/knighttime); el shell la sigue y los ajustes de Singlr escriben la de KDE. |
 
+| T-011 | Técnica derivada | Aplicada, validación anidada pendiente | Workspace (T246): Alt+Tab usa un KPackage `KWin/WindowSwitcher`; sus claves TabBox entran en la transacción de sesión existente. Indicador con VirtualDesktopInfo/VirtualDesktopManager y Overview con las APIs de efectos de KWin; materiales compartidos de `Singlr.Ui`. El puente de búsqueda se exporta en el servicio del shell existente, sin nuevo daemon. Organización mediante atajos/editor nativos de KWin. Ver [procedimiento y límites](../session/WORKSPACE.md). La propuesta visual no constituye aprobación del creador. |
+
 Para nuevas entradas: ID, clase, estado, motivo, evidencia/autor y consecuencias. Una decisión técnica no aprueba decisiones perceptibles de producto.

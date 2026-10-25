@@ -101,6 +101,24 @@ class KWinTests(unittest.TestCase):
             self.assertEqual(self.backup.read_text(), content)
             self.assertEqual(self.writes, [])
 
+    def test_old_journal_restores_before_new_switcher_snapshot(self):
+        self.backup.parent.mkdir()
+        legacy = [[g, k, self.original.get((g, k))] for g, k, _ in kwin.KWIN_SETTINGS if g != 'TabBox']
+        self.backup.write_text(json.dumps(legacy))
+        self.values[('TabBox', 'LayoutName')] = 'plasma-choice'
+        kwin.apply(self.backup, recover_pending=True)
+        self.assertEqual(self.values[('TabBox', 'LayoutName')], 'singlr')
+        kwin.restore(self.backup)
+        self.assertEqual(self.values[('TabBox', 'LayoutName')], 'plasma-choice')
+
+    def test_duplicate_journal_is_rejected(self):
+        self.backup.parent.mkdir()
+        entry = list(kwin.KWIN_SETTINGS[0])
+        self.backup.write_text(json.dumps([entry, entry]))
+        with self.assertRaises(ValueError):
+            kwin.restore(self.backup)
+        self.assertEqual(self.writes, [])
+
     def test_backup_failure_does_not_modify_config(self):
         with patch.object(kwin, 'save', side_effect=OSError('disk full')):
             with self.assertRaises(OSError):

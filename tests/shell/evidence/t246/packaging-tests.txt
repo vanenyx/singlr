@@ -1,0 +1,11 @@
+test_check_without_cmake (test_packaging.PackagingTests.test_check_without_cmake) ... ok
+test_launcher_dev_installed_and_missing_entry (test_packaging.PackagingTests.test_launcher_dev_installed_and_missing_entry) ... ok
+test_native_sources_and_package_ids (test_packaging.PackagingTests.test_native_sources_and_package_ids) ... ok
+test_reload_bridge (test_packaging.PackagingTests.test_reload_bridge) ... PASS reload dispatch, queued invocation, legacy session and launcher actions
+ok
+test_shell_syntax_and_desktop (test_packaging.PackagingTests.test_shell_syntax_and_desktop) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 1.075s
+
+OK

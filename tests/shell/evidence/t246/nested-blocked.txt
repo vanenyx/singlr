@@ -1,0 +1,4 @@
+dbus-daemon[7]: Failed to start message bus: Failed to bind socket "/tmp/dbus-vvY8UFuuIh": Operation not permitted
+dbus-run-session: EOF reading address from bus daemon
+SINGLR_CLEANUP remaining=[] {}
+SINGLR_HOST_CONFIG files_before=30 files_after=30 equal=True

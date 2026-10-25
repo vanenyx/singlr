@@ -23,8 +23,8 @@ Rectangle {
     Keys.onEnterPressed: clicked()
     Keys.onReturnPressed: clicked()
     Keys.onSpacePressed: clicked()
-    Row { anchors.centerIn: parent; spacing: 7
-        Icon { name: tool.icon; width: tool.iconSize; height: tool.iconSize; font.pixelSize: tool.iconSize; color: Theme.secondary; anchors.verticalCenter: parent.verticalCenter }
+    Row { anchors.centerIn: parent; spacing: tool.icon && tool.label ? 7 : 0
+        Icon { visible: !!tool.icon; name: tool.icon; width: tool.iconSize; height: tool.iconSize; font.pixelSize: tool.iconSize; color: Theme.secondary; anchors.verticalCenter: parent.verticalCenter }
         UiText { id: caption; text: tool.label; visible: !!tool.label; color: Theme.secondary; font.pixelSize: 13; height: 20 }
     }
     MouseArea { id: pointer; anchors.fill: parent; hoverEnabled: true; onClicked: tool.clicked() }

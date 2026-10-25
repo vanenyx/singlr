@@ -86,3 +86,12 @@ Server = file:///home/sunw/Projects/singlr/.local/repo
 
 Después Singlr se actualiza con el sistema: `sudo pacman -Syu`. El repositorio es local y
 sin firma; publicarlo (remoto, firma, checksums fijos) sigue pendiente de autorización.
+
+## Workspace (T246)
+
+El paquete instala `KWin/WindowSwitcher` en `kwin/tabbox/singlr`, junto al
+Overview existente. La sesión aplica el tema Alt+Tab mediante el journal de
+`singlr_kwin.py` y restaura la elección de Plasma al salir, también tras fallos.
+Las copias instaladas del QML de Workspace apuntan a los tokens `Singlr.Ui`
+instalados, no al checkout. Guía de uso, organización nativa de ventanas y
+procedimiento de dos pantallas/escritorios: [session/WORKSPACE.md](../session/WORKSPACE.md).

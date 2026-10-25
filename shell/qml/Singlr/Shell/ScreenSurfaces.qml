@@ -56,6 +56,7 @@ Item {
             onControlCenterRequested: surfaces.controller.toggleControlCenterOnScreen(surfaces.outputScreen)
             onNotificationsRequested: surfaces.controller.toggleNotificationsOnScreen(surfaces.outputScreen)
             sessionMode: true
+            screenName: surfaces.outputScreen ? surfaces.outputScreen.name : ""
             menuHost: barMenuSurface.item ? (barMenuSurface.item as Window).contentItem : null
             trayMenuHost: trayMenuSurface.item ? (trayMenuSurface.item as Window).contentItem : null
             width: parent.width; height: 28

@@ -10,6 +10,8 @@ import tempfile
 import uuid
 
 KWIN_SETTINGS = [
+    ('TabBox', 'LayoutName', 'singlr'),
+    ('TabBox', 'ShowTabBox', 'true'),
     ('org.kde.kdecoration2', 'library', 'org.kde.kwin.aurorae'),
     ('org.kde.kdecoration2', 'theme', '__aurorae__svg__Singlr'),
     ('Effect-scale', 'OutScale', '0.4'),
@@ -82,13 +84,17 @@ def locked(path):
 def entries_from(path):
     entries = json.loads(path.read_text())
     allowed = {(group, key) for group, key, _ in KWIN_SETTINGS}
-    if (not isinstance(entries, list) or len(entries) != len(allowed)
+    if (not isinstance(entries, list) or not entries
             or any(not isinstance(row, list) or len(row) != 3
                    or not all(isinstance(item, str) for item in row[:2])
                    or (row[0], row[1]) not in allowed
                    or (row[2] is not None and not isinstance(row[2], str)) for row in entries)
-            or len({(row[0], row[1]) for row in entries}) != len(allowed)):
+            or len({(row[0], row[1]) for row in entries}) != len(entries)):
         raise ValueError(f'Backup KWin no reconocido: {path}')
+    keys = {(row[0], row[1]) for row in entries}
+    legacy = {(group, key) for group, key in allowed if group != 'TabBox'}
+    if keys not in (allowed, legacy):
+        raise ValueError(f'Backup KWin incompleto: {path}')
     return entries
 
 
