@@ -33,7 +33,7 @@ class TrayTests(unittest.TestCase):
                                  str(ROOT / 'shell/session/src/tray.cpp'),
                                  str(ROOT / 'shell/session/src/trayformat.cpp'),
                                  str(ROOT / 'shell/session/src/system.cpp'), moc, system_moc,
-                                 *flags, '-o', cls.binary], capture_output=True, text=True, timeout=60)
+                                 *flags, '-lLayerShellQtInterface', '-o', cls.binary], capture_output=True, text=True, timeout=60)
         if result.returncode:
             raise RuntimeError(result.stderr)
         cls.env = os.environ | {'QT_QPA_PLATFORM': 'offscreen', 'QT_QUICK_BACKEND': 'software',
