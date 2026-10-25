@@ -136,7 +136,7 @@ FocusScope {
         verticalAlignment: TextInput.AlignVCenter
         Accessible.role: Accessible.EditableText
         Accessible.description: "Flechas para seleccionar, Enter para abrir, Escape para cerrar"
-        Rectangle { anchors.fill: parent; anchors.margins: -3; z: -1; radius: Theme.radius; color: "transparent"; border.color: parent.activeFocus ? Theme.accentText : "transparent" }
+        // Always-focused command field (as in Raycast): the caret is the focus indicator; no ring.
         Accessible.name: launcher.applicationsMode ? "Buscar en todas las aplicaciones" : "Buscar aplicaciones, archivos y configuraciones"
         Keys.onUpPressed: launcher.move(-1)
         Keys.onDownPressed: launcher.move(1)

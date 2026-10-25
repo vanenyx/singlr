@@ -50,7 +50,7 @@ Item {
                 }
                 if (child.style !== undefined) compare(child.style, Text.Normal);
             }
-            verify(backgrounds > 0); // native focus border remains, fill stays clear
+            compare(backgrounds, 0); // always-focused field: no backing and no focus ring (caret shows focus)
         }
         function test_calculationAndConversionCopy_data() {
             return [{tag:"calculator", id:"calculator_2+2", result:"4"},
