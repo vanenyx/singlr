@@ -124,6 +124,11 @@ void registerGlobalActions(QObject *parent, QObject *session)
 
 void applyBlur(QQuickWindow *window)
 {
+    // Only a mapped window has a live wl_surface. Updating the background effect of a
+    // hidden or destroyed surface is a protocol error that makes KWin drop the client.
+    // A hidden surface loses its region with it; the Show event applies it again.
+    if (!window->handle() || !window->isVisible())
+        return;
     const bool enabled = window->property("singlrBlur").toBool()
         && QQuickWindow::graphicsApi() != QSGRendererInterface::Software;
     const int radius = window->property("singlrBlurRadius").toInt();

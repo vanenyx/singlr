@@ -22,7 +22,10 @@ namespace SinglrShortcuts {
 QStringList actionNames()
 {
     return {QStringLiteral("Window Maximize"), QStringLiteral("Window Minimize"),
-            QStringLiteral("Window Quick Tile Top"), QStringLiteral("Window Quick Tile Bottom")};
+            QStringLiteral("Window Quick Tile Top"), QStringLiteral("Window Quick Tile Bottom"),
+            // KWin 6 also binds Meta+Tab to the window switcher; P-015 gives it to the overview.
+            QStringLiteral("Walk Through Windows"), QStringLiteral("Walk Through Windows (Reverse)"),
+            QStringLiteral("Singlr Overview")};
 }
 QJsonDocument encode(const Snapshot &snapshot)
 {
@@ -46,11 +49,12 @@ bool decode(const QByteArray &json, Snapshot &snapshot)
     if (root.value("version") != QJsonValue(1) || root.value("component") != QJsonValue("kwin") || !root.value("actions").isObject())
         return false;
     const auto actions = root.value("actions").toObject();
-    if (actions.size() != actionNames().size())
+    // Backups from older versions hold a subset of today's actions; restore exactly those.
+    if (actions.isEmpty())
         return false;
     Snapshot parsed;
-    for (const auto &name : actionNames()) {
-        if (!actions.value(name).isArray())
+    for (const auto &name : actions.keys()) {
+        if (!actionNames().contains(name) || !actions.value(name).isArray())
             return false;
         QList<QKeySequence> keys;
         for (const auto &value : actions.value(name).toArray()) {
@@ -163,7 +167,18 @@ bool applyKWin()
         if (!writeKeys(api, name, keys))
             return false;
     }
-    return writeKeys(api, actionNames()[0], {up}) && writeKeys(api, actionNames()[1], {down});
+    if (!writeKeys(api, actionNames()[0], {up}) || !writeKeys(api, actionNames()[1], {down}))
+        return false;
+    // Alt+Tab stays the window switcher; Meta+Tab is the overview (P-015).
+    const QKeySequence metaTab(Qt::META | Qt::Key_Tab), metaShiftTab(Qt::META | Qt::SHIFT | Qt::Key_Tab);
+    for (const auto &name : {actionNames()[4], actionNames()[5]}) {
+        auto keys = current.value(name);
+        keys.removeAll(metaTab);
+        keys.removeAll(metaShiftTab);
+        if (!writeKeys(api, name, keys))
+            return false;
+    }
+    return writeKeys(api, actionNames()[6], {metaTab});
 }
 bool restoreKWin()
 {
@@ -180,10 +195,10 @@ bool restoreKWin()
     QDBusInterface api("org.kde.kglobalaccel", "/kglobalaccel", "org.kde.KGlobalAccel");
     api.setTimeout(1500);
     // Clear first so restoring a key to its original owner cannot conflict.
-    for (const auto &name : actionNames())
+    for (const auto &name : original.keys())
         if (!writeKeys(api, name, {}))
             return false;
-    for (const auto &name : actionNames())
+    for (const auto &name : original.keys())
         if (!writeKeys(api, name, original.value(name)))
             return false;
     return QFile::remove(path);

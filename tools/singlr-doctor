@@ -90,7 +90,15 @@ def report():
                                              'XDG_SESSION_DESKTOP': ('Singlr', 'KDE', 'plasma')}.items()},
             'development': {'user_dropin': (config / 'systemd/user/singlr-shell.service.d/dev-channel.conf').is_file(),
                             'configured': bool(re.search(r'SINGLR_DEV_ROOT=(?!["\s]|$)', raw)) if not code else None,
-                            'running': running_dev},
+                            'running': running_dev,
+                            # User copies take precedence over the package in KWin's search path.
+                            'shadowed_kwin_packages': sorted(
+                                f'{kind}/{name}' for kind, names in (('effects', ('singlr-overview', 'singlr-liquidglass')),
+                                                                     ('scripts', ('singlr-gestures',)),
+                                                                     ('tabbox', ('singlr',)))
+                                for name in names
+                                if (Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local/share')) / 'kwin' / kind / name).exists()
+                                or (Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local/share')) / 'kwin' / kind / name).is_symlink())},
             'units': {u: unit(u) for u in UNITS}, 'recent_errors': errors(),
             'privacy': 'No messages, environment dump, account, hostname, network, filenames or credentials. Missing data is unknown, never PASS.'}
 

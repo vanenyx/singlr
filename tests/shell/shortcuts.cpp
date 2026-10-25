@@ -24,6 +24,10 @@ Snapshot fixture()
     data[names[1]] = {}; // Explicitly disabled must stay disabled.
     data[names[2]] = {QKeySequence("Meta+Up"), QKeySequence("Ctrl+Alt+T")};
     data[names[3]] = {QKeySequence("Meta+Down")};
+    // KWin 6 defaults: the window switcher also owns Meta+Tab.
+    data[names[4]] = {QKeySequence("Alt+Tab"), QKeySequence("Meta+Tab")};
+    data[names[5]] = {QKeySequence("Alt+Shift+Tab"), QKeySequence("Meta+Shift+Tab")};
+    data[names[6]] = {};
     return data;
 }
 class FakeAccel : public QDBusVirtualObject {
@@ -69,6 +73,11 @@ int main(int argc, char **argv)
     const auto data = fixture();
     Snapshot parsed;
     check(decode(encode(data).toJson(), parsed) && parsed == data);
+    // A backup written before Meta+Tab was managed restores exactly its own actions.
+    Snapshot legacy;
+    for (int i = 0; i < 4; ++i) legacy[actionNames()[i]] = data[actionNames()[i]];
+    Snapshot legacyParsed;
+    check(decode(encode(legacy).toJson(), legacyParsed) && legacyParsed == legacy);
     for (const auto &bad : {QByteArray("invalid"), QByteArray("{}"), QByteArray("[]")})
         check(!decode(bad, parsed) && parsed == data);
     auto root = encode(data).object();
@@ -112,6 +121,9 @@ int main(int argc, char **argv)
     check(keysFor(actionNames()[1]) == QList<QKeySequence>{QKeySequence("Meta+Down")});
     check(keysFor(actionNames()[2]) == QList<QKeySequence>{QKeySequence("Ctrl+Alt+T")});
     check(keysFor(actionNames()[3]).isEmpty());
+    check(keysFor(actionNames()[4]) == QList<QKeySequence>{QKeySequence("Alt+Tab")});
+    check(keysFor(actionNames()[5]) == QList<QKeySequence>{QKeySequence("Alt+Shift+Tab")});
+    check(keysFor(actionNames()[6]) == QList<QKeySequence>{QKeySequence("Meta+Tab")});
     QFile backup(backupPath());
     check(backup.open(QIODevice::ReadOnly));
     const auto original = backup.readAll();
