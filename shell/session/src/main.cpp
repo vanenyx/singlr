@@ -155,6 +155,9 @@ int main(int argc, char *argv[])
     // logout, including when another application cancels it.
     QCoreApplication::setAttribute(Qt::AA_DisableSessionManager);
     QGuiApplication app(argc, argv);
+    // Like plasmashell: outputs vanish briefly on resume or hotplug and the
+    // per-screen windows go with them; that must not end the shell.
+    app.setQuitOnLastWindowClosed(false);
     qunsetenv("QT_WAYLAND_SHELL_INTEGRATION");
     if (::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0, quitSockets) != 0) {
         qCCritical(shellLog) << "Cannot install shutdown signal notifier";
