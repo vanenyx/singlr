@@ -119,6 +119,9 @@ Controls.Control {
     Component {
         id: mainComponent
         Controls.ScrollView {
+            // Sin barras visibles: se desplaza con rueda o gesto.
+            Controls.ScrollBar.vertical.policy: Controls.ScrollBar.AlwaysOff
+            Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
         objectName: "main"
         Component.onCompleted: Qt.callLater(function() { panel.implicitHeight = Math.min(760, content.implicitHeight + 32); })
         contentWidth: availableWidth
@@ -285,6 +288,9 @@ Controls.Control {
     Component {
         id: networkComponent
         Controls.ScrollView {
+            // Sin barras visibles: se desplaza con rueda o gesto.
+            Controls.ScrollBar.vertical.policy: Controls.ScrollBar.AlwaysOff
+            Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
             id: networkPage
             objectName: "network"
             property bool passwordPage: false

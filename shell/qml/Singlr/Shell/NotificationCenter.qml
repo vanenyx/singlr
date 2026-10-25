@@ -179,6 +179,9 @@ Item {
                     UiText { width: parent.width - 28; height: 36; text: detail.entry.app; weight: 600 }
                 }
                 Controls.ScrollView {
+                    // Sin barras visibles: se desplaza con rueda o gesto.
+                    Controls.ScrollBar.vertical.policy: Controls.ScrollBar.AlwaysOff
+                    Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
                     y: 44; width: parent.width; height: parent.height - 44; clip: true; contentWidth: availableWidth
                     NotificationCard {
                         width: parent.width; entry: detail.entry; sessionMode: center.sessionMode
