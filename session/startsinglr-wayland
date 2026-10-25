@@ -85,7 +85,11 @@ def main():
         env.update({key: value for key, value in os.environ.items()
                     if key in ('LANG', 'LANGUAGE', 'XDG_CONFIG_HOME', 'XDG_CONFIG_DIRS',
                                'XDG_DATA_HOME', 'XDG_DATA_DIRS', 'XDG_CACHE_HOME', 'XDG_STATE_HOME')
-                    or key.startswith('LC_')})
+                    or key.startswith('LC_')
+                    # pam_kwallet5 deja la contraseña en un socket y lo anuncia en PAM_KWALLET5_LOGIN;
+                    # sin esta variable, plasma-kwallet-pam no desbloquea la cartera (pedía contraseña y
+                    # los navegadores esperaban a KWallet al iniciar).
+                    or key.startswith('PAM_KWALLET')})
         # Distribución de teclado del sistema (locale1), como hace startplasma-wayland: sin esto KWin
         # arranca con la distribución por defecto (inglés) si kxkbrc no define otra.
         env.update(keyboard_environment())
