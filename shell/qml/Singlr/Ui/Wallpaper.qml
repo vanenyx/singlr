@@ -35,5 +35,10 @@ Rectangle {
         fillMode: Image.PreserveAspectCrop
         asynchronous: true; autoTransform: true
         visible: status === Image.Ready
+        // Decoding leaves large freed temporaries; return them as DeferredLoader does.
+        // qmllint disable unqualified
+        onStatusChanged: if (status === Image.Ready && typeof SinglrSystem !== "undefined" && SinglrSystem.trimMemory)
+            Qt.callLater(SinglrSystem.trimMemory)
+        // qmllint enable unqualified
     }
 }

@@ -27,6 +27,7 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <csignal>
+#include <malloc.h>
 #include <QLoggingCategory>
 #include <QSocketNotifier>
 #include <sys/socket.h>
@@ -154,6 +155,11 @@ int main(int argc, char *argv[])
     // session. In particular it must survive app negotiation until KDE commits
     // logout, including when another application cancels it.
     QCoreApplication::setAttribute(Qt::AA_DisableSessionManager);
+    // Screen-sized images (wallpaper decode, scaling, crop) are freed right after
+    // upload. glibc then raises its dynamic mmap threshold and keeps later large
+    // blocks in arenas it never returns: ~60 MB for a 2560x1600 wallpaper.
+    // A fixed threshold returns them to the system (P-016).
+    mallopt(M_MMAP_THRESHOLD, 128 * 1024);
     QGuiApplication app(argc, argv);
     // Like plasmashell: outputs vanish briefly on resume or hotplug and the
     // per-screen windows go with them; that must not end the shell.

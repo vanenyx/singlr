@@ -228,3 +228,13 @@ con Orca en Wayland. `tools/check-atspi.py` permite obtener ese árbol real por
 D-Bus sin python3-atspi; la evidencia de este entorno es de **bloqueo**, no un árbol
 validado. El retorno a una aplicación real al retirar las superficies queda
 pendiente de esa sesión anidada; no se fuerza la activación de otra app desde QML.
+
+
+## 25 oct (Claude): fondo real y asignador de glibc
+
+Medición aislada (`tools/measure-resources.sh`, 2560×1600): fondo por defecto 90,7 MB; con el
+fondo PNG 2560×1600 del creador **151 MB**. Con `MALLOC_MMAP_THRESHOLD_=131072` el mismo caso
+da 91,6 MB: no era la textura, sino los temporales de decodificación retenidos por el umbral
+dinámico de mmap de glibc. Corrección: `mallopt(M_MMAP_THRESHOLD, 128 KiB)` al arrancar y
+`trimMemory()` al quedar listo el fondo. Resultado con el fondo real: **91,6 MB** en reposo,
+98–105 MB con paneles abiertos, CPU en reposo ≈ 0. Plasma aislado: 93,8 MB.
