@@ -3,6 +3,7 @@
 #include <QDBusConnection>
 #include <QTimer>
 #include <QDBusMessage>
+#include <QDBusServiceWatcher>
 #include <functional>
 
 class System final : public QObject
@@ -44,6 +45,7 @@ Q_SIGNALS:
     void userIconChanged();
     void sessionActionPendingChanged();
     void sessionActionFailed(const QString &action, const QString &message);
+    void sessionActionCancelled(const QString &action);
 private:
     void refreshOverview();
     void refreshCapabilities();
@@ -51,15 +53,18 @@ private:
     void queryCapability(bool hibernate, std::function<void(bool)> done = {});
     void call(const QDBusConnection &bus, const QDBusMessage &message,
               std::function<void(const QDBusMessage &)> done, int timeout = 3000);
-    void shutdownOwner(std::function<void(const QString &)> done);
+    void sessionAction(const QString &action, const QString &method);
+    void shutdownFinished();
     bool beginAction();
     void finishAction(const QString &action, const QDBusMessage &reply);
     void failAction(const QString &action, const QString &error);
     void sleepAction(bool hibernate);
-    void powerAction(bool reboot);
     void terminateSession();
     QDBusConnection m_bus;
     QDBusConnection m_systemBus;
+    QDBusServiceWatcher m_shutdownWatcher;
+    QString m_kdeAction;
+    quint64 m_actionSerial = 0;
     QTimer m_timer;
     bool m_overviewAvailable = false;
     bool m_pending = false;

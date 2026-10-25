@@ -136,6 +136,10 @@ int main(int argc, char *argv[])
     if (profile)
         qputenv("QSG_INFO", "1");
     LayerShellQt::Shell::useLayerShell();
+    // The shell belongs to the workspace target, not the saved application
+    // session. In particular it must survive app negotiation until KDE commits
+    // logout, including when another application cancels it.
+    QCoreApplication::setAttribute(Qt::AA_DisableSessionManager);
     QGuiApplication app(argc, argv);
     qunsetenv("QT_WAYLAND_SHELL_INTEGRATION");
     std::signal(SIGTERM, requestQuit);

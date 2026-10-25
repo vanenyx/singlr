@@ -36,7 +36,7 @@ public:
         return "Received D-Bus calls:\n  " + received.join("\n  ");
     }
     QString suspendCapability = "yes", hibernateCapability = "challenge";
-    bool deny = false, accounts = true;
+    bool deny = false, accounts = true, shuttingDown = false, shutdownService = false;
     QString icon;
     QString introspect(const QString &) const override { return {}; }
     bool handleMessage(const QDBusMessage &m, const QDBusConnection &bus) override
@@ -46,7 +46,12 @@ public:
         QDebug(&description) << m;
         received << description;
         QVariantList args;
-        if (m.member() == "CanSuspend") args << suspendCapability;
+        if (m.member() == "isShuttingDown") {
+            CHECK(m.path() == "/KSMServer");
+            CHECK(m.interface() == "org.kde.KSMServerInterface");
+            // Qt does not expose NO_AUTO_START on received messages; System sets it explicitly.
+            args << shuttingDown;
+        } else if (m.member() == "CanSuspend") args << suspendCapability;
         else if (m.member() == "CanHibernate") args << hibernateCapability;
         else if (m.member() == "isEffectLoaded") args << false;
         else if (m.member() == "FindUserById") {
@@ -73,6 +78,12 @@ public:
         } else if (m.interface() == "org.kde.Shutdown") {
             CHECK(m.path() == "/Shutdown");
             CHECK(m.arguments().isEmpty());
+            if (shutdownService) {
+                QFile record(qEnvironmentVariable("SINGLR_ACTIVATION_RECORD"));
+                CHECK(record.open(QIODevice::Append));
+                record.write(m.member().toUtf8() + '\n');
+                QTimer::singleShot(50, QCoreApplication::instance(), &QCoreApplication::quit);
+            }
         } else {
             CHECK(m.interface() == "org.freedesktop.login1.Manager");
             CHECK(m.path() == "/org/freedesktop/login1");
@@ -90,6 +101,14 @@ int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
     try {
+        if (app.arguments().contains("--shutdown-service")) {
+            auto bus = QDBusConnection::sessionBus();
+            Fixture service;
+            service.shutdownService = true;
+            CHECK(bus.registerVirtualObject("/Shutdown", &service));
+            CHECK(bus.registerService("org.kde.Shutdown"));
+            return app.exec();
+        }
         if (app.arguments().contains("--offline")) {
             System system(QDBusConnection("missing-session"), QDBusConnection("missing-system"));
             int failures = 0;
@@ -111,6 +130,9 @@ int main(int argc, char **argv)
             system.suspend();
             until([&] { return failures == 2; }, "suspend failure on disconnected bus");
             CHECK(!system.sessionActionPending());
+            system.reboot();
+            until([&] { return failures == 3; }, "reboot rejects disconnected owner lookup");
+            CHECK(!system.sessionActionPending());
             std::cout << "PASS offline\n";
             return 0;
         }
@@ -129,7 +151,9 @@ int main(int argc, char **argv)
         for (const auto &name : {"org.freedesktop.login1", "org.freedesktop.Accounts", "org.freedesktop.ScreenSaver", "org.freedesktop.systemd1", "org.kde.KWin"})
             CHECK(server.registerService(name));
         System system(client, client);
-        int failures = 0;
+        int failures = 0, cancellations = 0;
+        QObject::connect(&system, &System::sessionActionCancelled, &app,
+            [&](const QString &action) { CHECK(!action.isEmpty()); ++cancellations; });
         QObject::connect(&system, &System::sessionActionFailed, &app, [&](const QString &, const QString &) { ++failures; });
         auto diagnostics = [&] {
             return fixture.diagnostics() + QString("\nState: canSuspend=%1 canHibernate=%2 userName=%3 pending=%4 failures=%5")
@@ -167,34 +191,67 @@ int main(int argc, char **argv)
         CHECK(!system.canHibernate() && fixture.calls.count("Hibernate") == 1);
         invoke([&] { system.reboot(); }, "Reboot");
         invoke([&] { system.powerOff(); }, "PowerOff");
+        // ksmserver's presence, not an already running Shutdown helper or
+        // XDG_SESSION_DESKTOP, selects the KDE path. Exercise real activation.
+        CHECK(server.registerService("org.kde.ksmserver"));
+        qputenv("XDG_SESSION_DESKTOP", "Singlr");
+        qunsetenv("XDG_SESSION_ID");
+        system.logout(); system.logout();
+        CHECK(system.sessionActionPending());
+        until([&] { return cancellations == 1; }, "on-demand Shutdown activation and confirmed cancellation", diagnostics);
+        QFile activationRecord(qEnvironmentVariable("SINGLR_ACTIVATION_RECORD"));
+        CHECK(activationRecord.open(QIODevice::ReadOnly));
+        CHECK(activationRecord.readAll() == "logout\n");
+        CHECK(!system.sessionActionPending());
+        CHECK(!fixture.calls.contains("TerminateSession") && !fixture.calls.contains("StopUnit"));
+        auto kdeInvoke = [&](std::function<void()> action, const QString &method) {
+            CHECK(server.registerService("org.kde.Shutdown"));
+            const int count = fixture.calls.count(method), cancelled = cancellations;
+            action(); action();
+            until([&] { return fixture.calls.count(method) == count + 1; }, method, diagnostics);
+            // An immediate void reply is not logout completion. No timer races
+            // or hand-written window closes are allowed to advance this state.
+            QElapsedTimer delay; delay.start();
+            while (delay.elapsed() < 30) QCoreApplication::processEvents();
+            CHECK(system.sessionActionPending());
+            action();
+            CHECK(server.unregisterService("org.kde.Shutdown"));
+            until([&] { return cancellations == cancelled + 1; }, "KDE cancellation after " + method, diagnostics);
+            CHECK(!system.sessionActionPending() && fixture.calls.count(method) == count + 1);
+        };
+        for (const auto &desktop : {"Singlr", "KDE"}) {
+            qputenv("XDG_SESSION_DESKTOP", desktop);
+            kdeInvoke([&] { system.reboot(); }, "logoutAndReboot");
+            kdeInvoke([&] { system.powerOff(); }, "logoutAndShutdown");
+            kdeInvoke([&] { system.logout(); }, "logout");
+        }
         CHECK(server.registerService("org.kde.Shutdown"));
-        invoke([&] { system.reboot(); }, "logoutAndReboot");
-        invoke([&] { system.powerOff(); }, "logoutAndShutdown");
-        qputenv("XDG_SESSION_DESKTOP", "KDE");
-        invoke([&] { system.logout(); }, "logout");
         fixture.deny = true;
         failed = failures;
         invoke([&] { system.powerOff(); }, "logoutAndShutdown");
         CHECK(failures == failed + 1 && fixture.calls.count("PowerOff") == 1); // no destructive retry
         fixture.deny = false;
+        // A helper crash with ksmserver still shutting down is an error, never
+        // permission to bypass session negotiation through logind.
+        fixture.shuttingDown = true;
+        system.reboot();
+        until([&] { return fixture.calls.count("logoutAndReboot") == 3; }, "reboot dispatched before helper crash", diagnostics);
+        failed = failures;
         CHECK(server.unregisterService("org.kde.Shutdown"));
+        until([&] { return failures == failed + 1; }, "helper failure while session still closing", diagnostics);
+        fixture.shuttingDown = false;
+        CHECK(server.unregisterService("org.kde.ksmserver"));
         qputenv("XDG_SESSION_ID", "singlr-test-session");
         invoke([&] { system.logout(); }, "TerminateSession");
         qunsetenv("XDG_SESSION_ID");
         failed = failures;
         system.logout();
         until([&] { return failures == failed + 1; }, "logout failure without XDG_SESSION_ID", diagnostics);
-        CHECK(fixture.calls.count("TerminateSession") == 1);
-        qputenv("XDG_SESSION_DESKTOP", "Singlr");
-        failed = failures;
-        system.logout();
-        CHECK(failures == failed + 1 && !fixture.calls.contains("StopUnit"));
-        qputenv("XDG_SESSION_ID", "singlr-test-session");
-        system.logout();
-        until([&] { return fixture.calls.contains("StopUnit"); },
-              "systemd1.Manager.StopUnit(singlr-workspace.target, replace)", diagnostics);
-        CHECK(system.sessionActionPending());
-        CHECK(fixture.calls.count("TerminateSession") == 1); // supervisor, not dying shell, terminates installed session
+        CHECK(fixture.calls.count("TerminateSession") == 1 && !fixture.calls.contains("StopUnit"));
+        // A surviving Shutdown helper alone must not select KDE without ksmserver.
+        CHECK(server.registerService("org.kde.Shutdown"));
+        invoke([&] { system.reboot(); }, "Reboot");
+        CHECK(server.unregisterService("org.kde.Shutdown"));
         fixture.accounts = false;
         const int lookups = fixture.calls.count("FindUserById");
         System fallback(client, client);
@@ -203,6 +260,17 @@ int main(int argc, char **argv)
         // The startup calls were cleared above; compare against this phase's baseline.
         until([&] { return fixture.calls.count("FindUserById") == lookups + 1; },
               "one additional Accounts.FindUserById for fallback identity", diagnostics);
+        CHECK(server.registerService("org.kde.ksmserver"));
+        CHECK(server.registerService("org.kde.Shutdown"));
+        const int cancelled = cancellations, logoutCount = fixture.calls.count("logout");
+        system.logout();
+        until([&] { return fixture.calls.count("logout") == logoutCount + 1; }, "final logout request", diagnostics);
+        CHECK(server.unregisterService("org.kde.ksmserver"));
+        CHECK(server.unregisterService("org.kde.Shutdown"));
+        QElapsedTimer delay; delay.start();
+        while (delay.elapsed() < 50) QCoreApplication::processEvents();
+        CHECK(system.sessionActionPending() && cancellations == cancelled);
+        CHECK(fixture.calls.count("TerminateSession") == 1 && fixture.calls.count("Reboot") == 2);
         std::cout << "PASS session-actions\n";
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';

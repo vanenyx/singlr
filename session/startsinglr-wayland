@@ -42,6 +42,23 @@ def manager_environment():
     return dict(item.split('=', 1) for item in json.loads(result.stdout)['data'])
 
 
+def shutdown_running():
+    # NameHasOwner never activates plasma-shutdown. As in startplasma 6.8,
+    # do not reap the login while it is still performing Reboot/PowerOff.
+    result = run('busctl', '--user', '--json=short', 'call',
+                 'org.freedesktop.DBus', '/org/freedesktop/DBus',
+                 'org.freedesktop.DBus', 'NameHasOwner', 's', 'org.kde.Shutdown',
+                 capture_output=True)
+    return bool(json.loads(result.stdout)['data'][0])
+
+
+def wait_for_session_end(stopping):
+    while not stopping():
+        if not active('singlr-workspace.target') and not shutdown_running():
+            return
+        time.sleep(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--dry-run', action='store_true', help='mostrar el plan sin bus ni cambios')
@@ -52,8 +69,9 @@ def main():
     if args.dry_run:
         print('Shell:', json.dumps(command, ensure_ascii=False))
         print('KWin: recuperar pendiente → backup persistente → aplicar antes de arrancar → restaurar tras parar')
-        print('Sesión: importar entorno → start singlr-workspace.target → esperar → stop graphical-session.target')
-        print('No se inicia plasma-workspace/core, plasmashell, KRunner ni autostart XDG.')
+        print('Sesión: importar entorno → start singlr-workspace.target (KWin → ksmserver → restoreSession)')
+        print('Final: salida de ksmserver → target parado → esperar org.kde.Shutdown → limpiar grafo/entorno → terminar PAM')
+        print('No se inicia plasma-workspace/core, plasmashell ni KRunner; se conserva autostart XDG.')
         return 0
     if not binary.is_file() or not os.access(binary, os.X_OK) or not (qml / 'Shell.qml').is_file():
         raise RuntimeError('Falta binario/QML empaquetado, o build de desarrollo; véase session/README.md')
@@ -71,7 +89,7 @@ def main():
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         for unit in ('graphical-session.target', 'plasma-workspace.target',
                      'plasma-kwin_wayland.service', 'plasma-plasmashell.service',
-                     'plasma-krunner.service', 'singlr-workspace.target'):
+                     'plasma-krunner.service', 'plasma-ksmserver.service', 'singlr-workspace.target'):
             if active(unit):
                 raise RuntimeError(f'Otra sesión/unidad está activa: {unit}; no se modifica')
         old = manager_environment()
@@ -95,7 +113,9 @@ def main():
         env.update(keyboard_environment())
         # Cursor para apps X11/GTK, como hace startplasma-wayland (KWin lo lee de kcminputrc por su cuenta).
         env.update(cursor_environment())
-        keys = set(env) | {'DISPLAY', 'WAYLAND_DISPLAY', 'WAYLAND_SOCKET', 'XAUTHORITY'}
+        # ksmserver publishes SESSION_MANAGER through D-Bus/systemd. Restore it
+        # as well so a subsequent Plasma login cannot inherit the dead ICE socket.
+        keys = set(env) | {'DISPLAY', 'WAYLAND_DISPLAY', 'WAYLAND_SOCKET', 'XAUTHORITY', 'SESSION_MANAGER', 'ICEAUTHORITY'}
         stopping = False
         started = False
 
@@ -109,16 +129,15 @@ def main():
             singlr_kwin.apply(recover_pending=True)
             run('dbus-update-activation-environment', '--systemd',
                 *(f'{key}={value}' for key, value in env.items()),
-                'DISPLAY=', 'WAYLAND_DISPLAY=', 'WAYLAND_SOCKET=', 'XAUTHORITY=')
+                'DISPLAY=', 'WAYLAND_DISPLAY=', 'WAYLAND_SOCKET=', 'XAUTHORITY=', 'SESSION_MANAGER=', 'ICEAUTHORITY=')
             # Empty still counts as "set" to KWin's backend detection. Remove these
             # from systemd AFTER the D-Bus update, so KWin selects DRM, not nesting.
             run('systemctl', '--user', 'unset-environment', 'DISPLAY', 'WAYLAND_DISPLAY',
-                'WAYLAND_SOCKET', 'XAUTHORITY')
+                'WAYLAND_SOCKET', 'XAUTHORITY', 'SESSION_MANAGER', 'ICEAUTHORITY')
             # KWin wrapper publishes the real display variables before its dbus readiness.
             run('systemctl', '--user', 'start', 'singlr-workspace.target')
             started = True
-            while not stopping and active('singlr-workspace.target'):
-                time.sleep(1)
+            wait_for_session_end(lambda: stopping)
             return 0
         finally:
             # The shell is part of the target and cannot finish logout itself.

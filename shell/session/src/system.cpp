@@ -40,8 +40,11 @@ System::System(QObject *parent)
 }
 
 System::System(const QDBusConnection &sessionBus, const QDBusConnection &systemBus, QObject *parent)
-    : QObject(parent), m_bus(sessionBus), m_systemBus(systemBus)
+    : QObject(parent), m_bus(sessionBus), m_systemBus(systemBus),
+      m_shutdownWatcher(QStringLiteral("org.kde.Shutdown"), sessionBus,
+                        QDBusServiceWatcher::WatchForUnregistration, this)
 {
+    connect(&m_shutdownWatcher, &QDBusServiceWatcher::serviceUnregistered, this, &System::shutdownFinished);
     m_timer.setInterval(10000);
     connect(&m_timer, &QTimer::timeout, this, &System::refreshOverview);
     connect(&m_timer, &QTimer::timeout, this, &System::refreshCapabilities);
@@ -179,6 +182,7 @@ void System::refreshIdentity()
 bool System::beginAction()
 {
     if (m_sessionActionPending) return false;
+    ++m_actionSerial;
     m_sessionActionPending = true;
     Q_EMIT sessionActionPendingChanged();
     return true;
@@ -186,6 +190,7 @@ bool System::beginAction()
 
 void System::failAction(const QString &action, const QString &error)
 {
+    m_kdeAction.clear();
     m_sessionActionPending = false;
     Q_EMIT sessionActionPendingChanged();
     qWarning() << "SinglrSystem" << action << error;
@@ -229,38 +234,78 @@ void System::sleepAction(bool hibernate)
 void System::suspend() { sleepAction(false); }
 void System::hibernate() { sleepAction(true); }
 
-void System::shutdownOwner(std::function<void(const QString &)> done)
+void System::sessionAction(const QString &action, const QString &method)
 {
+    if (!beginAction()) return;
+    const auto serial = m_actionSerial;
     auto message = QDBusMessage::createMethodCall(QStringLiteral("org.freedesktop.DBus"),
         QStringLiteral("/org/freedesktop/DBus"), QStringLiteral("org.freedesktop.DBus"), QStringLiteral("GetNameOwner"));
-    message << QStringLiteral("org.kde.Shutdown");
-    call(m_bus, message, [done](const QDBusMessage &message) {
-        const QDBusReply<QString> reply(message);
-        done(reply.isValid() ? reply.value() : QString());
+    message << QStringLiteral("org.kde.ksmserver");
+    call(m_bus, message, [this, action, method, serial](const QDBusMessage &reply) {
+        if (serial != m_actionSerial) return;
+        if (reply.type() == QDBusMessage::ErrorMessage) {
+            // Only a confirmed absence permits bypassing KDE. A broken bus is
+            // not evidence that it is safe to terminate applications directly.
+            if (reply.errorName() != QStringLiteral("org.freedesktop.DBus.Error.NameHasNoOwner")) {
+                finishAction(action, reply);
+                return;
+            }
+            if (action == QStringLiteral("logout")) {
+                terminateSession();
+            } else {
+                auto direct = loginCall(action == QStringLiteral("reboot") ? QStringLiteral("Reboot") : QStringLiteral("PowerOff"));
+                direct << true;
+                call(m_systemBus, direct, [this, action](const QDBusMessage &reply) { finishAction(action, reply); }, 120000);
+            }
+            return;
+        }
+        m_kdeAction = action;
+        // plasma-shutdown is on-demand, unlike ksmserver. Allow its standard
+        // D-Bus activation in both installed Singlr and live-on-Plasma sessions.
+        auto shutdown = QDBusMessage::createMethodCall(QStringLiteral("org.kde.Shutdown"), QStringLiteral("/Shutdown"),
+            QStringLiteral("org.kde.Shutdown"), method);
+        call(m_bus, shutdown, [this, action, serial](const QDBusMessage &reply) {
+            if (serial != m_actionSerial || m_kdeAction != action) return;
+            if (reply.type() == QDBusMessage::ErrorMessage) finishAction(action, reply);
+            // The void method reply only acknowledges dispatch. Keep duplicates
+            // disabled while applications may be asking the user to save.
+        }, 120000);
     });
 }
 
-void System::powerAction(bool reboot)
+void System::shutdownFinished()
 {
-    if (!beginAction()) return;
-    const QString action = reboot ? QStringLiteral("reboot") : QStringLiteral("powerOff");
-    shutdownOwner([this, reboot, action](const QString &owner) {
-        if (!owner.isEmpty()) {
-            // KDE owns app negotiation and the final logind Reboot/PowerOff(true).
-            // Address the unique owner: never auto-start KDE or retry after a timeout.
-            auto message = QDBusMessage::createMethodCall(owner, QStringLiteral("/Shutdown"),
-                QStringLiteral("org.kde.Shutdown"), reboot ? QStringLiteral("logoutAndReboot") : QStringLiteral("logoutAndShutdown"));
-            call(m_bus, message, [this, action](const QDBusMessage &reply) { finishAction(action, reply); }, 120000);
+    if (m_kdeAction.isEmpty()) return;
+    const auto action = m_kdeAction;
+    const auto serial = m_actionSerial;
+    // Plasma 6.8 exports neither logoutFinished nor logoutCancelled on D-Bus.
+    // On cancellation plasma-shutdown exits and ksmserver returns to Idle.
+    // Query that public state, without activating a missing session manager.
+    auto message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.ksmserver"), QStringLiteral("/KSMServer"),
+        QStringLiteral("org.kde.KSMServerInterface"), QStringLiteral("isShuttingDown"));
+    message.setAutoStartService(false);
+    call(m_bus, message, [this, action, serial](const QDBusMessage &message) {
+        if (serial != m_actionSerial || m_kdeAction != action) return;
+        const QDBusReply<bool> reply(message);
+        if (!reply.isValid()) {
+            // Normal completion quits ksmserver before plasma-shutdown. The
+            // login supervisor waits for both; there is no destructive retry.
+            if (reply.error().type() == QDBusError::ServiceUnknown || reply.error().name() == QStringLiteral("org.freedesktop.DBus.Error.NameHasNoOwner"))
+                return;
+            finishAction(action, message);
+        } else if (!reply.value()) {
+            m_kdeAction.clear();
+            m_sessionActionPending = false;
+            Q_EMIT sessionActionPendingChanged();
+            Q_EMIT sessionActionCancelled(action);
         } else {
-            auto message = loginCall(reboot ? QStringLiteral("Reboot") : QStringLiteral("PowerOff"));
-            message << true;
-            call(m_systemBus, message, [this, action](const QDBusMessage &reply) { finishAction(action, reply); }, 120000);
+            failAction(action, QStringLiteral("KDE shutdown exited while the session was still closing"));
         }
     });
 }
 
-void System::reboot() { powerAction(true); }
-void System::powerOff() { powerAction(false); }
+void System::reboot() { sessionAction(QStringLiteral("reboot"), QStringLiteral("logoutAndReboot")); }
+void System::powerOff() { sessionAction(QStringLiteral("powerOff"), QStringLiteral("logoutAndShutdown")); }
 
 void System::terminateSession()
 {
@@ -276,32 +321,7 @@ void System::terminateSession()
 
 void System::logout()
 {
-    if (!beginAction()) return;
-    if (qEnvironmentVariable("XDG_SESSION_DESKTOP") == QStringLiteral("Singlr")) {
-        if (qEnvironmentVariableIsEmpty("XDG_SESSION_ID")) {
-            failAction(QStringLiteral("logout"), QStringLiteral("XDG_SESSION_ID is missing"));
-            return;
-        }
-        // This stops us too. The login supervisor finishes cleanup, restores the
-        // activation environment and terminates the PAM session (including apps).
-        auto message = QDBusMessage::createMethodCall(QStringLiteral("org.freedesktop.systemd1"),
-            QStringLiteral("/org/freedesktop/systemd1"), QStringLiteral("org.freedesktop.systemd1.Manager"), QStringLiteral("StopUnit"));
-        message << QStringLiteral("singlr-workspace.target") << QStringLiteral("replace");
-        call(m_bus, message, [this](const QDBusMessage &reply) {
-            if (reply.type() == QDBusMessage::ErrorMessage) finishAction(QStringLiteral("logout"), reply);
-            // Successful enqueue is not completion: keep duplicate logout disabled.
-        });
-        return;
-    }
-    shutdownOwner([this](const QString &owner) {
-        if (owner.isEmpty()) {
-            terminateSession();
-            return;
-        }
-        auto message = QDBusMessage::createMethodCall(owner, QStringLiteral("/Shutdown"),
-            QStringLiteral("org.kde.Shutdown"), QStringLiteral("logout"));
-        call(m_bus, message, [this](const QDBusMessage &reply) { finishAction(QStringLiteral("logout"), reply); }, 120000);
-    });
+    sessionAction(QStringLiteral("logout"), QStringLiteral("logout"));
 }
 
 void System::placeOnScreen(QObject *object, const QString &screenName)
