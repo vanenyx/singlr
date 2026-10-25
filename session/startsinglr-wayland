@@ -28,6 +28,15 @@ def layout():
     return binary, qml
 
 
+def config_dirs():
+    # Distribution defaults for the Singlr session only, below the user's own
+    # configuration and above the system's (/etc/xdg), as distributions do.
+    dev = os.environ.get('SINGLR_DEV_ROOT')
+    defaults = Path(dev) / 'session/xdg' if dev else Path('/usr/lib/singlr/xdg')
+    rest = os.environ.get('XDG_CONFIG_DIRS') or '/etc/xdg'
+    return ':'.join([str(defaults)] + [d for d in rest.split(':') if d and d != str(defaults)])
+
+
 # The user manager re-executes itself when packages install user units
 # (SIGRTMIN+25). While it does, systemctl/busctl fail: that is "no answer",
 # never "the session ended". Retry until it answers again.
@@ -132,6 +141,7 @@ def main():
                     or key.startswith('PAM_KWALLET')})
         # Distribución de teclado del sistema (locale1), como hace startplasma-wayland: sin esto KWin
         # arranca con la distribución por defecto (inglés) si kxkbrc no define otra.
+        env['XDG_CONFIG_DIRS'] = config_dirs()
         env.update(keyboard_environment())
         # Cursor para apps X11/GTK, como hace startplasma-wayland (KWin lo lee de kcminputrc por su cuenta).
         env.update(cursor_environment())

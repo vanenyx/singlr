@@ -226,6 +226,13 @@ class SessionEntryTests(unittest.TestCase):
                                      'plasma-ksmserver.service', 'plasma-kwin_wayland.service'))
                 self.assertLess(stale, calls.index(('systemctl', '--user', 'start', 'singlr-workspace.target')))
 
+    def test_distribution_defaults_precede_system_config(self):
+        with patch.dict(os.environ, {'XDG_CONFIG_DIRS': '/etc/xdg:/opt/xdg'}, clear=True):
+            self.assertEqual(entry.config_dirs(), '/usr/lib/singlr/xdg:/etc/xdg:/opt/xdg')
+        with patch.dict(os.environ, {'SINGLR_DEV_ROOT': '/dev/root'}, clear=True):
+            self.assertEqual(entry.config_dirs(), '/dev/root/session/xdg:/etc/xdg')
+        self.assertIn('ColorScheme=BreezeDark', (SESSION / 'xdg/kdeglobals').read_text())
+
     def test_manager_reexec_is_not_the_end_of_the_session(self):
         # systemctl fails while the user manager re-executes; keep waiting until it answers.
         answers = iter([subprocess.CalledProcessError(1, 'systemctl'), subprocess.CalledProcessError(1, 'systemctl'),

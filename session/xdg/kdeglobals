@@ -1,0 +1,5 @@
+# Singlr's distribution defaults (lowest priority): only used where the user has
+# not chosen otherwise. Singlr's identity is dark-first (P-005); KDE alone defaults
+# to BreezeLight. Applied to the Singlr session through XDG_CONFIG_DIRS.
+[General]
+ColorScheme=BreezeDark

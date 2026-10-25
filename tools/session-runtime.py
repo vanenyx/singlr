@@ -272,7 +272,8 @@ def launch(source, size, client_kind="singlr"):
                        SINGLR_PARENT_WAYLAND=parent, SINGLR_SESSION_ID=base.name,
                        # SINGLR_EXTRA_DATA_DIRS antepone rutas (efectos de KWin, temas) para probarlos aislados.
                        XDG_DATA_DIRS=':'.join(filter(None, [os.environ.get('SINGLR_EXTRA_DATA_DIRS', ''), '/usr/local/share:/usr/share'])),
-                       XDG_CONFIG_DIRS='/etc/xdg',
+                       # Same distribution defaults as the installed Singlr session (session/xdg).
+                       XDG_CONFIG_DIRS='/etc/xdg' if client_kind == 'plasma' else f'{ROOT}/session/xdg:/etc/xdg',
                        XDG_CURRENT_DESKTOP='KDE', XDG_SESSION_DESKTOP='Singlr', XDG_SESSION_TYPE='wayland',
                        QT_QPA_PLATFORM='wayland', QT_QPA_PLATFORMTHEME='kde',
                        KDE_FULL_SESSION='true', KDE_SESSION_VERSION='6',
