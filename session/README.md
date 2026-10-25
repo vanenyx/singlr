@@ -1,7 +1,8 @@
-# Sesión Singlr — T211 (preparación, sin instalar)
+# Sesión Singlr — entrada Wayland
 
-Esta entrega prepara una entrada Wayland adicional para el greeter. No se ha
-instalado ni iniciado. **No es todavía una sesión de producción validada.**
+La entrada Wayland adicional se prepara sin modificar la sesión activa.
+T237 integra ksmserver según P-017; ver [contrato y validación](T237-validation.md).
+Las comprobaciones históricas de este documento no acreditan esa integración. **No es todavía una sesión de producción validada.**
 La petición de T211 autoriza esta preparación; el target selectivo y las rutas
 son soluciones técnicas derivadas, pendientes de validación en login real.
 No se han cambiado decisiones visuales ni archivos de Plasma.
@@ -40,7 +41,8 @@ sesión KDE habitual.
 
 ## Grafo propio y servicios reutilizados
 
-`singlr-workspace.target` requiere KWin, el shell y `graphical-session.target`.
+`singlr-workspace.target` requiere KWin, el shell, ksmserver y `graphical-session.target`.
+Solicita `plasma-restoresession.service` después del arranque gráfico.
 Solicita kded6, polkit-agent, PowerDevil, KActivities, ambos portales y audio
 (PipeWire, compatibilidad PulseAudio y WirePlumber). Las unidades KDE conservan
 sus ejecutables y `PartOf=graphical-session.target`. `After=plasma-core.target`
@@ -50,9 +52,9 @@ El target usa `DefaultDependencies=no` con orden explícito para evitar el ciclo
 que provocaría ordenar todos sus Wants antes del target: el portal genérico
 necesita arrancar después de `graphical-session.target`.
 
-No se requiere `plasma-workspace*.target`, `plasma-core.target`, ksmserver,
-restauración de sesión ni `xdg-desktop-autostart.target`; no se disparan
-indiscriminadamente los autostarts del usuario. No se instalan masks, enlaces Wants ni cambios de enable/disable sobre unidades
+No se requiere `plasma-workspace*.target` ni `plasma-core.target`.
+Se reutilizan ksmserver, restauración de sesión y `xdg-desktop-autostart.target`;
+los autostarts KDE del usuario conservan el comportamiento estándar. No se instalan masks, enlaces Wants ni cambios de enable/disable sobre unidades
 KDE. T234 añade el drop-in de recuperación previo a KWin descrito al final;
 no sustituye unidades KDE.
 
@@ -62,14 +64,14 @@ administrador de atajos (`/usr/include/kwin/globalshortcuts.h`, miembro
 volumen y `kf6/kded/audioshortcutsservice.so`; kded carga los módulos habilitados
 por la configuración existente. No se inventan unidades para ellos.
 
-`singlr-shell.service` usa readiness D-Bus `org.kde.plasmashell`, nombre que el
-binario actual ya registra para Meta/lanzador; también registra `org.kde.krunner`.
+`singlr-shell.service` usa `Type=simple`; el binario registra `org.kde.plasmashell` para Meta/lanzador; también registra `org.kde.krunner`.
 Se ordena antes de kded6 para reservar esos nombres. Así las llamadas normales
 al lanzador llegan a Singlr. No es una prohibición de ejecutar manualmente
 plasmashell/KRunner; comprobar los nombres y ausencia de esos procesos en el E2E.
 
-Si el shell o KWin terminan, `BindsTo` desactiva el target. El supervisor permanece
-vivo hasta entonces o hasta SIGTERM/INT/HUP, detiene el target y la sesión gráfica,
+Si el shell, KWin o ksmserver terminan, `BindsTo` desactiva el target. El supervisor permanece
+vivo hasta entonces o hasta SIGTERM/INT/HUP. En cierre normal espera además
+a que desaparezca `org.kde.Shutdown`, detiene el target y la sesión gráfica,
 y restaura las variables gestionadas de systemd. D-Bus no permite borrar variables
 de activación: las que no existían se dejan vacías. No se para el bus ni el
 sistema de audio, que pueden pertenecer a otros usos del usuario.
@@ -159,8 +161,8 @@ ha probado el grafo real, renderizado, login ni cierre desde el greeter.
 
 Pendientes de aceptación: login en VT real; fallos/cierre de KWin y shell; retorno
 al greeter y login Plasma posterior; Meta/Alt+F2 sin KRunner; polkit; audio;
-portales (captura, selección y sandbox); energía y bloqueo. No se incluye ksmserver
-ni se acredita su API de logout/salvado o bloqueo seguro. Para terminar la prueba
+portales (captura, selección y sandbox); energía y bloqueo. T237 añade ksmserver;
+su integración real de logout/salvado sigue pendiente de los pasos de validación. Para terminar la prueba
 se puede usar `systemctl --user stop singlr-workspace.target` desde una TTY.
 
 La sesión real reutiliza la configuración KDE del usuario: no tiene el aislamiento

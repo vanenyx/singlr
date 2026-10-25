@@ -18,6 +18,10 @@ loader.exec_module(entry)
 
 class SessionEntryTests(unittest.TestCase):
     def setUp(self):
+        patcher = patch.object(entry, 'shutdown_running', return_value=False)
+        self.real_shutdown_running = entry.shutdown_running
+        self.shutdown_mock = patcher.start()
+        self.addCleanup(patcher.stop)
         for name in ('apply', 'restore'):
             patcher = patch.object(entry.singlr_kwin, name)
             patcher.start()
@@ -62,6 +66,41 @@ class SessionEntryTests(unittest.TestCase):
                                      'graphical-session.target'))
                 self.assertEqual(events[stop + 1], 'restore-kwin')
                 self.assertEqual(events[stop + 2][0], 'dbus-update-activation-environment')
+
+    def test_waits_for_shutdown_helper_after_target_stops(self):
+        events = []
+        with patch.object(entry, 'active', side_effect=[True, False, False]) as target, \
+             patch.object(entry, 'shutdown_running', side_effect=[True, False]) as shutdown, \
+             patch.object(entry.time, 'sleep', side_effect=lambda _: events.append('waiting')):
+            entry.wait_for_session_end(lambda: False)
+        self.assertEqual(target.call_count, 3)
+        self.assertEqual(shutdown.call_count, 2)
+        self.assertEqual(events, ['waiting', 'waiting'])
+
+    def test_cancellation_keeps_target_and_supervisor_alive(self):
+        # ksmserver stays alive when an app cancels: BindsTo does not stop target.
+        with patch.object(entry, 'active', return_value=True) as target, \
+             patch.object(entry, 'shutdown_running') as shutdown, \
+             patch.object(entry.time, 'sleep'), \
+             patch.object(entry, 'run') as commands:
+            remaining = iter([False, False, True])
+            entry.wait_for_session_end(lambda: next(remaining))
+        self.assertEqual(target.call_count, 2)
+        shutdown.assert_not_called()
+        commands.assert_not_called()
+
+    def test_shutdown_owner_query_never_activates_service(self):
+        with patch.object(entry, 'run', return_value=subprocess.CompletedProcess(
+                [], 0, '{"type":"b","data":[true]}')) as command:
+            self.assertTrue(self.real_shutdown_running())
+        self.assertEqual(command.call_args.args[-3:], ('NameHasOwner', 's', 'org.kde.Shutdown'))
+
+    def test_session_manager_environment_restored(self):
+        with patch.object(entry, 'run') as command:
+            entry.restore_environment({'SESSION_MANAGER': 'old-ice', 'ICEAUTHORITY': '/old-auth'},
+                                      {'SESSION_MANAGER', 'ICEAUTHORITY'})
+        self.assertIn('SESSION_MANAGER=old-ice', command.call_args.args)
+        self.assertIn('ICEAUTHORITY=/old-auth', command.call_args.args)
 
     def test_roundtrip_and_dry_run(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -163,7 +202,7 @@ class SessionEntryTests(unittest.TestCase):
                 calls = [item.args for item in commands.call_args_list]
                 start_index = calls.index(('systemctl', '--user', 'start', 'singlr-workspace.target'))
                 self.assertEqual(calls[start_index - 1], ('systemctl', '--user', 'unset-environment',
-                                 'DISPLAY', 'WAYLAND_DISPLAY', 'WAYLAND_SOCKET', 'XAUTHORITY'))
+                                 'DISPLAY', 'WAYLAND_DISPLAY', 'WAYLAND_SOCKET', 'XAUTHORITY', 'SESSION_MANAGER', 'ICEAUTHORITY'))
                 self.assertIn(('systemctl', '--user', 'stop', 'singlr-workspace.target',
                                'graphical-session.target'), calls)
                 self.assertIn(('systemctl', '--user', 'set-environment', 'DISPLAY=:7'), calls)

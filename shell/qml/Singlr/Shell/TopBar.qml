@@ -7,7 +7,6 @@ Rectangle {
     readonly property real menuHeight: menu ? menu.entriesHeight : 249
     readonly property real menuWidth: 292
     property bool sessionMode: false
-    property var closeController: null
     property Item menuHost: null
     function closeMenu() { menuOpen = false; systemTray.close(); }
     property alias tray: systemTray
@@ -52,8 +51,6 @@ Rectangle {
             SessionMenu {
                 id: menu
                 sessionMode: bar.sessionMode
-                closeController: bar.closeController || localCloseController
-                SessionCloseController { id: localCloseController; sessionMode: bar.sessionMode && !bar.closeController }
                 visible: bar.menuOpen
                 onClosed: bar.menuOpen = false
                 onAboutToShow: systemTray.close()

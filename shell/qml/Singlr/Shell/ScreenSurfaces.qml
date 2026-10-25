@@ -48,7 +48,6 @@ Item {
             onControlCenterRequested: surfaces.controller.toggleControlCenterOnScreen(surfaces.outputScreen)
             onNotificationsRequested: surfaces.controller.toggleNotificationsOnScreen(surfaces.outputScreen)
             sessionMode: true
-            closeController: surfaces.controller.closeController
             menuHost: barMenuSurface.item ? (barMenuSurface.item as Window).contentItem : null
             trayMenuHost: trayMenuSurface.item ? (trayMenuSurface.item as Window).contentItem : null
             width: parent.width; height: 28
@@ -74,7 +73,7 @@ Item {
                 LayerShell.Window.scope: "utility"
                 LayerShell.Window.activateOnShow: true
                 onVisibleChanged: if (visible) { surfaces.controller.closeDockMenu(); requestActivate(); }
-                onActiveChanged: if (!active && visible && !surfaces.controller.closeController.waiting) bar.closeMenu()
+                onActiveChanged: if (!active && visible) bar.closeMenu()
             }
         }
     }

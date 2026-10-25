@@ -47,8 +47,22 @@ Item {
         }
     }
     readonly property var notificationCenter: notifications
-    readonly property var closeController: sessionClose
-    SessionCloseController { id: sessionClose; sessionMode: true; notificationCenter: notifications }
+    // qmllint disable unqualified
+    property var systemBridge: typeof SinglrSystem !== "undefined" ? SinglrSystem : null
+    // qmllint enable unqualified
+    function reportSessionCancellation(action) {
+        const verb = action === "logout" ? "Cerrar sesión" : action === "reboot" ? "Reiniciar" : "Apagar";
+        notifications.localEntries = notifications.localEntries.concat([{
+            id: notifications.localId--, local: true, app: "Singlr", icon: "dialog-warning",
+            title: verb + ": cancelado por una aplicación", body: "", time: new Date(), timeout: 5000,
+            critical: false, expired: false, dismissed: false, suppressed: false, defaultAction: false,
+            actionNames: [], actionLabels: []
+        }]);
+    }
+    Connections {
+        target: session.systemBridge
+        function onSessionActionCancelled(action: string) { session.reportSessionCancellation(action); }
+    }
     property bool launcherOpen: false
     property bool controlOpen: false
     property bool controlMapped: false

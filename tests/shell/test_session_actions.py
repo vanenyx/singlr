@@ -38,13 +38,25 @@ class SessionActionsTests(unittest.TestCase):
             if os.environ.get('SINGLR_REQUIRE_SESSION_DBUS') == '1':
                 self.fail('requires dbus-run-session')
             self.skipTest('requires dbus-run-session')
-        probe = subprocess.run(['dbus-run-session', '--', 'true'], capture_output=True, text=True, timeout=10)
+        data = Path(self.tmp.name) / 'data'
+        services = data / 'dbus-1/services'
+        services.mkdir(parents=True)
+        runtime = Path(self.tmp.name) / 'runtime'
+        runtime.mkdir(mode=0o700)
+        env = os.environ | {'DBUS_SYSTEM_BUS_ADDRESS': 'unix:path=/nonexistent',
+                            'XDG_DATA_HOME': str(data), 'XDG_DATA_DIRS': str(data),
+                            'XDG_RUNTIME_DIR': str(runtime),
+                            'SINGLR_ACTIVATION_RECORD': str(Path(self.tmp.name) / 'activation')}
+        probe = subprocess.run(['dbus-run-session', '--', 'true'], env=env,
+                               capture_output=True, text=True, timeout=10)
         if probe.returncode:
             if os.environ.get('SINGLR_REQUIRE_SESSION_DBUS') == '1':
                 self.fail(probe.stderr)
             self.skipTest('private D-Bus unavailable: ' + probe.stderr.strip())
+        (services / 'org.kde.Shutdown.service').write_text(
+            '[D-BUS Service]\nName=org.kde.Shutdown\nExec=' + self.binary + ' --shutdown-service\n')
         result = subprocess.run(['dbus-run-session', '--', self.binary], capture_output=True, text=True,
-                                env=os.environ | {'DBUS_SYSTEM_BUS_ADDRESS': 'unix:path=/nonexistent'}, timeout=30)
+                                env=env, timeout=30)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('PASS session-actions', result.stdout)
 
