@@ -7,6 +7,7 @@ Item {
     id: controls
     property var sink: Volume.PreferredDevice.sink
     property var source: Volume.PreferredDevice.source
+    readonly property alias mediaPlayers: players
     property var player: players.currentPlayer
     signal feedback(string icon, real percent, string text)
     Mpris.Mpris2Model { id: players }

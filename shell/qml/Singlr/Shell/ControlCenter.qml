@@ -234,6 +234,7 @@ Controls.Control {
                 }
                 Tool { icon: "caret-right"; description: "Dispositivos Bluetooth"; onClicked: panel.openPage("bluetooth") }
             }
+            NowPlaying { width: parent.width; height: 36; players: panel.audio.mediaPlayers }
             Rectangle { width: parent.width; height: 1; color: Theme.border }
             Column {
                 width: parent.width; visible: !!panel.audio.sink

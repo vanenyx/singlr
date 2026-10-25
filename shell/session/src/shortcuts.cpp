@@ -205,7 +205,8 @@ void registerActions(QObject *parent, QObject *session)
     }
     struct Entry { const char *name; const char *method; QKeyCombination key; };
     const Entry entries[] = {{"Mostrar notificaciones", "toggleNotifications", Qt::META | Qt::Key_N},
-                             {"Centro de control", "toggleControlCenter", Qt::META | Qt::Key_A}};
+                             {"Centro de control", "toggleControlCenter", Qt::META | Qt::Key_A},
+                             {"Historial del portapapeles", "toggleClipboard", Qt::META | Qt::Key_V}};
     for (const auto &entry : entries) {
         const QByteArray signature = QByteArray(entry.method) + "()";
         if (session->metaObject()->indexOfMethod(signature.constData()) < 0) {
@@ -219,6 +220,33 @@ void registerActions(QObject *parent, QObject *session)
         for (const auto type : {KGlobalAccel::Equal, KGlobalAccel::Shadows, KGlobalAccel::Shadowed})
             for (const auto &owner : KGlobalAccel::globalShortcutsByKey(key, type))
                 owners.append({owner.componentUniqueName(), owner.uniqueName()});
+        if (QByteArray(entry.method) == "toggleClipboard") {
+            // Existing profile: [plasmashell] show-on-mouse-pos = Meta+V.
+            // libklipper 6.8.1 registers it under org.kde.klipper on fresh profiles.
+            // Retain whichever standard action owns the key; never steal a custom one.
+            QString component = QStringLiteral("org.kde.klipper");
+            if (!owners.isEmpty()) {
+                if (owners.size() != 1 || owners.first().value(1) != QLatin1String("show-on-mouse-pos")
+                    || (owners.first().value(0) != QLatin1String("plasmashell")
+                        && owners.first().value(0) != QLatin1String("org.kde.klipper"))) {
+                    qWarning() << "Singlr: conflicto de Meta+V; se conserva" << owners;
+                    continue;
+                }
+                component = owners.first().value(0);
+            } else if (!available) {
+                qWarning() << "Singlr: no se pudo verificar Meta+V";
+                continue;
+            }
+            auto *action = new QAction(parent);
+            action->setObjectName(QStringLiteral("show-on-mouse-pos"));
+            action->setProperty("componentName", component);
+            action->setText(QStringLiteral("Historial del portapapeles"));
+            KGlobalAccel::self()->setShortcut(action, {key}, KGlobalAccel::Autoloading);
+            QObject::connect(action, &QAction::triggered, session, [session] {
+                QMetaObject::invokeMethod(session, "toggleClipboard");
+            });
+            continue;
+        }
         if (!canAssign(available, owners, QStringLiteral("singlr"), name)) {
             // Si la tecla pertenece a una acción de plasmashell, Singlr ya es dueño de ese componente
             // mientras sustituye a Plasma: atiende esa misma acción sin cambiar el atajo guardado.

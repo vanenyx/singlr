@@ -5,6 +5,7 @@ Item {
     id: glass
     property Item backdrop
     property bool crystal: true
+    property bool compositorBlur: false
     property real radius: 12
     readonly property bool rhi: glass.GraphicsInfo.api !== GraphicsInfo.Software && glass.GraphicsInfo.api !== GraphicsInfo.Unknown
     readonly property bool canBlur: crystal && rhi && backdrop !== null
@@ -47,7 +48,7 @@ Item {
     // Explicit opaque reduced-effects material on software: no fake CPU blur.
     Rectangle {
         anchors.fill: parent; radius: glass.radius
-        color: glass.canBlur ? Qt.rgba(Theme.raised.r,Theme.raised.g,Theme.raised.b,Theme.dark?.78:.85) : Theme.raised
+        color: glass.compositorBlur ? Theme.surface : glass.canBlur ? Qt.rgba(Theme.raised.r,Theme.raised.g,Theme.raised.b,Theme.dark?.78:.85) : Theme.raised
         border.width: 1; border.color: Theme.focusBorder
     }
     Rectangle { x:12; y:1; width:parent.width-24; height:1; color:Theme.sheen }
