@@ -186,6 +186,7 @@ Item {
         }
     }
     function closeMenus() {
+        dockKeyboard = false;
         session.clipboardOpen = false;
         closeBarMenus();
         dock.closeMenu();
@@ -194,6 +195,19 @@ Item {
     }
     // Invocado desde C++ (tecla Meta, Alt+Espacio) a través de D-Bus.
     function showApplications() { openLauncher(true); }
+    property bool dockKeyboard: false
+    function focusDock() {
+        closeMenus(); if (launcher) launcher.close(); launcherOpen = false;
+        dockKeyboard = true;
+        dockWindow.requestActivate();
+        Qt.callLater(() => dock.focusFirst());
+    }
+    function showSessionMenu() {
+        closeMenus();
+        if (launcher) launcher.close(); launcherOpen = false;
+        const surface = screenSurfaces.objectAt(0) as ScreenSurfaces;
+        if (surface) surface.showSessionMenu();
+    }
     function activateDockEntry(n) { return dock.activateEntry(n); }
     function toggleNotifications() { toggleNotificationsOnScreen(effectiveDockScreen); }
     function toggleNotificationsOnScreen(targetScreen) {
@@ -215,7 +229,7 @@ Item {
         session.controlOpen = true;
     }
     SystemControls { id: systemControls; onFeedback: (icon, percent, text) => osd.show(icon, percent, text) }
-    Timer { id: controlFocus; interval: 0; onTriggered: if (session.controlPanel && session.controlOpen) session.controlPanel.forceActiveFocus() }
+    Timer { id: controlFocus; interval: 0; onTriggered: if (session.controlPanel && session.controlOpen) session.controlPanel.focusFirst() }
     Loader {
         id: osdSurface; objectName: "osdSurface"; active: osd.surfaceVisible
         sourceComponent: Component {
@@ -279,9 +293,10 @@ Item {
         LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
         LayerShell.Window.margins.bottom: 10
         LayerShell.Window.exclusionZone: 58
-        LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone  // None: un clic en el dock o la barra no debe quitar la actividad a la app de delante
+        onActiveChanged: if (!active) session.dockKeyboard = false
+        LayerShell.Window.keyboardInteractivity: session.dockKeyboard ? LayerShell.Window.KeyboardInteractivityOnDemand : LayerShell.Window.KeyboardInteractivityNone  // None: un clic en el dock o la barra no debe quitar la actividad a la app de delante
         LayerShell.Window.scope: "dock"
-        Dock { id: dock; objectName: "sessionDock"; sessionMode: true; menuHost: dockMenuSurface.item ? (dockMenuSurface.item as Window).contentItem : null; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.showApplications() }
+        Dock { Keys.onEscapePressed: session.dockKeyboard = false; id: dock; objectName: "sessionDock"; sessionMode: true; menuHost: dockMenuSurface.item ? (dockMenuSurface.item as Window).contentItem : null; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.showApplications() }
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
     }
     Loader {

@@ -29,7 +29,10 @@ public:
             return true;
         }
         const char *method = message.path() == QLatin1String("/PlasmaShell")
-                ? (message.member() == QLatin1String("toggleControlCenter") ? "toggleControlCenter"
+                ? (message.member() == QLatin1String("focusDock") ? "focusDock"
+                   : message.member() == QLatin1String("showSessionMenu") ? "showSessionMenu"
+                   : message.member() == QLatin1String("toggleClipboard") ? "toggleClipboard"
+                   : message.member() == QLatin1String("toggleControlCenter") ? "toggleControlCenter"
                    : message.member() == QLatin1String("toggleNotifications") ? "toggleNotifications"
                    : message.member() == QLatin1String("singlrReloadSettings") ? "reloadSettings"
                    : message.member() == QLatin1String("singlrShowApplications") ? "showApplications" : "toggleLauncher")

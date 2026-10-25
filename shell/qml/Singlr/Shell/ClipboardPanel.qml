@@ -6,6 +6,8 @@ import Singlr.Ui
 
 FocusScope {
     id: panel
+    Accessible.role: Accessible.Pane
+    Accessible.name: "Portapapeles"
     required property var history
     property alias query: search.text
     property alias selectedIndex: list.currentIndex
@@ -14,6 +16,8 @@ FocusScope {
     property var actionModel: null
     property string actionUuid: ""
     signal closed()
+    Keys.onUpPressed: { panel.move(-1); if (list.currentItem) list.currentItem.forceActiveFocus(Qt.TabFocusReason); }
+    Keys.onDownPressed: { panel.move(1); if (list.currentItem) list.currentItem.forceActiveFocus(Qt.TabFocusReason); }
     width: 760; height: 542
     function focusInput() { search.forceActiveFocus(); }
     function open() { query = ""; selectedIndex = 0; focusInput(); }
@@ -40,10 +44,14 @@ FocusScope {
     Glass { anchors.fill: parent; compositorBlur: Qt.platform.pluginName.startsWith("wayland") }
     Icon { x: 24; y: 25; width: 20; height: 20; font.pixelSize: 20; name: "magnifying-glass" }
     TextInput {
+        activeFocusOnTab: true
         id: search; objectName: "clipboardSearch"
         x: 62; y: 18; width: parent.width - 124; height: 40; clip: true; focus: true
         color: Theme.text; selectionColor: Theme.selection; selectedTextColor: Theme.text
         font.family: Theme.family; font.pixelSize: 13; verticalAlignment: TextInput.AlignVCenter
+        Accessible.role: Accessible.EditableText
+        Accessible.description: "Flechas para seleccionar, Enter para abrir, Escape para cerrar"
+        Rectangle { anchors.fill: parent; anchors.margins: -3; z: -1; radius: 4; color: "transparent"; border.color: parent.activeFocus ? Theme.accentText : "transparent" }
         Accessible.name: "Buscar en el portapapeles"
         Keys.onUpPressed: panel.move(-1)
         Keys.onDownPressed: panel.move(1)
@@ -72,10 +80,12 @@ FocusScope {
         id: entry
         required property var model
         required property int index
+            onActiveFocusChanged: if (activeFocus) panel.selectedIndex = index
         required property int type
         width: list.width; height: 44; trailingWidth: 72
         title: entry.type === 4 ? "Imagen" : String(model.display || "").replace(/\s+/g, " ")
         selected: list.currentIndex === index
+        Keys.onMenuPressed: panel.openMenu(entry.model, entry, width - 28, height)
         onClicked: { list.currentIndex = index; panel.copy(model.uuid); }
         Image {
             objectName: "clipboardThumbnail"

@@ -74,7 +74,7 @@ Item {
             scanModel.entries = [entry("A", 90), entry("B", 50, "b")];
             const panel = createTemporaryObject(panelFactory, fixture);
             wait(80); const height = panel.implicitHeight; panel.height = height;
-            panel.openPage("wifi"); wait(150);
+            panel.openPage("wifi"); tryCompare(panel.navigation, "busy", false);
             const list = findChild(panel, "wifiList"); list.forceLayout();
             const data = list.stableModel.rows.get(0).payload;
             for (let i = 0; i < 5; ++i) {
@@ -87,18 +87,18 @@ Item {
             const menu = findChild(panel, "controlContextMenu");
             verify(menu.opened); compare(panel.navigation.depth, 2); compare(panel.implicitHeight, height);
             keyClick(Qt.Key_Escape); wait(30); verify(!menu.visible); compare(panel.page, "wifi");
-            panel.openNetwork(data); wait(150); compare(panel.implicitHeight, height);
-            const field = findChild(list.editingRow, "wifiPassword"); field.forceActiveFocus(); keyClick(Qt.Key_Escape); wait(150);
+            panel.openNetwork(data); tryCompare(panel.navigation, "busy", false); compare(panel.implicitHeight, height);
+            const field = findChild(list.editingRow, "wifiPassword"); field.forceActiveFocus(); keyClick(Qt.Key_Escape); tryCompare(panel.navigation, "busy", false);
             compare(panel.page, "wifi"); compare(panel.navigation.depth, 2);
-            panel.forceActiveFocus(); keyClick(Qt.Key_Escape); wait(150); compare(panel.page, "main");
-            panel.openPage("bluetooth"); wait(150); compare(panel.implicitHeight, height);
-            panel.back(); wait(150); compare(panel.page, "main");
+            panel.forceActiveFocus(); keyClick(Qt.Key_Escape); tryCompare(panel.navigation, "busy", false); compare(panel.page, "main");
+            panel.openPage("bluetooth"); tryCompare(panel.navigation, "busy", false); compare(panel.implicitHeight, height);
+            panel.back(); tryCompare(panel.navigation, "busy", false); compare(panel.page, "main");
         }
         function test_inlinePasswordGeometryAndStates() {
             scanModel.entries = [entry("A", 90), entry("B", 50), entry("C", 20)];
             const panel = createTemporaryObject(panelFactory, fixture);
             wait(80); panel.height = panel.implicitHeight;
-            panel.openPage("wifi"); wait(150);
+            panel.openPage("wifi"); tryCompare(panel.navigation, "busy", false);
             const list = findChild(panel.navigation.currentItem, "wifiList"); list.forceLayout();
             const rows = [list.itemAtIndex(0), list.itemAtIndex(1), list.itemAtIndex(2)];
             const positions = rows.map(row => row.mapToItem(panel, 0, 0).y);

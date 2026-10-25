@@ -42,6 +42,7 @@ Controls.Popup {
     }
     onCurrentIndexChanged: {
         const row = menuRows.itemAt(currentIndex);
+        if (row && visible) row.actionItem.forceActiveFocus();
         if (row) viewport.contentY = Math.max(0, Math.min(viewport.contentHeight - viewport.height,
             row.y < viewport.contentY ? row.y : Math.max(viewport.contentY, row.y + row.height - viewport.height)));
     }
@@ -55,7 +56,10 @@ Controls.Popup {
     }
     onAboutToShow: {
         confirmingIndex = -1; currentIndex = entries.length - 1; move(1);
-        contentItem.forceActiveFocus();
+        Qt.callLater(function() {
+            const row = menuRows.itemAt(menu.currentIndex);
+            if (menu.visible && row) row.actionItem.forceActiveFocus();
+        });
     }
     onClosed: {
         confirmingIndex = -1;
@@ -77,11 +81,16 @@ Controls.Popup {
     }
     contentItem: Flickable {
         id: viewport
+        Accessible.role: Accessible.PopupMenu
+        Accessible.name: menu.headerName || "Acciones"
         clip: true
         contentHeight: rows.height
         boundsBehavior: Flickable.StopAtBounds
         Controls.ScrollBar.vertical: Controls.ScrollBar {}
         focus: true
+        Keys.onTabPressed: menu.move(1)
+        Keys.onBacktabPressed: menu.move(-1)
+        Keys.onSpacePressed: menu.activate(menu.currentIndex)
         Keys.onUpPressed: menu.move(-1)
         Keys.onDownPressed: menu.move(1)
         Keys.onReturnPressed: menu.activate(menu.currentIndex)
@@ -105,6 +114,7 @@ Controls.Popup {
             model: menu.entries
             delegate: Column {
                 id: row
+                property alias actionItem: actionItem
                 required property var modelData
                 required property int index
                 width: menu.availableWidth
@@ -113,7 +123,15 @@ Controls.Popup {
                     Rectangle { visible: parent.height > 0; anchors.centerIn: parent; width: parent.width - 8; height: 1; color: Theme.border }
                 }
                 Rectangle {
+                    id: actionItem
                     objectName: "contextAction" + row.index
+                    enabled: row.modelData.enabled !== false && !row.modelData.separatorOnly
+                    Accessible.focusable: enabled
+                    Accessible.onPressAction: menu.activate(row.index)
+                    Accessible.description: row.modelData.shortcut || ""
+                    Accessible.checkable: !!row.modelData.toggleType
+                    Accessible.checked: !!row.modelData.toggleState
+                    border.color: activeFocus ? Theme.accentText : "transparent"
                     width: parent.width; height: row.modelData.separatorOnly ? 0 : 28; visible: !row.modelData.separatorOnly; radius: 4
                     color: menu.currentIndex === row.index ? Theme.hover : "transparent"
                     opacity: row.modelData.enabled === false ? 0.4 : 1

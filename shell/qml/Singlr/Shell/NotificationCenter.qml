@@ -156,7 +156,15 @@ Item {
         id: historyLoader; objectName: "notificationHistoryLoader"; opened: center.historyOpen
         sourceComponent: Component {
             Rectangle {
-                id: panel; property bool menuOpen: false; readonly property var menu: historyMenuLoader.item; property alias pages: historyPages; width: 360; height: 620; visible: center.historyOpen
+                id: panel
+                Accessible.role: Accessible.Pane
+                Accessible.name: "Notificaciones"
+                Keys.onEscapePressed: {
+                    if (historyPages.depth > 1) historyPages.popCurrentItem();
+                    else center.historyOpen = false;
+                }
+                Component.onCompleted: Qt.callLater(() => dnd.forceActiveFocus(Qt.TabFocusReason))
+                property bool menuOpen: false; readonly property var menu: historyMenuLoader.item; property alias pages: historyPages; width: 360; height: 620; visible: center.historyOpen
                 DeferredLoader {
                     id: historyMenuLoader; objectName: "historyMenuLoader"; opened: panel.menuOpen
                     sourceComponent: Component {
@@ -181,13 +189,15 @@ Item {
                         width: parent.width
                         UiText { width: parent.width - 84; height: 28; text: "Notificaciones"; weight: 590 }
                         Controls.AbstractButton {
-                            objectName: "notificationDnd"; width: 28; height: 28
+                            Keys.onReturnPressed: click()
+                            Keys.onEnterPressed: click()
+                            id: dnd; objectName: "notificationDnd"; width: 28; height: 28
                             checkable: true; checked: center.inhibited
                             Accessible.name: "No molestar"
                             Controls.ToolTip.visible: hovered
                             Controls.ToolTip.text: "No molestar"
                             contentItem: Icon { name: "bell-slash"; color: center.inhibited ? Theme.text : Theme.muted }
-                            background: Rectangle { radius: 5; color: center.inhibited ? Theme.hover : "transparent" }
+                            background: Rectangle { radius: 5; border.color: dnd.visualFocus ? Theme.accentText : "transparent"; color: center.inhibited ? Theme.hover : "transparent" }
                             onToggled: center.setInhibited(checked)
                         }
                         Tool { icon: "trash"; description: "Borrar todas las notificaciones"; enabled: center.entries.length > 0; onClicked: center.clearAll() }
@@ -204,10 +214,10 @@ Item {
                         if (depth > 1) popCurrentItem();
                         else center.historyOpen = false;
                     }
-                    pushEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 120 } }
-                    pushExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 120 } }
-                    popEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 120 } }
-                    popExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 120 } }
+                    pushEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Motion.duration } }
+                    pushExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: Motion.duration } }
+                    popEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Motion.duration } }
+                    popExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: Motion.duration } }
                 }
                 Component {
                     id: historyComponent
@@ -217,6 +227,10 @@ Item {
                         add: null; remove: null; displaced: null; move: null; populate: null
                         delegate: ControlRow {
                             id: historyRow
+                            required property int index
+                            onActiveFocusChanged: if (activeFocus) history.currentIndex = index
+                            Keys.onUpPressed: { history.decrementCurrentIndex(); if (history.currentItem) history.currentItem.forceActiveFocus(Qt.TabFocusReason); }
+                            Keys.onDownPressed: { history.incrementCurrentIndex(); if (history.currentItem) history.currentItem.forceActiveFocus(Qt.TabFocusReason); }
                             required property var modelData
                             actionText: "…"
                             onActionTriggered: center.openContext(modelData, historyRow, width - 28, height)

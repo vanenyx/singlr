@@ -3,6 +3,8 @@ import QtQuick
 import QtQuick.Controls.Basic as Controls
 Controls.Switch {
     id: sw
+    Keys.onReturnPressed: sw.click()
+    Keys.onEnterPressed: sw.click()
     implicitHeight: 36
     leftPadding: 0; rightPadding: 44
     spacing: 10
@@ -17,7 +19,8 @@ Controls.Switch {
         implicitWidth: 34; implicitHeight: 20; radius: 10
         x: sw.width - width; y: (sw.height - height) / 2
         color: sw.checked ? Theme.control : Theme.track
-        border.color: sw.visualFocus ? Theme.control : "transparent"
+        border.width: sw.visualFocus ? 2 : 1
+        border.color: sw.visualFocus ? Theme.accentText : "transparent"
         Rectangle {
             width: 16; height: 16; radius: 8; y: 2
             x: sw.checked ? parent.width - width - 2 : 2

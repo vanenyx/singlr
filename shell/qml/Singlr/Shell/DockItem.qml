@@ -24,10 +24,12 @@ Controls.Control {
     // Marco de foco solo para navegación con teclado, nunca al hacer clic.
     background: Rectangle { radius: 6; color: tile.fileTarget ? Theme.selection : "transparent"; border.color: tile.fileTarget ? Theme.accentText : tile.activeFocus && tile.keyboardFocus ? Theme.accentText : "transparent" }
     activeFocusOnTab: true
-    onActiveFocusChanged: keyboardFocus = activeFocus && (focusReason === Qt.TabFocusReason || focusReason === Qt.BacktabFocusReason)
+    onActiveFocusChanged: keyboardFocus = activeFocus
     Accessible.role: Accessible.Button
     Accessible.name: String(task?.AppName || task?.display || "Aplicación")
     Keys.onMenuPressed: { interacted(); contextRequested(); }
+    Accessible.onPressAction: activated()
+    Keys.onEnterPressed: activated()
     Keys.onReturnPressed: activated()
     Keys.onSpacePressed: activated()
     Rectangle {

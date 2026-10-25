@@ -82,9 +82,9 @@ Item {
             center.backendObject.entries = Array.from({length: 40}, (_, i) => entry(i + 1)); wait(30);
             compare(center.height, height); list.forceLayout();
             const pages = findChild(center, "notificationPages");
-            mouseClick(list.itemAtIndex(0)); wait(150); compare(pages.depth, 2); compare(center.height, height);
-            mouseClick(findChild(pages.currentItem, "notificationBack")); wait(150); compare(pages.depth, 1);
-            mouseClick(list.itemAtIndex(0)); wait(150); pages.forceActiveFocus(); keyClick(Qt.Key_Escape); wait(150); compare(pages.depth, 1);
+            mouseClick(list.itemAtIndex(0)); tryCompare(pages, "busy", false); compare(pages.depth, 2); compare(center.height, height);
+            mouseClick(findChild(pages.currentItem, "notificationBack")); tryCompare(pages, "busy", false); compare(pages.depth, 1);
+            mouseClick(list.itemAtIndex(0)); tryCompare(pages, "busy", false); pages.forceActiveFocus(); keyClick(Qt.Key_Escape); tryCompare(pages, "busy", false); compare(pages.depth, 1);
             center.backendObject.entries = []; wait(30); compare(center.height, height);
         }
         function test_historyContextActions() {

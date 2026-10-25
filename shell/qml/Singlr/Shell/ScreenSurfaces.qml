@@ -12,6 +12,7 @@ Item {
     property string activeAppName: "Escritorio"
     readonly property bool menuOpen: bar.menuOpen || bar.tray.opened
     function closeMenus() { bar.closeMenu(); }
+    function showSessionMenu() { bar.menuOpen = true; }
     // Coloca la superficie en su pantalla (ver SinglrSystem.placeOnScreen).
     function place(window) {
         // qmllint disable unqualified

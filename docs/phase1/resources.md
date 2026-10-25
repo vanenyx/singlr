@@ -14,7 +14,7 @@ Desde este checkout, en la sesión Wayland anfitriona, sin sudo y sin cerrar Pla
 # Base y comparación secuencial; ~50 s de muestra/reposo por sesión + arranque/cierre.
 tools/measure-resources.sh --compare-plasma --output /tmp/singlr-resources-idle
 
-# Base, recorrido de tres paneles y medida posterior al cierre (~115 s + arranque).
+# Base, recorrido de cuatro paneles, muestras abiertas y posterior al cierre (~240 s + arranque).
 tools/measure-resources.sh --scenario open-panels --output /tmp/singlr-resources-panels
 
 # Diagnóstico separado: tiene coste y no debe sustituir la medida principal.
@@ -62,10 +62,10 @@ KDE del host con el contrato existente del runner. No se instala ni modifica KDE
   filtrado por PID, guardado en cada fila JSON. Incluye `hidden`, tamaño y geometría.
   KWin solo conoce superficies que recibió: ventanas Qt nunca mapeadas se consultan
   con el perfil del lanzador. Se reutiliza el helper de `tests/shell/e2e.py`.
-- `open-panels` solo se aplica a Singlr: invoca `toggleLauncher`, `toggleControlCenter`
-  y `toggleNotifications` por D-Bus, uno cada vez; espera 2 s tras cada toggle y
+- `open-panels` solo se aplica a Singlr: invoca `toggleLauncher`, `toggleControlCenter`,
+  `toggleNotifications` y `toggleClipboard` por D-Bus, uno cada vez; espera 2 s tras cada toggle y
   verifica aumento de superficies visibles al abrir y vuelta al número inicial al
-  cerrar. Guarda snapshots de apertura. Espera otros 20 s y repite muestra de 30 s.
+  cerrar. Guarda snapshots y una muestra de 30 s con cada panel abierto. Espera otros 20 s y repite muestra de 30 s.
   `pss_delta_bytes` compara after-close con idle; puede reflejar cachés o modelos
   retenidos, y no acredita por sí solo una fuga ni liberación completa.
 - En comparación, Plasma y KRunner tienen filas y checks individuales; no se suman
@@ -134,3 +134,97 @@ Las medidas reales y la revisión de logs quedan para Claude fuera del sandbox.
 | Sesión real, CPU en reposo (10 s) | 0 ticks | 1 tick (0,1 %) |
 
 Antes de la optimización (P-016), la sesión real de Singlr estaba en ~208 MB.
+
+## T245 — accesibilidad y medición ampliada (25 oct 2026)
+
+**No hay cifras nuevas de PSS/CPU en esta entrega.** Los intentos antes y después
+fallaron antes de iniciar el shell: `dbus-daemon` no puede enlazar el socket privado
+(`Operation not permitted`, salida 127). El sandbox tampoco permite conectar al bus
+anfitrión ni muestra PID de `singlr-shell`, `plasmashell` o `ksmserver`. No se ha
+recargado ni alterado la sesión del creador.
+
+| Medida T245 | Antes (base de main al iniciar) | Después (rama T245) |
+| --- | --- | --- |
+| PSS shell / ksmserver | N/D | N/D |
+| CPU reposo / panel abierto / tras cerrar | N/D | N/D |
+| GPU / modelos tras cerrar | Sin perfil real | Sin perfil real |
+| Inicio de sesión anidada | Bloqueado por socket D-Bus | Bloqueado por socket D-Bus |
+
+Los 84/91 MB aislados, 151 MB de Singlr real y 207/254 MB de Plasma del apartado
+anterior son **medidas históricas**, no resultados de T245. Los 151 MB históricos
+superan el límite propio de 120 MB: no se da por resuelto ese incumplimiento ni se
+atribuye una mejora a estos cambios. No se ha eliminado funcionalidad para reducir
+consumo. Evidencia de los intentos y pruebas:
+[`tests/shell/evidence/t245/`](../../tests/shell/evidence/t245/README.md).
+
+### Cambios del medidor
+
+- `open-panels` recorre ahora lanzador, centro de control, notificaciones y
+  portapapeles. Además del reposo y del estado final, registra 30 s de CPU/PSS con
+  **cada panel abierto**. El recorrido tarda aproximadamente cuatro minutos más el
+  arranque/cierre. Conserva `samples.json` después de cada muestra.
+- Si `ksmserver` existe con el marcador privado, se registra como proceso separado.
+  `session-components.json` registra también si existe el locker. El runner de shell
+  aislado no inicia una sesión completa con ksmserver: su ausencia no equivale a un
+  coste de 0 MB en la sesión instalada.
+- Klipper vive dentro del shell y `Singlr.System` es un módulo del mismo proceso:
+  ambos están incluidos en su PSS; no se les asigna una PSS independiente ficticia.
+  El locker se comprueba fuera del bloqueo, sin iniciarlo para medir reposo.
+- El límite de memoria se aplica al shell/KRunner; los auxiliares tienen filas
+  separadas. CPU < 0,5 % se exige en reposo y tras cerrar, no durante el uso de un
+  panel. La columna de presupuesto no acredita VRAM ni ausencia de modelos.
+- `--existing-pid` permite una muestra de solo lectura de 30 s de PID explícitos
+  del usuario (`singlr-shell`, `plasmashell`, `krunner`, `ksmserver` o
+  `kscreenlocker_g`). No necesita controlar KWin ni reiniciar sesiones. Comprueba
+  identidad/starttime; si un proceso desaparece, falla. Sin acceso a KWin, ventanas
+  quedan `null`/N/D, no 0.
+
+Para comparar las sesiones reales, ejecutar en cada una tras 20 s de reposo, con
+los PID actuales del shell y de ksmserver (sustituir los números):
+
+```bash
+tools/measure-resources.sh --existing-pid 1234 --existing-pid 1235 \
+  --phase idle --output /tmp/t245-singlr-real-idle
+# Abrir el panel manualmente y mantenerlo abierto durante la muestra:
+tools/measure-resources.sh --existing-pid 1234 --existing-pid 1235 \
+  --phase open-panels --output /tmp/t245-singlr-real-panel
+# Cerrar, esperar 20 s, repetir con --phase after-close y otra salida.
+# Repetir con plasmashell/ksmserver en la sesión Plasma, mismo equipo y carga.
+```
+
+Para la comparación aislada y perfil de liberación:
+
+```bash
+tools/measure-resources.sh --compare-plasma --scenario open-panels \
+  --output /tmp/t245-comparison
+# Perfil separado, con su coste diagnóstico:
+tools/measure-resources.sh --scenario open-panels --profile \
+  --output /tmp/t245-profile
+```
+
+La revisión de código y las pruebas de ciclo de vida confirman que las superficies
+nativas se destruyen al cerrar y los `DeferredLoader` liberan contenido tras su
+caché de 2500 ms (más 500 ms para GC/trim). **No equivale a liberar modelos de forma
+instantánea**, ni demuestra que el driver devuelva toda su memoria GPU. Falta el
+perfil real para acreditar P-016 de extremo a extremo.
+
+### Movimiento y contratos de accesibilidad
+
+Qt Quick 6.12.0, KWin/Plasma 6.8.1, Kirigami y qqc2-desktop-style 6.31.0,
+qqc2-breeze-style 6.8.1. `Motion` consume `org.kde.kirigami.platform.Units`, la
+misma duración de plataforma usada por los componentes Plasma instalados
+(`/usr/lib/qt6/qml/org/kde/plasma/extras/animations/AppearAnimation.qml`).
+La integración KDE observa `kdeglobals [KDE] AnimationDurationFactor`; evita un
+lector propio o un temporizador de sondeo. Units limita `longDuration` a 1 ms;
+Singlr convierte ese caso a transiciones de 0 ms y detiene el spinner infinito.
+Se verifican perfiles XDG temporales con factor 0 y 2, sin escribir kdeglobals del
+usuario. El cambio en ControlCenter se limita a foco, semántica y duraciones;
+TopBar y Theme no cambian.
+
+Referencias de API: [Units de Kirigami](https://api.kde.org/qml-org-kde-kirigami-platform-units.html),
+[accesibilidad Qt Quick](https://doc.qt.io/qt-6/qml-qtquick-accessible.html).
+La verificación QML de nombres/roles/acciones y foco no sustituye la prueba AT-SPI
+con Orca en Wayland. `tools/check-atspi.py` permite obtener ese árbol real por
+D-Bus sin python3-atspi; la evidencia de este entorno es de **bloqueo**, no un árbol
+validado. El retorno a una aplicación real al retirar las superficies queda
+pendiente de esa sesión anidada; no se fuerza la activación de otra app desde QML.

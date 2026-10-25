@@ -6,7 +6,9 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 [ -f "$root/build/qml/Singlr/System/qmldir" ] || { echo "Falta build/qml: cmake --build build" >&2; exit 2; }
 tmp=$(mktemp -d); trap 'rm -rf -- "$tmp"' EXIT
 mkdir -p "$tmp/config"
-printf '[General]\nColorScheme=BreezeDark\n' > "$tmp/config/kdeglobals"
+factor=${SINGLR_TEST_ANIMATION_FACTOR:-1}
+[[ "$factor" =~ ^[0-9]+([.][0-9]+)?$ ]] || { echo "Factor de animación inválido" >&2; exit 2; }
+printf '[General]\nColorScheme=BreezeDark\n[KDE]\nAnimationDurationFactor=%s\n' "$factor" > "$tmp/config/kdeglobals"
 cp /usr/share/color-schemes/BreezeDark.colors "$tmp/config/kdeglobals.colors" 2>/dev/null || true
 cat /usr/share/color-schemes/BreezeDark.colors >> "$tmp/config/kdeglobals"
 export XDG_CONFIG_HOME="$tmp/config" XDG_CACHE_HOME="$tmp/cache" XDG_STATE_HOME="$tmp/state" \

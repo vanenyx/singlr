@@ -149,9 +149,12 @@ Item {
                 visible: index < 6
                 width: 16; height: 28; radius: 3
                 color: pointer.containsMouse ? Theme.hover : "transparent"
+                border.color: activeFocus ? Theme.accentText : "transparent"
                 activeFocusOnTab: visible
                 Accessible.role: Accessible.Button
                 Accessible.name: model.toolTipTitle || model.title
+                Accessible.onPressAction: tray.click(model, Qt.LeftButton, app, 8, 14)
+                Keys.onEnterPressed: tray.click(model, Qt.LeftButton, app, 8, 14)
                 Keys.onReturnPressed: tray.click(model, Qt.LeftButton, app, 8, 14)
                 Keys.onSpacePressed: tray.click(model, Qt.LeftButton, app, 8, 14)
                 Keys.onMenuPressed: tray.openMenu(model, app, 8)

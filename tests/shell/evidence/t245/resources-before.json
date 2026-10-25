@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "timestamp": "2026-10-25T18:39:02.552025+00:00",
+  "environment": {
+    "kernel": "7.2.11-arch1-1",
+    "machine": "x86_64",
+    "cpu": "",
+    "size": "2048x1280",
+    "profile": false,
+    "locale": {
+      "LANGUAGE": "",
+      "LANG": "es_PE.UTF-8",
+      "LC_CTYPE": "C.UTF-8",
+      "LC_ALL": "C.UTF-8"
+    },
+    "clk_tck": 100,
+    "kwin_wayland": "kwin 6.8.1",
+    "plasmashell": "",
+    "pkg-config": "6.12.0",
+    "cpuinfo": "processor\t: 0\nvendor_id\t: AuthenticAMD\ncpu family\t: 25\nmodel\t\t: 97\nmodel name\t: AMD Ryzen 7 7745HX with Radeon Graphics\nstepping\t: 2\nmicrocode\t: 0xa60120c\ncpu MHz\t\t: 5085.900\ncache size\t: 1024 KB\nphysical id\t: 0\nsiblings\t: 16\ncore id\t\t: 0\ncpu cores\t: 8\napicid\t\t: 0\ninitial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 16\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good amd_lbr_v2 nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpuid_fault cpb cat_l3 cdp_l3 hw_pstate ssbd mba perfmon_v2 ibrs ibpb stibp ibrs_enhanced vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk avx512_bf16 clzero irperf xsaveerptr rdpru wbnoinvd cppc arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic vgif x2avic v_spec_ctrl vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid overflow_recov succor smca fsrm flush_l1d amd_lbr_pmc_freeze\nbugs\t\t: sysret_ss_attrs spectre_v1 spectre_v2 spec_store_bypass srso spectre_v2_user tsa vmscape\nbogomips\t: 7186.86\nTLB size\t: 3584 4K pages\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 48 bits physical, 48 bits virtual\npower management: ts ttp tm hwpstate cpb eff_freq_ro [13] [14]"
+  },
+  "scenario": "open-panels",
+  "budget": {
+    "pss_bytes_lt": 120000000,
+    "cpu_percent_lt": 0.5
+  },
+  "notes": [
+    "CPU: 100% = un n\u00facleo l\u00f3gico; 20 s de reposo + 30 s de muestra.",
+    "schedstat timeslices NO son despertares; wakeups=null (no expuesto).",
+    "KWin enumera superficies mapeadas; ventanas Qt ocultas: log --profile.",
+    "Plasma limpio; krunner solo si se activa. open-panels se aplica a Singlr.",
+    "PSS excluye KWin, servicios auxiliares y memoria GPU no mapeada."
+  ],
+  "results": [],
+  "errors": [
+    "Sesi\u00f3n fall\u00f3 (exit=127); /tmp/t245-before/singlr/session.log"
+  ],
+  "status": "FAIL"
+}
