@@ -63,15 +63,14 @@ Controls.Control {
             else if (entry.action === "bluetoothSettings") KCMUtils.KCMLauncher.openSystemSettings("kcm_bluetooth");
             else if (entry.action === "wifi") {
                 if (n.ConnectionState === Network.Enums.Activated) panel.networkActions.deactivateConnection(n.ConnectionPath, n.DevicePath);
-                else if (n.Uuid) panel.networkActions.activateConnection(n.ConnectionPath, n.DevicePath, n.SpecificPath);
-                else if (n.SecurityType === Network.Enums.NoneSecurity || n.SecurityType === Network.Enums.OWE) panel.networkActions.addAndActivateConnection(n.DevicePath, n.SpecificPath);
-                else if ([Network.Enums.StaticWep, Network.Enums.WpaPsk, Network.Enums.Wpa2Psk, Network.Enums.SAE].indexOf(n.SecurityType) >= 0) Qt.callLater(() => panel.openNetwork(n));
-                else KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement");
+                else Qt.callLater(() => { if (panel.wifiView) panel.wifiView.connectNetwork(n); });
             } else {
                 const device = panel.selectedDevice;
                 if (!device) return;
-                const call = entry.action === "forgetBluetooth" ? device.adapter.removeDevice(device) : device.connected ? device.disconnectFromDevice() : device.connectToDevice();
-                call.finished.connect(function(result) { if (result.error) panel.errorText = result.errorText; });
+                if (entry.action === "forgetBluetooth") {
+                    const call = device.adapter.removeDevice(device);
+                    call.finished.connect(function(result) { if (result.error) panel.errorText = result.errorText; });
+                } else panel.connectDevice(device);
             }
         }
     }
@@ -105,12 +104,31 @@ Controls.Control {
             if (panel.page !== "wifi") {
                 panel.resetPages(); pages.pushItem(wifiComponent, {}, Controls.StackView.Immediate);
             }
-            panel.secretId = requestId; panel.secretRetry = retry;
+            panel.secretRetry = retry;
             panel.wifiView.showPassword({Ssid: ssid, Uuid: connectionUuid}, requestId, retry);
+            panel.secretId = requestId;
         }
         function onRequestCancelled(requestId) {
             if (panel.secretId === requestId) { panel.secretId = ""; if (panel.page === "wifi") panel.wifiView.closePassword(); }
         }
+    }
+    property var bluetoothDevices: Bluetooth.Manager.devices
+    property var deviceOperations: ({})
+    property var deviceBusy: ({})
+    function connectDevice(device) {
+        const key = device.address || device.friendlyName || "device";
+        if (deviceBusy[key]) return;
+        deviceBusy = Object.assign({}, deviceBusy, {[key]: true});
+        deviceOperations = Object.assign({}, deviceOperations, {[key]: device.paired === false ? "Emparejando…" : device.connected ? "Desconectando…" : "Conectando…"});
+        const pairing = device.paired === false;
+        const call = pairing ? device.pair() : device.connected ? device.disconnectFromDevice() : device.connectToDevice();
+        call.finished.connect(function(result) {
+            const busy = Object.assign({}, panel.deviceBusy); delete busy[key]; panel.deviceBusy = busy;
+            const next = Object.assign({}, panel.deviceOperations); delete next[key];
+            if (result.error) next[key] = result.errorText;
+            panel.deviceOperations = next;
+            if (!result.error && pairing && device.paired && !device.connected) panel.connectDevice(device);
+        });
     }
     property string errorText: ""
     property bool opened: true
@@ -136,8 +154,8 @@ Controls.Control {
     Keys.onEscapePressed: back()
     Rectangle { anchors.fill: parent; radius: 12; color: "#ed191a1b"; border.color: Theme.focusBorder }
     Kicker.SimpleFavoritesModel { id: settingsApp; favorites: ["systemsettings.desktop"] }
-    Battery.BatteryControlModel { id: battery }
-    Power.PowerProfilesControl { id: power }
+    Battery.BatteryControlModel { id: batteryModel }
+    Power.PowerProfilesControl { id: powerProfiles }
     Brightness.ScreenBrightnessControl { id: brightness }
     Network.NetworkStatus { id: network }
     Network.EnabledConnections { id: enabledConnections }
@@ -175,39 +193,25 @@ Controls.Control {
             Row {
                 width: parent.width; height: 36; spacing: 10
                 Toggle { width: 34; checked: enabledConnections.wirelessEnabled; enabled: enabledConnections.wirelessHwEnabled; Accessible.name: "Wi-Fi"; onToggled: networkHandler.enableWireless(checked) }
-                Column {
-                    width: parent.width - 82
-                    UiText { height: 18; text: "Wi-Fi" }
-                    UiText { width: parent.width; height: 18; text: enabledConnections.wirelessEnabled ? network.activeConnections || "Sin conexión" : "Desactivado"; color: Theme.secondary; font.pixelSize: 11; elide: Text.ElideRight }
-                }
+                Icon { name: "wifi-high"; width: 16; height: 36; font.pixelSize: 16; Accessible.name: "Wi-Fi" }
+                UiText { width: parent.width - 108; height: 36; text: enabledConnections.wirelessEnabled ? network.activeConnections || "Sin conexión" : "Desactivado"; elide: Text.ElideRight }
                 Tool { icon: "caret-right"; description: "Redes Wi-Fi"; onClicked: panel.openPage("wifi") }
             }
             Row {
                 width: parent.width; height: 36; spacing: 10
                 Toggle { width: 34; checked: panel.bluetoothEnabled; enabled: Bluetooth.Manager.adapters.length > 0; Accessible.name: "Bluetooth"; onToggled: panel.setBluetooth(checked) }
-                Column {
-                    width: parent.width - 82
-                    UiText { height: 18; text: "Bluetooth" }
-                    UiText { width: parent.width; height: 18; color: Theme.secondary; font.pixelSize: 11; elide: Text.ElideRight
-                        text: !panel.bluetoothEnabled ? "Desactivado" : Bluetooth.Manager.devices.filter(device => device.connected).map(device => device.friendlyName).join(", ") || "Sin conexión"
-                    }
+                Icon { name: "bluetooth"; width: 16; height: 36; font.pixelSize: 16; Accessible.name: "Bluetooth" }
+                UiText { width: parent.width - 108; height: 36; elide: Text.ElideRight
+                    text: !panel.bluetoothEnabled ? "Desactivado" : panel.bluetoothDevices.filter(device => device.connected).map(device => device.friendlyName).join(", ") || "Sin conexión"
                 }
                 Tool { icon: "caret-right"; description: "Dispositivos Bluetooth"; onClicked: panel.openPage("bluetooth") }
             }
             Rectangle { width: parent.width; height: 1; color: Theme.border }
             Column {
                 width: parent.width; visible: !!panel.audio.sink
-                Row {
-                    width: parent.width; height: 28
+                Row { width: parent.width; height: 36; spacing: 10
                     Tool { icon: panel.audio.sink && panel.audio.sink.muted ? "speaker-slash" : "speaker-high"; description: "Silenciar salida"; onClicked: panel.audio.toggleMute(panel.audio.sink) }
-                    UiText { width: parent.width - 28; height: 28; text: panel.audio.sink ? panel.audio.sink.description : ""; elide: Text.ElideRight }
-                }
-                SliderControl {
-                    width: parent.width; from: 0; to: 100; stepSize: 1
-                    value: panel.audio.percent(panel.audio.sink)
-                    enabled: !!panel.audio.sink && panel.audio.sink.volumeWritable
-                    Accessible.name: "Volumen de salida"
-                    onMoved: panel.audio.setVolume(panel.audio.sink, value)
+                    SliderControl { width: parent.width - 38; from: 0; to: 100; stepSize: 1; value: panel.audio.percent(panel.audio.sink); enabled: !!panel.audio.sink && panel.audio.sink.volumeWritable; Accessible.name: "Volumen de salida"; onMoved: panel.audio.setVolume(panel.audio.sink, value) }
                 }
                 Repeater {
                     model: sinks
@@ -223,81 +227,37 @@ Controls.Control {
             Column {
                 width: parent.width; visible: !!panel.audio.source
                 Row {
-                    width: parent.width; height: 28
+                    width: parent.width; height: 36; spacing: 10
                     Tool { icon: panel.audio.source && panel.audio.source.muted ? "microphone-slash" : "microphone"; description: "Silenciar micrófono"; onClicked: panel.audio.toggleMute(panel.audio.source, true) }
-                    UiText { width: parent.width - 28; height: 28; text: "Micrófono"; color: Theme.secondary }
-                }
-                SliderControl {
-                    width: parent.width; from: 0; to: 100; stepSize: 1
-                    value: panel.audio.percent(panel.audio.source)
-                    enabled: !!panel.audio.source && panel.audio.source.volumeWritable
-                    Accessible.name: "Volumen de micrófono"
-                    onMoved: panel.audio.setVolume(panel.audio.source, value, true)
+                    SliderControl { width: parent.width - 38; from: 0; to: 100; stepSize: 1; value: panel.audio.percent(panel.audio.source); enabled: !!panel.audio.source && panel.audio.source.volumeWritable; Accessible.name: "Volumen de micrófono"; onMoved: panel.audio.setVolume(panel.audio.source, value, true) }
                 }
             }
             Repeater {
                 model: brightness.displays
-                delegate: Column {
+                delegate: Row {
                     id: brightnessDisplay
                     required property var model
-                    width: content.width; visible: brightness.isBrightnessAvailable
-                    UiText { width: parent.width; height: 26; text: "Brillo · " + brightnessDisplay.model.label; elide: Text.ElideRight }
+                    width: content.width; height: 36; spacing: 10; visible: brightness.isBrightnessAvailable
+                    Icon { name: "sun"; width: 28; height: 36; font.pixelSize: 16; Accessible.name: "Brillo" }
                     SliderControl {
-                        width: parent.width; from: 0; to: brightnessDisplay.model.maxBrightness; stepSize: 1
+                        width: parent.width - 38; from: 0; to: brightnessDisplay.model.maxBrightness; stepSize: 1
                         value: brightnessDisplay.model.brightness; Accessible.name: "Brillo de " + brightnessDisplay.model.label
                         onMoved: brightness.setBrightness(brightnessDisplay.model.displayName, Math.round(value))
                     }
                 }
             }
-            Toggle {
-                width: parent.width; text: "No molestar"; checked: panel.notifications.inhibited
-                onToggled: panel.notifications.setInhibited(checked)
+            Row { height: 36; width: parent.width; spacing: 10
+                Icon { name: "bell-slash"; width: 28; height: 36; Accessible.name: "No molestar" }
+                Toggle { width: 34; checked: panel.notifications.inhibited; Accessible.name: "No molestar"; onToggled: panel.notifications.setInhibited(checked) }
             }
             Rectangle { width: parent.width; height: 1; color: Theme.border }
             ControlRow { width: parent.width; glyph: "gear"; text: "Configuración del sistema"; onClicked: panel.openSettings() }
             UiText { width: parent.width; height: visible ? implicitHeight : 0; visible: !!panel.errorText; text: panel.errorText; wrapMode: Text.Wrap; color: Theme.secondary }
-            Column {
-                width: parent.width; spacing: 8
-                visible: battery.hasInternalBatteries && battery.hasCumulative
-                Rectangle { width: parent.width; height: 1; color: Theme.border }
-                Row {
-                    spacing: 8; height: 30
-                    Icon { name: "battery-high"; width: 22; height: 22; anchors.verticalCenter: parent.verticalCenter }
-                    UiText { height: 30; text: battery.percent + " %"; font.pixelSize: 20; weight: 590 }
-                }
-                UiText {
-                    width: parent.width; color: Theme.secondary
-                    text: {
-                        const minutes = Math.floor(battery.smoothedRemainingMsec / 60000);
-                        const duration = Math.floor(minutes / 60) + " h " + String(minutes % 60).padStart(2, "0") + " min";
-                        if (battery.state === Battery.BatteryControlModel.Charging) return "Cargando" + (minutes > 0 ? " · llena en " + duration : "");
-                        if (battery.pluggedIn) return battery.state === Battery.BatteryControlModel.FullyCharged ? "Conectado · batería llena" : "Conectado, sin cargar";
-                        return "Batería" + (minutes > 0 ? " · quedan " + duration : "");
-                    }
-                }
-                Rectangle {
-                    width: parent.width; height: 3; radius: 2; color: "#1fffffff"
-                    Rectangle { width: parent.width * battery.percent / 100; height: 3; radius: 2; color: Theme.control }
-                }
-                Row {
-                    width: parent.width; spacing: 2; visible: power.profiles.length > 0
-                    Repeater {
-                        model: [{key: "power-saver", title: "Ahorro"}, {key: "balanced", title: "Equilibrado"}, {key: "performance", title: "Rendimiento"}]
-                        delegate: Controls.Button {
-                            id: profileButton
-                            required property var modelData
-                            width: (content.width - 4) / 3; height: 30
-                            text: modelData.title; enabled: power.profiles.indexOf(modelData.key) >= 0
-                            Accessible.name: "Perfil " + text
-                            Accessible.checkable: true; Accessible.checked: power.activeProfile === modelData.key
-                            opacity: enabled ? 1 : 0.4
-                            contentItem: UiText { text: profileButton.text; font.pixelSize: 11; horizontalAlignment: Text.AlignHCenter; color: power.activeProfile === profileButton.modelData.key ? "#16171a" : Theme.secondary }
-                            background: Rectangle { radius: 5; color: power.activeProfile === profileButton.modelData.key ? Theme.control : profileButton.hovered ? Theme.hover : Theme.raised; border.color: profileButton.visualFocus ? Theme.control : "transparent" }
-                            onClicked: power.setProfile(modelData.key)
-                        }
-                    }
-                }
-                UiText { width: parent.width; visible: !!power.profileError; text: power.profileError; color: "#ef9a9a"; wrapMode: Text.Wrap }
+            BatteryRow {
+                width: parent.width; height: 36
+                visible: batteryModel.hasInternalBatteries && batteryModel.hasCumulative
+                battery: batteryModel; power: powerProfiles
+                charging: batteryModel.state === Battery.BatteryControlModel.Charging
             }
         }
     }
@@ -337,21 +297,43 @@ Controls.Control {
                 UiText { width: parent.width - 28; height: 36; text: "Bluetooth"; weight: 600 }
             }
             ListView {
-                id: bluetoothList; y: 44; width: parent.width; height: parent.height - 80; clip: true
+                id: bluetoothList; objectName: "bluetoothList"; y: 44; width: parent.width; height: parent.height - 80; clip: true
                 reuseItems: false; currentIndex: -1
                 model: bluetoothStable.rows
                 add: null; remove: null; displaced: null; move: null; populate: null
-                StableDeviceModel { id: bluetoothStable }
+                StableDeviceModel { id: bluetoothStable; promoteActive: false }
+                property var scanningAdapters: []
+                function stopDiscovery() {
+                    for (const adapter of scanningAdapters) if (adapter) adapter.stopDiscovery();
+                    scanningAdapters = [];
+                }
+                function startDiscovery() {
+                    if (!panel.opened || !panel.bluetoothEnabled) return;
+                    for (const adapter of Bluetooth.Manager.adapters) {
+                        if (adapter.powered && !adapter.discovering && scanningAdapters.indexOf(adapter) < 0) {
+                            scanningAdapters = scanningAdapters.concat([adapter]);
+                            adapter.startDiscovery();
+                        }
+                    }
+                }
+                Component.onCompleted: startDiscovery()
+                Component.onDestruction: stopDiscovery()
+                Connections {
+                    target: panel
+                    function onBluetoothEnabledChanged() { if (panel.bluetoothEnabled) bluetoothList.startDiscovery(); else bluetoothList.stopDiscovery(); }
+                }
                 function refresh() {
-                    bluetoothStable.sync(Bluetooth.Manager.devices.filter(device => device.paired).map(device => ({deviceKey: device.address, payload: {name: device.friendlyName, connected: device.connected, device: device}, rank: 0, active: device.connected})));
+                    bluetoothStable.sync(panel.bluetoothDevices.map(device => ({deviceKey: device.address, payload: {name: device.friendlyName, connected: device.connected, device: device}, rank: 0, active: device.connected})));
                 }
                 Timer { interval: 100; running: panel.opened; repeat: true; triggeredOnStart: true; onTriggered: bluetoothList.refresh() }
                 delegate: ControlRow {
                     required property var payload
-                    width: bluetoothList.width; height: 36; glyph: "bluetooth"; text: payload.name; status: payload.connected ? "Conectado" : ""
+                    width: bluetoothList.width; height: 36; glyph: "bluetooth"; text: payload.name; status: panel.deviceOperations[payload.device.address || payload.device.friendlyName || "device"] || (payload.connected ? "Conectado" : "")
                     id: deviceRow
+                    objectName: "bluetoothDeviceRow"
                     actionText: "…"
-                    onClicked: panel.openDeviceMenu(payload.device, deviceRow, width - 28, height)
+                    secondaryText: payload.device.paired ? "" : "Sin emparejar"
+                    onClicked: panel.connectDevice(payload.device)
                     onActionTriggered: panel.openDeviceMenu(payload.device, deviceRow, width - 28, height)
                     TapHandler { acceptedButtons: Qt.RightButton; onTapped: point => panel.openDeviceMenu(deviceRow.payload.device, deviceRow, point.position.x, point.position.y) }
                     Keys.onMenuPressed: panel.openDeviceMenu(payload.device, deviceRow, width - 28, height)

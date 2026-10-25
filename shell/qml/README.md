@@ -486,3 +486,86 @@ selección, envío, cancelación y retry de secretos con dobles. Preview renderi
 de barra normal y error inspeccionado a 308 × 36 px. El registro en vivo recarga
 sin errores QML nuevos; conserva el aviso previo del portal por app ID
 `singlr-shell`. No se ha probado autenticación contra una red real.
+
+### T220 — Conectar en la fila y mínimo entendible (P-013, P-014)
+
+Aplicación de las decisiones explícitas P-013/P-014; los cambios siguientes son
+soluciones técnicas derivadas del encargo, pendientes de la revisión visual del
+creador. No se modificaron archivos fuera de `shell/qml/` ni se creó commit.
+
+- `WifiPasswordBar` eliminado. `WifiRow` conserva 36 px y sustituye su contenido
+  por icono Wi-Fi + campo de contraseña + ojo. Enter envía; Esc o clic fuera
+  cancelan y limpian. Progreso: icono atenuado y campo de solo lectura. Error:
+  Phosphor de aviso rojo suave, selección completa y ayuda «Contraseña incorrecta».
+  Éxito: fila normal con «Conectada». Los secretos y sus reintentos usan esa fila.
+- El menú Wi-Fi llama al mismo `WifiRow.connectNetwork()` que el clic izquierdo:
+  conserva progreso, protección contra solicitudes duplicadas y errores también
+  para redes conocidas y abiertas. Se eliminó el porcentaje de señal visible.
+- Bluetooth muestra también dispositivos no emparejados y descubre mientras está
+  abierta su página; solo detiene el descubrimiento iniciado por ella. Clic y
+  menú comparten conexión/desconexión/emparejamiento. Estado y errores aparecen
+  en la fila sin desplazarla; se puede reintentar un error. El menú mantiene
+  Conectar/Desconectar, Olvidar con doble confirmación y Ajustes.
+- `BatteryRow`: una fila de 36 px; icono de carga, porcentaje 13 px/peso 590,
+  tiempo corto y tres círculos de 12 px/borde 1,5 px. Colores prescritos por P-014;
+  relleno ligado a `activeProfile`, clic/teclado llaman a `setProfile` y perfiles
+  no disponibles se deshabilitan. Sin barra ni frases que repitan el porcentaje.
+- Vista principal: Wi-Fi/Bluetooth pasan de título + estado a icono + estado.
+  Salida, micrófono y brillo usan icono + deslizador en la misma fila. Las salidas
+  de audio conservan nombres para poder elegir el dispositivo.
+- Notificaciones: cabecera única con No molestar como icono con estado, borrar y
+  cerrar; se reduce el hueco superior de la lista manteniendo el panel de 620 px.
+  OSD: icono + barra para magnitudes, sin porcentaje redundante; conserva texto
+  cuando comunica un estado. La barra superior y los menús ya eran compactos:
+  se conservan sus nombres de acciones para distinguirlas; batería refleja carga.
+- Se añaden tooltips compartidos a `Tool`, nombres accesibles a acciones «…» y
+  estado accesible a perfiles y No molestar. Se conserva geometría, tipografía,
+  materiales y navegación existentes fuera de estas reducciones.
+
+**Límite pendiente del contrato nativo:** ni `org.kde.bluezqt` ni el módulo privado
+Bluetooth instalado exportan `BluezQt::Agent` a QML. El launcher solo expone
+`SinglrSecrets` (NetworkManager), sin agente Bluetooth. Por ello **no están
+implementadas la recepción, entrada y confirmación de PIN dentro de la fila**.
+`device.pair()` inicia el emparejamiento nativo, pero su diálogo depende del agente
+externo disponible. Completar P-013 para PIN requiere un puente de `BluezQt::Agent`
+en `shell/session/`, fuera del alcance autorizado. No se ha simulado ese contrato
+como si funcionara ni se ha sustituido el agente de la sesión KDE.
+
+Contratos: Qt 6.12.0, módulos Plasma 6.8.1 y firmas de BluezQt contrastadas con los
+`qmltypes` locales. Referencias oficiales:
+[TextInput y selección](https://doc.qt.io/qt-6/qml-qtquick-textinput.html),
+[TapHandler y observación sin bloquear controles](https://doc.qt.io/qt-6/qml-qtquick-taphandler.html),
+[agente BluezQt y peticiones PIN](https://api.kde.org/bluezqt-agent.html).
+
+Verificado:
+
+```bash
+/usr/lib/qt6/bin/qmllint -I shell/qml -i shell/qml/Singlr/Ui/qmldir \
+  shell/qml/Shell.qml shell/qml/Singlr/Ui/*.qml \
+  shell/qml/Singlr/Shell/*.qml shell/qml/tests/*.qml
+# exit 0, sin avisos
+
+XDG_CACHE_HOME=/tmp/singlr-t220-cache QT_QPA_PLATFORM=offscreen \
+QT_QUICK_BACKEND=software QT_FORCE_STDERR_LOGGING=1 \
+  /usr/lib/qt6/bin/qmltestrunner -import shell/qml -input shell/qml/tests
+# 84 passed, 0 failed
+
+git diff --check
+# exit 0
+```
+
+Pruebas con dobles: geometría de filas/panel, Enter/Esc/clic fuera, contraseña
+visible/oculta, fallo/selección/éxito con UUID nuevo, secretos/retry/cancelación,
+el mismo flujo desde menú y clic en redes conocidas/abiertas/protegidas,
+Bluetooth conectar/desconectar/emparejar/reintentar y perfiles por teclado,
+colores y perfiles deshabilitados. No conectan hardware ni cambian PowerDevil.
+[Preview de componentes T220](captures/minimum-controls-t220.png) renderizada e
+inspeccionada; datos de prueba, no captura de autenticación real. No se tomó una
+captura previa de la sesión: la comparación anterior se basa en el QML sustituido
+(barra flotante, batería multilínea, etiquetas sobre los deslizadores).
+
+Log en vivo revisado hasta la recarga de las 20:21:30: sin errores QML nuevos;
+permanece el aviso previo del portal para `singlr-shell`. La suite offscreen
+conserva avisos esperados de D-Bus, UPower y audio por el sandbox. Quedan pendientes
+la autenticación Wi-Fi real, PIN Bluetooth con el puente indicado, cambios reales
+de PowerDevil y comprobación física de foco entre ventanas layer-shell.

@@ -144,26 +144,26 @@ Item {
             id: panelHeader; x: 14; y: 10; width: parent.width - 28; spacing: 4
             Row {
                 width: parent.width
-                UiText { width: 198; height: 28; text: "Notificaciones"; weight: 590 }
+                UiText { width: parent.width - 84; height: 28; text: "Notificaciones"; weight: 590 }
                 Controls.AbstractButton {
-                    id: clearButton
-                    width: 104; height: 28; text: "Borrar todo"; enabled: center.entries.length > 0
-                    contentItem: UiText { text: clearButton.text; color: Theme.secondary; horizontalAlignment: Text.AlignHCenter }
-                    background: Rectangle { radius: 6; color: clearButton.hovered || clearButton.activeFocus ? Theme.hover : "transparent" }
-                    onClicked: center.clearAll()
+                    objectName: "notificationDnd"; width: 28; height: 28
+                    checkable: true; checked: center.inhibited
+                    Accessible.name: "No molestar"
+                    Controls.ToolTip.visible: hovered
+                    Controls.ToolTip.text: "No molestar"
+                    contentItem: Icon { name: "bell-slash"; color: center.inhibited ? Theme.text : Theme.muted }
+                    background: Rectangle { radius: 5; color: center.inhibited ? Theme.hover : "transparent" }
+                    onToggled: center.setInhibited(checked)
                 }
+                Tool { icon: "trash"; description: "Borrar todas las notificaciones"; enabled: center.entries.length > 0; onClicked: center.clearAll() }
                 Tool { icon: "x"; width: 28; description: "Cerrar historial"; onClicked: center.historyOpen = false }
             }
-            Toggle {
-                width: parent.width; text: "No molestar"; checked: center.inhibited
-                onToggled: center.setInhibited(checked)
-            }
-            UiText { visible: center.live && !center.serverValid; width: parent.width; text: "Servidor no disponible · " + center.ownerName; color: Theme.secondary; wrapMode: Text.Wrap }
+            UiText { visible: center.live && !center.serverValid; width: parent.width; text: "Servidor no disponible · " + center.ownerName; color: Theme.secondary; elide: Text.ElideRight }
             UiText { visible: !center.entries.length; height: visible ? 40 : 0; text: "No tienes notificaciones"; color: Theme.muted }
         }
         Controls.StackView {
             id: historyPages; objectName: "notificationPages"
-            x: 14; y: 132; width: parent.width - 28; height: parent.height - y - 14
+            x: 14; y: 68; width: parent.width - 28; height: parent.height - y - 14
             clip: true; initialItem: historyComponent
             Keys.onEscapePressed: {
                 if (depth > 1) popCurrentItem();

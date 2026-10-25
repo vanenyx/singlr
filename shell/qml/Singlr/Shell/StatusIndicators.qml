@@ -13,7 +13,7 @@ Row {
     Network.NetworkStatus { id: network }
     Tool {
         visible: network.connectivity > 0; width: 24; height: 22; iconSize: 15
-        icon: "wifi-high"; description: network.activeConnections
+        icon: "wifi-high"; description: network.activeConnections || "Wi-Fi"
         onClicked: status.controlCenterRequested()
     }
     Tool {
@@ -24,7 +24,7 @@ Row {
     }
     Tool {
         visible: battery.hasInternalBatteries && battery.hasCumulative; height: 22; iconSize: 15
-        icon: "battery-high"; label: battery.percent + " %"
+        icon: battery.state === Battery.BatteryControlModel.Charging ? "battery-charging" : "battery-high"; label: battery.percent + " %"
         description: "Batería: " + battery.percent + " %" + (battery.pluggedIn ? ", conectada" : "")
         onClicked: status.controlCenterRequested()
     }

@@ -99,7 +99,7 @@ Item {
             list.forceLayout();
             panel.openNetworkMenu(Object.assign({}, data, {Uuid:"", ConnectionState:Network.Enums.Deactivated}), panel, 20, 40); wait(20);
             keyClick(Qt.Key_Return); wait(150); compare(panel.page, "wifi"); compare(panel.navigation.depth, 2); compare(panel.height, height);
-            verify(findChild(list.passwordBar.contentItem, "wifiPassword").activeFocus);
+            verify(findChild(list.editingRow, "wifiPassword").activeFocus);
         }
     }
 }

@@ -119,24 +119,24 @@ Item {
             secretAgent.operation = "";
             secretAgent.secretRequested("request-1", "Red protegida", "saved-uuid", true);
             compare(panel.page, "wifi"); compare(panel.navigation.depth, 2);
-            let field = findChild(list.passwordBar.contentItem, "wifiPassword");
+            let field = findChild(list.editingRow, "wifiPassword");
             tryCompare(field, "activeFocus", true);
-            compare(panel.secretRetry, true); verify(list.passwordBar.failed);
+            compare(panel.secretRetry, true); verify(list.editingRow.failed);
             compare(field.placeholderText, "Contraseña incorrecta");
             field.text = "test-password"; keyClick(Qt.Key_Return);
             compare(secretAgent.operation, "provide"); compare(secretAgent.request, "request-1");
             compare(secretAgent.password, "test-password"); compare(field.text, "test-password"); verify(field.readOnly);
             secretAgent.secretRequested("request-2", "Red protegida", "saved-uuid", true);
-            field = findChild(list.passwordBar.contentItem, "wifiPassword");
+            field = findChild(list.editingRow, "wifiPassword");
             tryCompare(field, "activeFocus", true);
-            verify(list.passwordBar.failed); verify(!field.readOnly);
+            verify(list.editingRow.failed); verify(!field.readOnly);
             compare(field.selectionStart, 0); compare(field.selectionEnd, field.length);
             compare(field.text, "test-password");
             keyClick(Qt.Key_Escape); compare(panel.page, "wifi");
             wait(150);
             compare(secretAgent.operation, "cancel"); compare(secretAgent.request, "request-2");
             secretAgent.secretRequested("request-3", "Red protegida", "saved-uuid", false);
-            secretAgent.requestCancelled("request-3"); compare(panel.secretId, ""); verify(!list.passwordBar.visible);
+            secretAgent.requestCancelled("request-3"); compare(panel.secretId, ""); verify(!list.editingRow);
         }
         function test_controlCenterLoadAndEscape() {
             const panel = createTemporaryObject(panelComponent, parent);

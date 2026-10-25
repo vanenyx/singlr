@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls.Basic as Controls
 import org.kde.plasma.networkmanagement as Network
 import Singlr.Ui
 
@@ -19,12 +20,37 @@ Item {
     property bool requested: false
     property bool sawActivation: false
     property string failure: ""
-    signal passwordRequested()
+    property bool editing: false
+    property string requestId: ""
+    readonly property bool failed: editing && !!failure
+    signal secretSubmitted(string requestId, string password)
+    signal passwordCancelled()
+    function showPassword(secret = "", retry = false) {
+        if (!editing) password.clear();
+        editing = true; requestId = secret; requested = false; sawActivation = false;
+        failure = retry ? "Contraseña incorrecta" : "";
+        timeout.stop(); password.echoMode = TextInput.Password;
+        password.forceActiveFocus();
+        if (retry) password.selectAll();
+    }
+    function closePassword(cancel = true) {
+        if (!editing) return;
+        editing = false; password.clear(); requestId = "";
+        if (!requested) timeout.stop();
+        if (cancel) passwordCancelled();
+    }
+    function submit() {
+        if (!password.length || requested) return;
+        begin();
+        if (requestId) secretSubmitted(requestId, password.text);
+        else handler.addAndActivateConnection(networkData.DevicePath, networkData.SpecificPath, password.text);
+    }
     signal menuRequested(var anchor, real px, real py)
     signal settingsRequested()
     height: 36
     implicitHeight: 36
-    onConnectedChanged: if (connected) { requested = false; attempted = false; failure = ""; timeout.stop(); }
+    Component.onDestruction: if (editing) passwordCancelled()
+    onConnectedChanged: if (connected) { requested = false; attempted = false; failure = ""; timeout.stop(); closePassword(false); }
     onActivatingChanged: {
         if (activating && requested) sawActivation = true;
         else if (sawActivation && requested && !connected) {
@@ -32,7 +58,8 @@ Item {
         }
     }
     function fail(message) {
-        requested = false; sawActivation = false; failure = message; timeout.stop();
+        requested = false; sawActivation = false; failure = editing ? "Contraseña incorrecta" : message; timeout.stop();
+        if (editing) { password.forceActiveFocus(); password.selectAll(); }
     }
     function begin() {
         failure = ""; sawActivation = false; requested = true; attempted = true;
@@ -56,23 +83,61 @@ Item {
         } else if (!secured) {
             begin();
             handler.addAndActivateConnection(networkData.DevicePath, networkData.SpecificPath);
-        } else if (staticPassword) passwordRequested();
+        } else if (staticPassword) showPassword();
         else settingsRequested();
     }
     ControlRow {
         id: row
         objectName: "networkRow"
+        visible: !wifi.editing
         width: parent.width; height: 36
         text: wifi.networkData.Name
         glyph: wifi.networkData.Signal < 25 ? "wifi-none" : wifi.networkData.Signal < 50 ? "wifi-low" : wifi.networkData.Signal < 75 ? "wifi-medium" : "wifi-high"
         secured: wifi.secured
-        secondaryText: wifi.failure || wifi.networkData.Signal + " %"
-        status: wifi.connected ? "Conectada" : ""
+        secondaryText: wifi.failure || (wifi.activating || wifi.requested ? "Conectando…" : wifi.connected ? "Conectada" : "")
+        status: ""
         busy: wifi.activating || wifi.requested
         actionText: "…"
         onActionTriggered: wifi.menuRequested(row, row.width - 28, row.height)
         TapHandler { acceptedButtons: Qt.RightButton; onTapped: eventPoint => wifi.menuRequested(row, eventPoint.position.x, eventPoint.position.y) }
         Keys.onMenuPressed: wifi.menuRequested(row, row.width - 28, row.height)
         onClicked: wifi.connectNetwork()
+    }
+    Rectangle {
+        anchors.fill: parent; visible: wifi.editing; radius: 6
+        color: Theme.hover
+        Icon {
+            x: 8; anchors.verticalCenter: parent.verticalCenter; width: 16; height: 16; font.pixelSize: 16
+            name: wifi.failed ? "warning" : row.glyph
+            color: wifi.failed ? "#ef9a9a" : Theme.secondary
+            opacity: wifi.requested ? 0.4 : 1
+            Accessible.name: wifi.failed ? "Contraseña incorrecta" : wifi.requested ? "Conectando" : "Wi-Fi"
+        }
+        Controls.TextField {
+            id: password; objectName: "wifiPassword"
+            x: 34; width: parent.width - 38; height: 36
+            leftPadding: 0; rightPadding: 32
+            echoMode: TextInput.Password; readOnly: wifi.requested; selectByMouse: true
+            placeholderText: wifi.failed ? "Contraseña incorrecta" : "Contraseña"
+            color: Theme.text; placeholderTextColor: Theme.secondary; font.family: Theme.family; font.pixelSize: 13
+            Accessible.name: "Contraseña de " + wifi.networkData.Name
+            background: Item {}
+            onAccepted: wifi.submit()
+            Keys.onEscapePressed: wifi.closePassword()
+            Tool {
+                objectName: "showPassword"; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+                iconSize: 14; icon: password.echoMode === TextInput.Password ? "eye" : "eye-slash"
+                description: "Mostrar u ocultar contraseña"
+                onClicked: { password.echoMode = password.echoMode === TextInput.Password ? TextInput.Normal : TextInput.Password; password.forceActiveFocus(); }
+            }
+        }
+    }
+    TapHandler {
+        parent: wifi.Window.window ? wifi.Window.window.contentItem : wifi
+        enabled: wifi.editing
+        onTapped: point => {
+            const local = wifi.mapFromItem(parent, point.position.x, point.position.y);
+            if (!wifi.contains(local)) wifi.closePassword();
+        }
     }
 }

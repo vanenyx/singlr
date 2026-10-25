@@ -43,13 +43,13 @@ Item {
     Rectangle { anchors.fill: parent; radius: 12; color: "#e6191a1b"; border.color: Theme.focusBorder }
     Icon { x: 16; anchors.verticalCenter: parent.verticalCenter; width: 20; height: 20; name: osd.icon }
     Rectangle {
-        x: 50; anchors.verticalCenter: parent.verticalCenter; width: 120; height: 4; radius: 2
+        x: 50; anchors.verticalCenter: parent.verticalCenter; width: 174; height: 4; radius: 2
         visible: osd.percent >= 0; color: Theme.hover
         Rectangle { width: parent.width * Math.max(0, Math.min(100, osd.percent)) / 100; height: 4; radius: 2; color: Theme.control }
     }
     UiText {
-        x: osd.percent >= 0 ? 178 : 50; width: osd.percent >= 0 ? 50 : 174; height: parent.height
-        text: osd.percent >= 0 ? Math.round(osd.percent) + " %" : osd.message
-        font.pixelSize: 13; elide: Text.ElideRight
+        x: 50; width: 174; height: parent.height; visible: osd.percent < 0
+        text: osd.message; font.pixelSize: 13; elide: Text.ElideRight
     }
+    Accessible.name: osd.percent >= 0 ? Math.round(osd.percent) + " %" : osd.message
 }

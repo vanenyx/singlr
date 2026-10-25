@@ -64,7 +64,7 @@ Item {
             row.networkData = networkFixture({Uuid: "known", ConnectionState: Network.Enums.Deactivated});
             verify(row.failure.length > 0); verify(!row.requested);
             row.networkData = networkFixture({Uuid: "known", ConnectionPath: "/connection/1", ConnectionState: Network.Enums.Activated});
-            compare(row.failure, ""); const button = findChild(row, "networkRow"); compare(button.status, "Conectada");
+            compare(row.failure, ""); const button = findChild(row, "networkRow"); compare(button.secondaryText, "Conectada");
             compare(row.height, 36);
         }
         function test_forgetConfirmationAndRightClick() {

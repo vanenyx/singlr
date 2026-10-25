@@ -11,7 +11,7 @@ ListView {
     signal secretSubmitted(string requestId, string password)
     signal passwordCancelled()
     property var pendingPassword: null
-    readonly property alias passwordBar: passwordBar
+    property WifiRow editingRow: null
     signal menuRequested(var data, var anchor, real px, real py)
     signal networkUpdated(string key, var data)
     signal settingsRequested()
@@ -21,10 +21,19 @@ ListView {
     model: stable.rows
     add: null; remove: null; displaced: null; move: null; populate: null
     StableDeviceModel { id: stable; promoteActive: false }
-    WifiPasswordBar {
-        id: passwordBar; handler: list.handler
-        onSecretSubmitted: (requestId, password) => list.secretSubmitted(requestId, password)
-        onCancelled: list.passwordCancelled()
+    function connectNetwork(data) {
+        const row = rowFor(data);
+        if (row) row.connectNetwork();
+    }
+    function rowFor(data) {
+        for (let i = 0; i < count; ++i) {
+            const candidate = stable.rows.get(i).payload;
+            if ((data.Uuid && candidate.Uuid === data.Uuid) || (!data.Uuid && candidate.Ssid === data.Ssid && candidate.SecurityType === data.SecurityType)) {
+                positionViewAtIndex(i, ListView.Contain); forceLayout();
+                return itemAtIndex(i);
+            }
+        }
+        return null;
     }
     function showPassword(data, requestId = "", retry = false) {
         pendingPassword = {data: data, requestId: requestId, retry: retry};
@@ -39,12 +48,13 @@ ListView {
                 const target = itemAtIndex(i);
                 if (!target) { Qt.callLater(resolvePassword); return; }
                 const pending = pendingPassword; pendingPassword = null;
-                passwordBar.show(target, pending.requestId, pending.retry);
+                if (editingRow && editingRow !== target) editingRow.closePassword();
+                target.showPassword(pending.requestId, pending.retry);
                 return;
             }
         }
     }
-    function closePassword() { pendingPassword = null; passwordBar.close(); }
+    function closePassword() { pendingPassword = null; if (editingRow) editingRow.closePassword(); }
 
     function keyFor(data) {
         // Saving a new connection assigns a UUID; keep its existing delegate and position.
@@ -94,7 +104,14 @@ ListView {
         width: list.width
         networkData: payload
         handler: list.handler
-        onPasswordRequested: list.showPassword(networkData)
+        onEditingChanged: {
+            if (editing) {
+                if (list.editingRow && list.editingRow !== this) list.editingRow.closePassword();
+                list.editingRow = this;
+            } else if (list.editingRow === this) list.editingRow = null;
+        }
+        onSecretSubmitted: (requestId, password) => list.secretSubmitted(requestId, password)
+        onPasswordCancelled: list.passwordCancelled()
         onMenuRequested: (anchor, px, py) => list.menuRequested(networkData, anchor, px, py)
         onSettingsRequested: list.settingsRequested()
     }

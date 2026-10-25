@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls.Basic as Controls
 Rectangle {
     id: tool
     property int iconSize: 16
@@ -11,6 +12,8 @@ Rectangle {
     color: pointer.containsMouse || activeFocus ? "#0dffffff" : "transparent"
     border.color: activeFocus ? Theme.accentText : "transparent"
     activeFocusOnTab: true
+    Controls.ToolTip.visible: pointer.containsMouse && !!description
+    Controls.ToolTip.text: description
     Accessible.role: Accessible.Button
     Accessible.name: description
     Keys.onReturnPressed: clicked()

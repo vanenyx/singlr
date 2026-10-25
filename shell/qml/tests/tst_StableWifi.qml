@@ -88,13 +88,13 @@ Item {
             verify(menu.opened); compare(panel.navigation.depth, 2); compare(panel.implicitHeight, height);
             keyClick(Qt.Key_Escape); wait(30); verify(!menu.visible); compare(panel.page, "wifi");
             panel.openNetwork(data); wait(150); compare(panel.implicitHeight, height);
-            const field = findChild(list.passwordBar.contentItem, "wifiPassword"); field.forceActiveFocus(); keyClick(Qt.Key_Escape); wait(150);
+            const field = findChild(list.editingRow, "wifiPassword"); field.forceActiveFocus(); keyClick(Qt.Key_Escape); wait(150);
             compare(panel.page, "wifi"); compare(panel.navigation.depth, 2);
             panel.forceActiveFocus(); keyClick(Qt.Key_Escape); wait(150); compare(panel.page, "main");
             panel.openPage("bluetooth"); wait(150); compare(panel.implicitHeight, height);
             panel.back(); wait(150); compare(panel.page, "main");
         }
-        function test_passwordBarGeometryAndStates() {
+        function test_inlinePasswordGeometryAndStates() {
             scanModel.entries = [entry("A", 90), entry("B", 50), entry("C", 20)];
             const panel = createTemporaryObject(panelFactory, fixture);
             wait(80); panel.height = panel.implicitHeight;
@@ -111,21 +111,20 @@ Item {
                 }
             }
             mouseClick(findChild(rows[1], "networkRow"));
-            const bar = list.passwordBar; verify(bar.visible); unchanged();
-            compare(bar.height, 36); compare(bar.width, rows[1].width); compare(bar.parent, rows[1]); compare(bar.y, 0);
-            const field = findChild(bar.contentItem, "wifiPassword"); tryCompare(field, "activeFocus", true);
-            compare(field.placeholderText, "Contraseña de B"); field.text = "bad-password";
-            mouseClick(findChild(bar.contentItem, "showPassword")); compare(field.echoMode, TextInput.Normal);
+            const row = rows[1]; verify(row.editing); unchanged();
+            verify(!findChild(row, "networkRow").visible); compare(row.height, 36);
+            const field = findChild(row, "wifiPassword"); tryCompare(field, "activeFocus", true);
+            compare(field.placeholderText, "Contraseña"); field.text = "bad-password";
+            mouseClick(findChild(row, "showPassword")); compare(field.echoMode, TextInput.Normal);
             keyClick(Qt.Key_Return); verify(field.readOnly); compare(handlerStub.password, "bad-password"); unchanged();
             handlerStub.connectionActivationFailed("", "Invalid password");
-            verify(bar.failed); verify(!field.readOnly); compare(field.selectionStart, 0); compare(field.selectionEnd, field.length);
+            verify(row.failed); verify(!field.readOnly); compare(field.selectionStart, 0); compare(field.selectionEnd, field.length);
             compare(field.placeholderText, "Contraseña incorrecta"); unchanged();
             keyClick(Qt.Key_C); compare(field.text, "c"); field.text = "correct-password"; keyClick(Qt.Key_Return); unchanged();
             scanModel.scan([entry("A", 90), entry("B", 50, "newly-saved-uuid", true), entry("C", 20)]); wait(50); list.forceLayout();
-            verify(!bar.visible); compare(findChild(rows[1], "networkRow").status, "Conectada"); unchanged();
-            panel.openNetwork(rows[0].networkData); verify(bar.visible); keyClick(Qt.Key_Escape); verify(!bar.visible); unchanged();
-            panel.openNetwork(rows[0].networkData); mouseClick(findChild(bar.contentItem, "cancelPassword")); verify(!bar.visible); unchanged();
-            panel.openNetwork(rows[0].networkData); mouseClick(panel, 150, 20); verify(!bar.visible); unchanged();
+            verify(!row.editing); compare(findChild(rows[1], "networkRow").secondaryText, "Conectada"); unchanged();
+            panel.openNetwork(rows[0].networkData); verify(rows[0].editing); keyClick(Qt.Key_Escape); verify(!rows[0].editing); unchanged();
+            panel.openNetwork(rows[0].networkData); mouseClick(panel, 150, 20); verify(!rows[0].editing); unchanged();
         }
         function test_orderFixedUntilNextOpening() {
             const list = setupList();
