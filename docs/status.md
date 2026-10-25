@@ -4,6 +4,8 @@
 
 **25 oct 2026:** sesión Singlr instalada y usada a diario por el creador. Gestión de sesión con ksmserver de KDE (P-017, T237): cierre ordenado, restauración de lo abierto al salir; teclado, cursor y cartera KDE correctos. Confirmado por el creador en login real. Ver [handoffs/T237-ksmserver.md](handoffs/T237-ksmserver.md).
 
+**Canal de desarrollo (25 oct):** con autorización del creador, su sesión Singlr instalada ejecuta el shell desde este checkout (`tools/dev-channel.sh`; drop-in de usuario). Los cambios de shell/QML se aplican con `tools/dev-channel.sh reload` sin reinstalar ni cerrar sesión; sesión, unidades y pantalla de bloqueo siguen requiriendo el paquete. Recargar solo con build y pruebas en verde.
+
 Fase 1 en desarrollo: objetivo de producto instalable el 31 oct 2026. La visión original permanece conservada en la raíz.
 
 ## Flujo vigente
