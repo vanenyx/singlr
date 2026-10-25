@@ -5,7 +5,6 @@ Uso: tools/singlr-live.sh start [--keep-plasma] | stop | status
 Por defecto sustituye a plasmashell mientras está activo (autorizado por el creador el 24 oct);
 `stop` vuelve a arrancar Plasma. No cambia la configuración de Plasma.
 """
-import json
 import os
 from pathlib import Path
 import signal
@@ -14,32 +13,18 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'session'))
+import singlr_kwin
+
 QML = ROOT / 'shell/qml'
 STATE = Path(os.environ.get('XDG_RUNTIME_DIR', '/tmp')) / 'singlr-live'
 PIDFILE = STATE / 'supervisor.pid'
 PLASMA_MARK = STATE / 'plasma-stopped'
 NETWORK_MARK = STATE / 'networkmanagement-unloaded'
-KWIN_BACKUP = STATE / 'kwinrc-backup.json'
+KWIN_BACKUP = singlr_kwin.backup_path()
 AURORAE = Path.home() / '.local/share/aurorae/themes/Singlr'
 OVERVIEW = Path.home() / '.local/share/kwin/effects/singlr-overview'
 GESTURES = Path.home() / '.local/share/kwin/scripts/singlr-gestures'
-# Ajustes de KWin de Singlr en modo sustitución; los valores previos se guardan y se restauran al parar.
-KWIN_SETTINGS = [
-    ('org.kde.kdecoration2', 'library', 'org.kde.kwin.aurorae'),
-    ('org.kde.kdecoration2', 'theme', '__aurorae__svg__Singlr'),
-    # Colapso al cerrar, expansión suave al abrir; minimizar (squash) y maximizar ya son los de Plasma.
-    ('Effect-scale', 'OutScale', '0.4'),
-    ('Effect-scale', 'OutOpacity', '0'),
-    ('Effect-scale', 'InScale', '0.92'),
-    ('Plugins', 'scaleEnabled', 'true'),
-    ('Plugins', 'squashEnabled', 'true'),
-    ('Plugins', 'magiclampEnabled', 'false'),
-    ('Plugins', 'maximizeEnabled', 'true'),
-    # Multitarea de Singlr: KWin solo descubre efectos al arrancar, así que se activa en el
-    # siguiente inicio de sesión (o al instante si KWin ya lo conoce).
-    ('Plugins', 'singlr-overviewEnabled', 'true'),
-    ('Plugins', 'singlr-gesturesEnabled', 'true'),
-]
 PLASMA_UNIT = 'plasma-plasmashell.service'
 LOG = STATE / 'shell.log'
 
@@ -76,19 +61,6 @@ def unload_network_module():
         raise RuntimeError('No se pudo descargar networkmanagement: ' + result.stderr.strip())
 
 
-def kwin_read(group, key):
-    result = subprocess.run(['kreadconfig6', '--file', 'kwinrc', '--group', group, '--key', key],
-                            capture_output=True, text=True)
-    # kreadconfig6 devuelve vacío si la clave no existe: se trata como ausente para borrarla al restaurar.
-    value = result.stdout.rstrip('\n')
-    return value or None
-
-
-def kwin_write(group, key, value):
-    command = ['kwriteconfig6', '--file', 'kwinrc', '--group', group, '--key', key]
-    subprocess.run(command + (['--delete'] if value is None else [value]), capture_output=True)
-
-
 SETTINGS_LINKS = [
     (Path.home() / '.local/bin/singlr-settings', 'apps/settings/singlr-settings'),
     (Path.home() / '.local/share/applications/singlr-settings.desktop', 'apps/settings/singlr-settings.desktop'),
@@ -113,7 +85,7 @@ def remove_settings_app():
 
 def apply_kwin():
     theme = Path(__file__).resolve().parents[1] / 'decoration/aurorae/Singlr'
-    if not (theme / 'decoration.svg').exists() or KWIN_BACKUP.exists():
+    if not (theme / 'decoration.svg').exists():
         return
     AURORAE.parent.mkdir(parents=True, exist_ok=True)
     if not AURORAE.exists():
@@ -126,31 +98,15 @@ def apply_kwin():
     GESTURES.parent.mkdir(parents=True, exist_ok=True)
     if not GESTURES.exists():
         GESTURES.symlink_to(gestures)
-    KWIN_BACKUP.write_text(json.dumps([[g, k, kwin_read(g, k)] for g, k, _ in KWIN_SETTINGS]))
-    for group, key, value in KWIN_SETTINGS:
-        kwin_write(group, key, value)
-    subprocess.run(['qdbus6', 'org.kde.KWin', '/KWin', 'reconfigure'], capture_output=True)
-    subprocess.run(['qdbus6', 'org.kde.KWin', '/Effects', 'org.kde.kwin.Effects.loadEffect', 'singlr-overview'],
-                   capture_output=True)
-    # Los scripts habilitados en kwinrc se cargan con start() sin reiniciar KWin.
-    subprocess.run(['qdbus6', 'org.kde.KWin', '/Scripting', 'org.kde.kwin.Scripting.start'], capture_output=True)
+    singlr_kwin.apply(KWIN_BACKUP, recover_pending=True)
+    singlr_kwin.reload_kwin(applying=True)
 
 
 def restore_kwin():
-    if not KWIN_BACKUP.exists():
-        return
-    for group, key, value in json.loads(KWIN_BACKUP.read_text()):
-        kwin_write(group, key, value or None)
-    subprocess.run(['qdbus6', 'org.kde.KWin', '/KWin', 'reconfigure'], capture_output=True)
-    KWIN_BACKUP.unlink(missing_ok=True)
-    if AURORAE.is_symlink():
-        AURORAE.unlink()
-    # El efecto queda enlazado: deshabilitado en kwinrc, no se carga, y evita que KWin pierda
-    # el paquete en uso. Se descarga de la sesión actual.
-    subprocess.run(['qdbus6', 'org.kde.KWin', '/Effects', 'org.kde.kwin.Effects.unloadEffect', 'singlr-overview'],
-                   capture_output=True)
-    subprocess.run(['qdbus6', 'org.kde.KWin', '/Scripting', 'org.kde.kwin.Scripting.unloadScript', 'singlr-gestures'],
-                   capture_output=True)
+    if singlr_kwin.restore(KWIN_BACKUP):
+        singlr_kwin.reload_kwin(applying=False)
+        if AURORAE.is_symlink() and AURORAE.resolve() == ROOT / 'decoration/aurorae/Singlr':
+            AURORAE.unlink()
 
 
 def restore_shortcuts():
@@ -264,7 +220,7 @@ def main():
                 # KRunner vuelve por activación D-Bus al detener Singlr.
                 subprocess.run(['kquitapp6', 'krunner'], capture_output=True)
             child = os.fork()
-        except (OSError, RuntimeError):
+        except (OSError, RuntimeError, subprocess.SubprocessError):
             restore_plasma()
             raise
         if child:

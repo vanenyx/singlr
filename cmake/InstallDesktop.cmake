@@ -6,6 +6,7 @@ function(singlr_configure_path source output)
     file(WRITE "${PROJECT_BINARY_DIR}/${output}" "${content}")
 endfunction()
 singlr_configure_path(session/startsinglr-wayland startsinglr-wayland)
+singlr_configure_path(session/systemd/singlr-kwin-recover.service singlr-kwin-recover.service)
 singlr_configure_path(session/singlr.desktop singlr.desktop)
 singlr_configure_path(session/systemd/singlr-shell.service singlr-shell.service)
 singlr_configure_path(apps/settings/singlr-settings singlr-settings)
@@ -41,3 +42,11 @@ foreach(kind effects scripts)
         FILES_MATCHING PATTERN "*.qml" PATTERN "*.js" PATTERN "*.json" PATTERN "qmldir"
         PATTERN "tools" EXCLUDE)  # utilidades de desarrollo, no se instalan
 endforeach()
+
+# Shared transaction helper and offline recovery before the standard Plasma KWin.
+install(PROGRAMS session/singlr-kwin DESTINATION "${KDE_INSTALL_LIBDIR}/singlr")
+install(FILES session/singlr_kwin.py DESTINATION "${KDE_INSTALL_LIBDIR}/singlr")
+install(FILES "${PROJECT_BINARY_DIR}/singlr-kwin-recover.service"
+    DESTINATION "${KDE_INSTALL_SYSTEMDUSERUNITDIR}")
+install(FILES session/systemd/plasma-kwin_wayland.service.d/50-singlr-recovery.conf
+    DESTINATION "${KDE_INSTALL_SYSTEMDUSERUNITDIR}/plasma-kwin_wayland.service.d")

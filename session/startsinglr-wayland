@@ -10,6 +10,9 @@ import subprocess
 import sys
 import time
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import singlr_kwin
+
 
 def run(*args, **kwargs):
     return subprocess.run(args, check=True, text=True, **kwargs)
@@ -48,6 +51,7 @@ def main():
     command = [str(binary), str(qml), str(qml / 'Shell.qml')]
     if args.dry_run:
         print('Shell:', json.dumps(command, ensure_ascii=False))
+        print('KWin: recuperar pendiente → backup persistente → aplicar antes de arrancar → restaurar tras parar')
         print('Sesión: importar entorno → start singlr-workspace.target → esperar → stop graphical-session.target')
         print('No se inicia plasma-workspace/core, plasmashell, KRunner ni autostart XDG.')
         return 0
@@ -93,6 +97,7 @@ def main():
         for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
             signal.signal(sig, terminate)
         try:
+            singlr_kwin.apply(recover_pending=True)
             run('dbus-update-activation-environment', '--systemd',
                 *(f'{key}={value}' for key, value in env.items()),
                 'DISPLAY=', 'WAYLAND_DISPLAY=', 'WAYLAND_SOCKET=', 'XAUTHORITY=')
@@ -116,17 +121,24 @@ def main():
                     run('systemctl', '--user', 'stop', 'singlr-workspace.target', 'graphical-session.target')
                 finally:
                     try:
-                        run('dbus-update-activation-environment',
-                            *(f'{key}={old.get(key, "")}' for key in sorted(keys)))
+                        singlr_kwin.restore()
                     finally:
-                        run('systemctl', '--user', 'unset-environment', *sorted(keys - old.keys()))
-                        previous = [f'{key}={old[key]}' for key in sorted(keys & old.keys())]
-                        if previous:
-                            run('systemctl', '--user', 'set-environment', *previous)
+                        restore_environment(old, keys)
             finally:
                 session_id = os.environ.get('XDG_SESSION_ID')
                 if started and session_id:
                     run('loginctl', 'terminate-session', session_id)
+
+
+def restore_environment(old, keys):
+    try:
+        run('dbus-update-activation-environment',
+            *(f'{key}={old.get(key, "")}' for key in sorted(keys)))
+    finally:
+        run('systemctl', '--user', 'unset-environment', *sorted(keys - old.keys()))
+        previous = [f'{key}={old[key]}' for key in sorted(keys & old.keys())]
+        if previous:
+            run('systemctl', '--user', 'set-environment', *previous)
 
 
 if __name__ == '__main__':

@@ -17,11 +17,51 @@ loader.exec_module(entry)
 
 
 class SessionEntryTests(unittest.TestCase):
+    def setUp(self):
+        for name in ('apply', 'restore'):
+            patcher = patch.object(entry.singlr_kwin, name)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
     def manage(self, action, prefix, *args, ok=True):
         result = subprocess.run([str(SESSION / f'{action}.sh'), '--prefix', str(prefix), *args],
                                 text=True, capture_output=True)
         self.assertEqual(result.returncode == 0, ok, result.stdout + result.stderr)
         return result
+
+    def test_kwin_precedes_start_and_restore_follows_stop_even_on_failure(self):
+        for fail_restore in (False, True):
+            with self.subTest(fail_restore=fail_restore), tempfile.TemporaryDirectory() as tmp:
+                binary = Path(tmp) / 'binary'
+                binary.touch(mode=0o755)
+                (Path(tmp) / 'Shell.qml').touch()
+                events = []
+
+                def restore():
+                    events.append('restore-kwin')
+                    if fail_restore:
+                        raise OSError('fixture restore error')
+
+                with patch.dict(os.environ, {'XDG_RUNTIME_DIR': tmp}, clear=True), \
+                     patch('sys.argv', ['startsinglr-wayland']), \
+                     patch.object(entry, 'layout', return_value=(binary, Path(tmp))), \
+                     patch.object(entry.os, 'geteuid', return_value=1000), \
+                     patch.object(entry.signal, 'signal'), \
+                     patch.object(entry, 'active', return_value=False), \
+                     patch.object(entry, 'manager_environment', return_value={}), \
+                     patch.object(entry.singlr_kwin, 'apply', side_effect=lambda **kw: events.append(('apply', kw))), \
+                     patch.object(entry.singlr_kwin, 'restore', side_effect=restore), \
+                     patch.object(entry, 'run', side_effect=lambda *args, **kw: events.append(args)):
+                    if fail_restore:
+                        with self.assertRaises(OSError):
+                            entry.main()
+                    else:
+                        self.assertEqual(entry.main(), 0)
+                self.assertEqual(events[0], ('apply', {'recover_pending': True}))
+                stop = events.index(('systemctl', '--user', 'stop', 'singlr-workspace.target',
+                                     'graphical-session.target'))
+                self.assertEqual(events[stop + 1], 'restore-kwin')
+                self.assertEqual(events[stop + 2][0], 'dbus-update-activation-environment')
 
     def test_roundtrip_and_dry_run(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -10,6 +10,11 @@ import sys
 HERE = Path(__file__).resolve().parent
 FILES = {
     'usr/share/wayland-sessions/singlr.desktop': ('singlr.desktop', 0o644),
+    'usr/lib/singlr/singlr_kwin.py': ('singlr_kwin.py', 0o644),
+    'usr/lib/singlr/singlr-kwin': ('singlr-kwin', 0o755),
+    'usr/lib/systemd/user/singlr-kwin-recover.service': ('systemd/singlr-kwin-recover.service', 0o644),
+    'usr/lib/systemd/user/plasma-kwin_wayland.service.d/50-singlr-recovery.conf':
+        ('systemd/plasma-kwin_wayland.service.d/50-singlr-recovery.conf', 0o644),
     'usr/lib/singlr/startsinglr-wayland': ('startsinglr-wayland', 0o755),
     'usr/lib/systemd/user/singlr-workspace.target': ('systemd/singlr-workspace.target', 0o644),
     'usr/lib/systemd/user/singlr-shell.service': ('systemd/singlr-shell.service', 0o644),

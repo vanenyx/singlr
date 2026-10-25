@@ -1,0 +1,9 @@
+[Unit]
+Description=Recover interrupted Singlr KWin preferences before Plasma starts
+# Singlr's login supervisor performs recovery and applies its own settings first.
+ConditionEnvironment=!XDG_SESSION_DESKTOP=Singlr
+Before=plasma-kwin_wayland.service
+
+[Service]
+Type=oneshot
+ExecStart=-/usr/lib/singlr/singlr-kwin --restore --offline
