@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls.Basic as Controls
 import org.kde.kcmutils as KCMUtils
 import org.kde.plasma.private.volume as Volume
@@ -14,6 +15,9 @@ import Singlr.Ui
 Controls.Control {
     id: panel
 
+    // Qt's screen list is maintained by KWin; use the standard KScreen KCM.
+    property int outputCount: Qt.application.screens.length
+    property var nightLightBackend: NightLight
     property bool contextMenuOpen: false
     readonly property var contextMenu: contextMenuLoader.item
     required property SystemControls audio
@@ -208,7 +212,6 @@ Controls.Control {
             Controls.ScrollBar.vertical.policy: Controls.ScrollBar.AlwaysOff
             Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
         objectName: "main"
-        Component.onCompleted: Qt.callLater(function() { panel.implicitHeight = Math.min(760, content.implicitHeight + 32); })
         contentWidth: availableWidth
         clip: true
         Column {
@@ -273,6 +276,17 @@ Controls.Control {
                         value: brightnessDisplay.model.brightness; Accessible.name: "Brillo de " + brightnessDisplay.model.label
                         onMoved: brightness.setBrightness(brightnessDisplay.model.displayName, Math.round(value))
                     }
+                }
+            }
+            NightLightRow { width: parent.width; backend: panel.nightLightBackend }
+            Item {
+                width: parent.width; height: 36
+                // Reserve the row when outputs change in the background (P-011).
+                ControlRow {
+                    objectName: "displayLayoutRow"; anchors.fill: parent; visible: panel.outputCount > 1
+                    glyph: "monitor"; text: "Disposición de pantallas"; actionText: "›"
+                    onClicked: KCMUtils.KCMLauncher.openSystemSettings("kcm_kscreen")
+                    onActionTriggered: KCMUtils.KCMLauncher.openSystemSettings("kcm_kscreen")
                 }
             }
             Row { height: 36; width: parent.width; spacing: 10

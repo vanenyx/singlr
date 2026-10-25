@@ -15,12 +15,12 @@ Item {
     readonly property color shadow: "#59000000"
     readonly property color softShadow: "#10000000"
     readonly property color scrim: "#38000000"
-    readonly property color error: dark ? "#ef9a9a" : "#ae3535"
+    readonly property color error: dark ? "#ef9a9a" : "#8f2727"
     readonly property color powerSaver: "#4ea7fc"
     readonly property color powerPerformance: "#eb5757"
-    readonly property color surface: Palette.alpha(raised, .93)
-    readonly property color barSurface: Palette.alpha(panel, .90)
-    readonly property color dockSurface: Palette.alpha(panel, .80)
+    readonly property color surface: Palette.alpha(raised, dark ? .93 : .97)
+    readonly property color barSurface: Palette.alpha(panel, dark ? .90 : .96)
+    readonly property color dockSurface: Palette.alpha(panel, dark ? .80 : .94)
     readonly property color sheen: Palette.alpha(text, .04)
     readonly property color wallpaperDefault: "#08090a"
     readonly property color wallpaperGlow: "#17191d"
@@ -43,8 +43,9 @@ Item {
     readonly property color focusBorder: Palette.alpha(dark?Qt.color("white"):Qt.color("black"),.20*contrast)
     readonly property color text: dark ? "#f7f8f8" : Palette.ink(base,17,contrast)
     readonly property color secondary: dark ? "#d0d6e0" : Palette.ink(base,35,contrast)
-    readonly property color muted: Palette.ink(base,dark?58.5:46,contrast)
-    readonly property color faint: Palette.ink(base,dark?43:56,contrast)
+    // Small text, placeholders and shortcuts retain AA on translucent surfaces.
+    readonly property color muted: Palette.ink(base,dark?72:39,contrast)
+    readonly property color faint: Palette.ink(base,dark?71:39,contrast)
     readonly property color selection: Palette.alpha(accent,(dark?.14:.11)*contrast)
     readonly property color accentText: Palette.accentInk(accent,dark,contrast)
     readonly property string family: inter.name

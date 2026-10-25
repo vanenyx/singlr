@@ -10,7 +10,7 @@ Item {
     required property var outputScreen
     required property var controller
     property string activeAppName: "Escritorio"
-    readonly property bool menuOpen: bar.menuOpen || bar.tray.opened
+    readonly property bool menuOpen: bar.menuOpen || bar.tray.opened || bar.keyboard.opened
     function closeMenus() { bar.closeMenu(); }
     // Coloca la superficie en su pantalla (ver SinglrSystem.placeOnScreen).
     function place(window) {
@@ -85,23 +85,23 @@ Item {
         }
     }
     Loader {
-        id: trayMenuSurface; objectName: "trayMenuSurface"; active: bar.tray.opened
+        id: trayMenuSurface; objectName: "trayMenuSurface"; active: bar.tray.opened || bar.keyboard.opened
         sourceComponent: Component {
             Window {
                 Component.onCompleted: surfaces.place(this)
                 id: trayMenuWindow
                 screen: surfaces.outputScreen; transientParent: null; visible: true
-                width: 240; height: bar.tray.menuHeight; color: "transparent"
+                width: 240; height: bar.keyboard.opened ? bar.keyboard.menuHeight : bar.tray.menuHeight; color: "transparent"
                 LayerShell.Window.layer: LayerShell.Window.LayerTop
                 LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft
                 LayerShell.Window.margins.top: 4
-                LayerShell.Window.margins.left: Math.round(Math.max(4, Math.min(screen.width - width - 4, bar.tray.menuX)))
+                LayerShell.Window.margins.left: Math.round(Math.max(4, Math.min(screen.width - width - 4, (bar.keyboard.opened ? bar.keyboard.menuX : bar.tray.menuX))))
                 LayerShell.Window.exclusionZone: 0
                 LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
                 LayerShell.Window.scope: "utility"
                 LayerShell.Window.activateOnShow: true
                 onVisibleChanged: if (visible) { surfaces.controller.closeDockMenu(); requestActivate(); }
-                onActiveChanged: if (!active && visible) bar.tray.close()
+                onActiveChanged: if (!active && visible) { bar.tray.close(); bar.keyboard.close(); }
             }
         }
     }

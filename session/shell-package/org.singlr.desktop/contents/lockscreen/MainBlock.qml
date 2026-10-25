@@ -80,6 +80,9 @@ SinglrSessionScreen {
                 font.pixelSize: 15
                 leftPadding: 4
                 color: Theme.text
+                placeholderTextColor: Theme.faint
+                selectionColor: Theme.selection
+                selectedTextColor: Theme.text
                 background: Item {}
                 Layout.fillWidth: true
                 text: PasswordSync.password

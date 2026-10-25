@@ -48,7 +48,7 @@ Item {
     // Explicit opaque reduced-effects material on software: no fake CPU blur.
     Rectangle {
         anchors.fill: parent; radius: glass.radius
-        color: glass.compositorBlur ? Theme.surface : glass.canBlur ? Qt.rgba(Theme.raised.r,Theme.raised.g,Theme.raised.b,Theme.dark?.78:.85) : Theme.raised
+        color: glass.compositorBlur ? Theme.surface : glass.canBlur ? Qt.rgba(Theme.raised.r,Theme.raised.g,Theme.raised.b,Theme.dark?.90:.92) : Theme.raised
         border.width: 1; border.color: Theme.focusBorder
     }
     Rectangle { x:12; y:1; width:parent.width-24; height:1; color:Theme.sheen }
