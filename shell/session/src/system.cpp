@@ -14,6 +14,8 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QUrl>
+#include <KService>
+#include <QMimeDatabase>
 #include <pwd.h>
 #include <unistd.h>
 
@@ -26,6 +28,18 @@ QDBusMessage loginCall(const QString &method)
 bool allowed(const QString &value)
 {
     return value == QStringLiteral("yes") || value == QStringLiteral("challenge");
+}
+KService::Ptr desktopService(const QUrl &launcher)
+{
+    if (launcher.scheme() == QLatin1String("applications"))
+        return KService::serviceByStorageId(launcher.path());
+    if (launcher.isLocalFile() && launcher.fileName().endsWith(QLatin1String(".desktop"))) {
+        auto service = KService::serviceByDesktopPath(launcher.toLocalFile());
+        if (!service && QFileInfo(launcher.toLocalFile()).isFile())
+            service = KService::Ptr(new KService(launcher.toLocalFile()));
+        return service;
+    }
+    return {};
 }
 QString iconUrl(const QString &path)
 {
@@ -343,4 +357,56 @@ void System::placeOnScreen(QObject *object, const QString &screenName)
     LayerShellQt::Window::get(window)->setScreen(target);
     if (visible)
         window->show();
+}
+
+// Resolve the desktop service through sycoca; MIME inheritance is significant
+// (e.g. Kate accepts text/x-python through text/plain). Never execute desktop Exec.
+bool System::acceptsUrls(const QUrl &launcher, const QList<QUrl> &urls) const
+{
+    const auto service = desktopService(launcher);
+    if (!service || !service->isApplication() || urls.isEmpty()) return false;
+    QMimeDatabase database;
+    for (const auto &url : urls) {
+        // No synchronous network I/O during a drag. Unknown remote content is
+        // accepted only when the service explicitly handles that URL scheme.
+        if (!url.isValid() || url.isEmpty()) return false;
+        if (!url.isLocalFile()) {
+            if (!service->hasMimeType(QStringLiteral("x-scheme-handler/") + url.scheme())) return false;
+            continue;
+        }
+        if (!QFileInfo::exists(url.toLocalFile())) return false;
+        const auto mime = database.mimeTypeForFile(url.toLocalFile());
+        bool accepted = false;
+        for (const auto &supported : service->mimeTypes()) {
+            if (mime.inherits(supported)) { accepted = true; break; }
+        }
+        if (!accepted) return false;
+    }
+    return true;
+}
+
+void System::showInFolder(const QList<QUrl> &urls)
+{
+    if (urls.isEmpty()) return;
+    QStringList items;
+    for (const auto &url : urls) {
+        if (!url.isValid() || !url.isLocalFile()) return;
+        items << url.toString();
+    }
+    auto message = QDBusMessage::createMethodCall(QStringLiteral("org.freedesktop.FileManager1"),
+        QStringLiteral("/org/freedesktop/FileManager1"), QStringLiteral("org.freedesktop.FileManager1"), QStringLiteral("ShowItems"));
+    message << items << QString();
+    call(m_bus, message, [](const QDBusMessage &reply) {
+        if (reply.type() == QDBusMessage::ErrorMessage) qWarning() << "Singlr ShowItems:" << reply.errorMessage();
+    });
+}
+
+QUrl System::launcherUrl(const QUrl &url) const
+{
+    const auto service = desktopService(url);
+    if (!service || !service->isApplication()) return {};
+    QUrl result;
+    result.setScheme(QStringLiteral("applications"));
+    result.setPath(service->storageId());
+    return result;
 }

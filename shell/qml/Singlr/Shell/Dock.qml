@@ -49,6 +49,8 @@ Rectangle {
     property var launching: ({})
     readonly property var candidates: ["org.kde.dolphin.desktop", "org.kde.konsole.desktop", "firefox.desktop", "org.kde.kate.desktop", "systemsettings.desktop"]
     property var pinUrls: []
+    property var appOrder: []
+    property bool restoringOrder: false
     property url settingsLocation: "file://" + StandardPaths.writableLocation(StandardPaths.GenericConfigLocation) + "/singlr/dock.json"
     readonly property var pinStore: pinSettings.item
     readonly property bool pinsLoaded: pinSettings.status === Loader.Ready
@@ -59,11 +61,14 @@ Rectangle {
             Settings {
                 location: dock.settingsLocation
                 property string pins: ""
+                property string order: "[]"
                 Component.onCompleted: {
+                    try { dock.appOrder = JSON.parse(order); } catch (e) { dock.appOrder = []; }
                     if (pins) {
                         try { dock.pinUrls = JSON.parse(pins); tasks.launcherList = dock.pinUrls; }
                         catch (e) { console.warn("Dock: lista de fijados inválida", e); }
                     } else dock.refreshPins();
+                    Qt.callLater(dock.restoreOrder);
                 }
             }
         }
@@ -130,15 +135,77 @@ Rectangle {
         else if (entry.action === "close") closeTask();
         else togglePin();
     }
+    function persistPins() {
+        pinUrls = Array.from(taskSource.launcherList || [], String);
+        if (pinStore) { pinStore.pins = JSON.stringify(pinUrls); pinStore.sync(); }
+    }
+    function normalizeLauncher(url) {
+        return systemBridge && typeof systemBridge.launcherUrl === "function" ? String(systemBridge.launcherUrl(url)) : String(url);
+    }
+    function isPinned(url) { return Array.from(taskSource.launcherList || [], String).indexOf(String(url)) >= 0; }
+    function setPinned(url, keep) {
+        url = normalizeLauncher(url);
+        if (!url) return;
+        if (keep) taskSource.requestAddLauncher(url);
+        else taskSource.requestRemoveLauncher(url);
+        persistPins();
+    }
     function togglePin() {
         const url = String(contextTask.LauncherUrlWithoutIcon || contextTask.LauncherUrl || "");
-        if (!url) return;
-        if (contextTask.IsLauncher || contextTask.HasLauncher) {
-            taskSource.requestRemoveLauncher(url);
-        } else taskSource.requestAddLauncher(url);
-        pinUrls = Array.from(tasks.launcherList, String);
-        if (pinStore) { pinStore.pins = JSON.stringify(pinUrls); pinStore.sync(); }
+        setPinned(url, !(contextTask.IsLauncher || contextTask.HasLauncher));
         closeMenu();
+    }
+    function saveOrder() {
+        let order = [];
+        for (let row = 0; row < pinned.count; ++row) {
+            const item = pinned.itemAt(row) as TaskEntry;
+            if (item) order.push(appKey(item.model));
+        }
+        appOrder = order;
+        if (pinStore) { pinStore.order = JSON.stringify(order); pinStore.sync(); }
+    }
+    function moveAt(from, position) {
+        if (position.y < 0 || position.y >= height) return false;
+        for (let row = 0; row < pinned.count; ++row) {
+            const item = pinned.itemAt(row) as TaskEntry;
+            if (!item) continue;
+            const point = item.mapFromItem(dock, position.x, position.y);
+            if (point.x >= 0 && point.x < item.width) return moveEntry(from, row);
+        }
+        return false;
+    }
+    function moveEntry(from, to) {
+        if (from === to || from < 0 || to < 0 || from >= pinned.count || to >= pinned.count) return false;
+        closeMenu(); hideTooltip();
+        if (taskSource.move(from, to) === false) return false;
+        taskSource.syncLaunchers();
+        persistPins(); saveOrder();
+        return true;
+    }
+    function restoreOrder() {
+        if (restoringOrder || !appOrder.length || !taskSource.move) return;
+        restoringOrder = true;
+        let target = 0;
+        for (const key of appOrder) {
+            for (let row = target; row < pinned.count; ++row) {
+                const item = pinned.itemAt(row) as TaskEntry;
+                if (item && appKey(item.model) === key) {
+                    if (row !== target) taskSource.move(row, target);
+                    ++target; break;
+                }
+            }
+        }
+        if (taskSource.syncLaunchers) taskSource.syncLaunchers();
+        restoringOrder = false;
+    }
+    function acceptsFiles(task, urls) {
+        return !!systemBridge && typeof systemBridge.acceptsUrls === "function"
+            && systemBridge.acceptsUrls(String(task.LauncherUrlWithoutIcon || task.LauncherUrl || ""), urls);
+    }
+    function openFiles(row, task, urls) {
+        if (!acceptsFiles(task, urls)) return false;
+        taskSource.requestOpenUrls(taskSource.index(row, 0), urls);
+        return true;
     }
     function beginLaunch(row, task) {
         const key = appKey(task);
@@ -195,9 +262,10 @@ Rectangle {
         target: dock.taskSource
         ignoreUnknownSignals: true
         function onDataChanged() { dock.reconcileRequests(); }
-        function onModelReset() { dock.closeMenu(); dock.requestedWindows = ({}); }
+        function onModelReset() { dock.closeMenu(); dock.requestedWindows = ({}); Qt.callLater(dock.restoreOrder); }
         function onRowsRemoved() { dock.closeMenu(); dock.reconcileRequests(); }
         function onLayoutChanged() { dock.closeMenu(); }
+        function onRowsInserted() { Qt.callLater(dock.restoreOrder); }
     }
     // Test entry point: resolve the current app row, then follow the exact click path.
     function cycleApp(appId) {
@@ -210,18 +278,11 @@ Rectangle {
         }
         return false;
     }
-    // Number the visible entries: pinned launchers/windows, then unpinned apps.
-    // Model rows can be interleaved, so resolve the presentation order first.
+    // Shortcuts follow the same manual order as the visible app entries.
     function activateEntry(n) {
         if (!Number.isInteger(n) || n < 1 || n > 9) return false;
-        let position = 0;
-        for (const pinnedPass of [true, false]) {
-            for (let row = 0; row < pinned.count; ++row) {
-                const item = pinned.itemAt(row) as TaskEntry;
-                if (!item || item.pinnedTask !== pinnedPass) continue;
-                if (++position === n) { activate(row, item.model); return true; }
-            }
-        }
+        const item = pinned.itemAt(n - 1) as TaskEntry;
+        if (item) { activate(n - 1, item.model); return true; }
         return false;
     }
     function activate(row, task) {
@@ -253,7 +314,7 @@ Rectangle {
     }
     TaskManager.TasksModel {
         id: tasks; groupMode: TaskManager.TasksModel.GroupApplications; groupInline: false
-        sortMode: TaskManager.TasksModel.SortManual; separateLaunchers: true; launchInPlace: true; hideActivatedLaunchers: true
+        sortMode: TaskManager.TasksModel.SortManual; separateLaunchers: false; launchInPlace: true; hideActivatedLaunchers: true
     }
     readonly property string activeAppName: {
         for (let i = 0; i < pinned.count; ++i) {
@@ -280,26 +341,6 @@ Rectangle {
             model: dock.taskSource
             delegate: TaskEntry {}
         }
-        Rectangle { visible: unpinned.width > 0 && dock.pinnedCount > 0; width: 1; height: 20; y: 14; color: Theme.border }
-        Row {
-            id: unpinned; height: 48; spacing: 6
-            Repeater {
-                model: dock.taskSource
-                delegate: DockItem {
-                    sessionMode: dock.sessionMode
-                    onTooltipRequested: (text, center) => dock.showTooltip(text, center)
-                    required property var model
-                    required property int index
-                    visible: !!model && !model.IsLauncher && !model.HasLauncher
-                    task: model
-                    launching: dock.launching[dock.appKey(model)] !== undefined
-                    onInteracted: dock.hideTooltip()
-                    onNewInstanceRequested: { if (model.IsNewInstanceable) dock.taskSource.requestNewInstance(dock.taskSource.index(index, 0)); }
-                    onActivated: dock.activate(index, model)
-                    onContextRequested: dock.openContext(index, model)
-                }
-            }
-        }
         Rectangle { visible: pinned.count > 0; width: 1; height: 20; y: 14; color: Theme.border }
         DockItem { sessionMode: dock.sessionMode; onTooltipRequested: (text, center) => dock.showTooltip(text, center); task: ({AppName: "Todas las aplicaciones", singlrGrid: true, decoration: ""}); onActivated: dock.applicationsRequested() }
         Tool { objectName: "overviewButton"; visible: dock.overviewAvailable; width: 32; height: 48; icon: "cards-three"; iconSize: 20; description: "Multitarea"; onClicked: dock.systemBridge.invokeShortcut("kwin", "Singlr Overview") }
@@ -310,9 +351,14 @@ Rectangle {
         required property int index
         readonly property bool pinnedTask: !!model && (!!model.IsLauncher || !!model.HasLauncher)
         readonly property string activeName: model && model.IsActive ? String(model.AppName || model.display || "Escritorio") : ""
-        visible: pinnedTask; width: 32; height: 48
+        visible: !!model; width: 32; height: 48
         DockItem {
+            objectName: "dockTask" + entry.index
             sessionMode: dock.sessionMode; task: entry.model
+            dockOwner: dock
+            onReorderFinished: position => dock.moveAt(entry.index, position)
+            fileAcceptor: urls => dock.acceptsFiles(entry.model, urls)
+            onFilesDropped: urls => dock.openFiles(entry.index, entry.model, urls)
             onTooltipRequested: (text, center) => dock.showTooltip(text, center)
             launching: dock.launching[dock.appKey(entry.model)] !== undefined
             onInteracted: dock.hideTooltip()

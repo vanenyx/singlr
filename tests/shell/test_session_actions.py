@@ -23,10 +23,10 @@ class SessionActionsTests(unittest.TestCase):
         subprocess.run([str(Path(libexec) / 'moc'), str(ROOT / 'shell/session/src/system.h'), '-o', moc], check=True)
         cls.binary = str(Path(cls.tmp.name) / 'session-actions')
         subprocess.run(['g++', '-std=c++17', '-fPIC', '-Wall', '-Wextra',
-                        '-I' + str(ROOT / 'shell/session/src'),
+                        '-I' + str(ROOT / 'shell/session/src'), '-I/usr/include/KF6/KService', '-I/usr/include/KF6/KConfigCore',
                         str(ROOT / 'tests/shell/session_actions.cpp'),
                         str(ROOT / 'shell/session/src/system.cpp'), moc,
-                        *flags, '-lLayerShellQtInterface', '-o', cls.binary], check=True, timeout=60)
+                        *flags, '-lKF6Service', '-lLayerShellQtInterface', '-o', cls.binary], check=True, timeout=60)
 
     def test_disconnected_bus_and_qml_contract(self):
         result = subprocess.run([self.binary, '--offline'], capture_output=True, text=True, timeout=10)

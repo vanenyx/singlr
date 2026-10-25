@@ -28,12 +28,12 @@ class TrayTests(unittest.TestCase):
         system_moc = str(Path(cls.tmp.name) / 'moc_system.cpp')
         subprocess.run([str(Path(libexec) / 'moc'), str(ROOT / 'shell/session/src/system.h'), '-o', system_moc], check=True)
         result = subprocess.run(['g++', '-std=c++17', '-fPIC', '-Wall', '-Wextra',
-                                 '-I' + str(ROOT / 'shell/session/src'),
+                                 '-I' + str(ROOT / 'shell/session/src'), '-I/usr/include/KF6/KService', '-I/usr/include/KF6/KConfigCore',
                                  str(ROOT / 'tests/shell/tray.cpp'),
                                  str(ROOT / 'shell/session/src/tray.cpp'),
                                  str(ROOT / 'shell/session/src/trayformat.cpp'),
                                  str(ROOT / 'shell/session/src/system.cpp'), moc, system_moc,
-                                 *flags, '-lLayerShellQtInterface', '-o', cls.binary], capture_output=True, text=True, timeout=60)
+                                 *flags, '-lKF6Service', '-lLayerShellQtInterface', '-o', cls.binary], capture_output=True, text=True, timeout=60)
         if result.returncode:
             raise RuntimeError(result.stderr)
         cls.env = os.environ | {'QT_QPA_PLATFORM': 'offscreen', 'QT_QUICK_BACKEND': 'software',

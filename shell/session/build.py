@@ -33,7 +33,8 @@ def main():
         # KF6GlobalAccel no instala un .pc: cabeceras y biblioteca directas.
         '-I/usr/include/KF6/KGlobalAccel', '-lKF6GlobalAccel', '-lLayerShellQtInterface',
         '-I/usr/include/KF6/NetworkManagerQt', '-lKF6NetworkManagerQt',
-        '-I/usr/include/KF6/KWallet', '-lKF6Wallet']
+        '-I/usr/include/KF6/KWallet', '-lKF6Wallet',
+        '-I/usr/include/KF6/KService', '-I/usr/include/KF6/KConfigCore', '-lKF6Service']
     command += shlex.split(os.environ.get('LDFLAGS', ''))
     libexec = subprocess.run(['pkg-config', '--variable=libexecdir', 'Qt6Core'],
                              check=True, capture_output=True, text=True).stdout.strip()

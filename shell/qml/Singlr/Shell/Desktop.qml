@@ -29,7 +29,7 @@ Window {
             id: launcherLoader; opened: desktop.launcherOpen; z: 4
             x: (parent.width-width)/2; y: Math.min(286, (parent.height-height)/2)
             sourceComponent: Component {
-                Launcher { visible: desktop.launcherOpen; backdrop: background; onClosed: desktop.launcherOpen = false }
+                Launcher { dockController: dock; visible: desktop.launcherOpen; backdrop: background; onClosed: desktop.launcherOpen = false }
             }
         }
         NotificationCenter { id: notifications; x: parent.width - width - 16; y: 40; z: 5 }

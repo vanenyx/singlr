@@ -127,6 +127,7 @@ Item {
             const panel = item as Item;
             panel.objectName = "sessionLauncher";
             panel.sessionMode = true;
+            panel.dockController = dock;
             panel.parent = Qt.binding(() => session.overlay ? session.overlay.contentItem : session);
             panel.visible = Qt.binding(() => session.launcherOpen);
             panel.x = Qt.binding(() => (panel.parent.width - panel.width) / 2);
