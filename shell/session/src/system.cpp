@@ -1,4 +1,5 @@
 #include "system.h"
+#include <malloc.h>
 #include <QDBusMessage>
 #include <QDBusPendingCallWatcher>
 #include <QDBusPendingReply>
@@ -49,4 +50,10 @@ void System::invokeShortcut(const QString &component, const QString &action)
             qWarning() << "SinglrSystem shortcut:" << reply.error().message();
         pending->deleteLater();
     });
+}
+
+void System::trimMemory()
+{
+    // glibc conserva los bloques liberados; malloc_trim los devuelve al sistema operativo.
+    malloc_trim(0);
 }
