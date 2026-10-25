@@ -65,8 +65,8 @@ demuestra merecerlo.
   márgenes consistentes, equilibrio entre espacio libre e información. Fuerte influencia de Linear.
 - **Superficies y materiales:** superficies sólidas elegantes para el contenido principal; materiales
   translúcidos y profundidad para elementos flotantes, menús y capas temporales. Los materiales son
-  capacidades configurables, no tratamientos indiscriminados. Glassmorphism y Liquid Glass son
-  capacidades configurables del sistema de materiales (P-019, que sustituye a P-007).
+  capacidades configurables, no tratamientos indiscriminados. Vidrio plano y sólido son
+  los materiales del sistema; Liquid Glass se probó y se retiró (P-021). Siempre planos (P-020).
 - **Tipografía, color e iconografía:** escala tipográfica ajustada; paleta neutral con acentos
   controlados; Phosphor Icons como base. Símbolos propios (p. ej. controles de ventana inspirados en
   la singularidad) como exploraciones de identidad, sujetas a pruebas de reconocimiento y legibilidad.
