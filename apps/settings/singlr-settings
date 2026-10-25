@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+here="$(dirname "$(realpath "$0")")"
+installed_root='/usr/lib/singlr'
+# CMake substitutes the installed prefix in its generated copy.
+if [[ -n "${SINGLR_DEV_ROOT:-}" ]]; then
+    root="$SINGLR_DEV_ROOT"
+    qml="$root/shell/qml"
+    entry="$root/apps/settings/Main.qml"
+elif [[ -f "$here/../../shell/qml/Shell.qml" ]]; then
+    root="$(realpath "$here/../..")"
+    qml="$root/shell/qml"
+    entry="$here/Main.qml"
+else
+    qml="$installed_root/qml"
+    entry="$installed_root/apps/settings/Main.qml"
+fi
+if [[ ! -f "$entry" ]]; then
+    printf 'Singlr: no existe la app de ajustes: %s\n' "$entry" >&2
+    exit 1
+fi
+# Keep the settings window on xdg-shell even when invoked from the shell.
+unset QT_WAYLAND_SHELL_INTEGRATION
+exec qml6 -I "$qml" "$entry" "$@"

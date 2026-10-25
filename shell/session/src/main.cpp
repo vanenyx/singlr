@@ -19,6 +19,7 @@
 #include "tray.h"
 #include "system.h"
 #include "shortcuts.h"
+#include "launcherbridge.h"
 #include <QCoreApplication>
 #include <QTimer>
 #include <QScopeGuard>
@@ -47,40 +48,6 @@ QRegion roundedRegion(const QSize &size, int radius)
         region -= QRegion(corners[i]).subtracted(QRegion(ellipses[i], QRegion::Ellipse));
     return region;
 }
-
-// Recibe la tecla Meta (KWin llama a org.kde.plasmashell activateLauncherMenu) y Alt+Espacio
-// (KRunner) mientras Singlr sustituye a Plasma, y abre el lanzador de Singlr.
-class LauncherBridge : public QDBusVirtualObject
-{
-public:
-    explicit LauncherBridge(QObject *target)
-        : m_target(target)
-    {
-    }
-    bool handleMessage(const QDBusMessage &message, const QDBusConnection &connection) override
-    {
-        if (message.type() != QDBusMessage::MethodCallMessage || message.interface() == QLatin1String("org.freedesktop.DBus.Introspectable")
-            || message.interface() == QLatin1String("org.freedesktop.DBus.Properties"))
-            return false;
-        const char *method = message.path() == QLatin1String("/PlasmaShell")
-                && message.member() == QLatin1String("singlrShowApplications") ? "showApplications" : "toggleLauncher";
-        const QByteArray signature = QByteArray(method) + "()";
-        if (m_target->metaObject()->indexOfMethod(signature.constData()) < 0) {
-            connection.send(message.createErrorReply(QStringLiteral("org.kde.plasmashell.MissingMethod"), QString::fromLatin1(signature)));
-            return true;
-        }
-        QMetaObject::invokeMethod(m_target, method, Qt::QueuedConnection);
-        connection.send(message.createReply());
-        return true;
-    }
-    QString introspect(const QString &) const override
-    {
-        return {};
-    }
-
-private:
-    QObject *m_target;
-};
 
 // org.kde.osdService: PowerDevil y otros servicios piden aquí el indicador en pantalla
 // (brillo, volumen…). Lo atendía plasmashell; Singlr lo reenvía a Session.osdRequest().

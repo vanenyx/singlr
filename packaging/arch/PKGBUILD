@@ -1,0 +1,28 @@
+# Local source package: run the preparation command in packaging/README.md first.
+pkgname=singlr-desktop
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Singlr desktop session for KDE Plasma 6 (phase 1 prototype)'
+arch=('x86_64')
+# Distribution license remains pending; this local package is not a release.
+license=('LicenseRef-Singlr-Pending')
+depends=('bash' 'python' 'qt6-base' 'qt6-declarative' 'qt6-wayland' 'qt6-svg'
+         'kwindowsystem' 'kglobalaccel' 'networkmanager-qt' 'kwallet' 'layer-shell-qt'
+         'libnm' 'networkmanager' 'plasma-workspace' 'plasma-desktop' 'kwin'
+         'plasma-nm' 'plasma-pa' 'bluez-qt' 'bluedevil' 'kitemmodels' 'kcmutils' 'milou'
+         'breeze-icons' 'powerdevil' 'polkit-kde-agent' 'xdg-desktop-portal-kde'
+         'pipewire' 'pipewire-pulse' 'wireplumber' 'systemd')
+makedepends=('cmake' 'ninja' 'extra-cmake-modules' 'pkgconf')
+source=("singlr-$pkgver.tar.gz")
+sha256sums=('SKIP') # Local development snapshot; pin a checksum before distributing.
+
+build() {
+    cmake -S "$srcdir/singlr-$pkgver" -B build -G Ninja \
+        -DCMAKE_BUILD_TYPE=None -DCMAKE_INSTALL_PREFIX=/usr \
+        -DKDE_INSTALL_LIBDIR=lib
+    cmake --build build
+}
+
+package() {
+    DESTDIR="$pkgdir" cmake --install build
+}
