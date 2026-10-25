@@ -17,6 +17,7 @@
 #include <wayland/clientconnection.h>
 #include <KSharedConfig>
 #include <QVector2D>
+#include <QColor>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -49,6 +50,12 @@ LiquidGlassEffect::LiquidGlassEffect() {
         [this](const KConfigGroup &group) {
             if (group.name() == QLatin1String("Effect-singlrliquidglass")) reconfigure(ReconfigureAll);
         });
+    m_materialConfig = KSharedConfig::openConfig(QStringLiteral("singlr/singlr.conf"), KConfig::SimpleConfig);
+    m_paletteConfig = KSharedConfig::openConfig(QStringLiteral("kdeglobals"));
+    m_materialWatcher = KConfigWatcher::create(m_materialConfig);
+    m_paletteWatcher = KConfigWatcher::create(m_paletteConfig);
+    for (const auto &watcher : {m_materialWatcher, m_paletteWatcher})
+        connect(watcher.data(), &KConfigWatcher::configChanged, this, [this] { reconfigure(ReconfigureAll); });
     reconfigure(ReconfigureAll);
     for (auto w : effects->stackingOrder()) watch(w);
 }
@@ -77,7 +84,7 @@ QString LiquidGlassEffect::debug(const QString &) const {
     }
     return QString::fromUtf8(QJsonDocument(QJsonObject{
         {"shader", bool(m_shader)}, {"enabled", m_settings.enabled},
-        {"intensity", m_settings.intensity}, {"active", isActive()},
+        {"liquid", m_settings.liquid}, {"dark", m_dark}, {"intensity", m_settings.intensity}, {"active", isActive()},
         {"diagnosticOverlay", m_diagnosticOverlay}, {"chainPosition", requestedEffectChainPosition()},
         {"virtualGeometry", QJsonArray{desktop.x(), desktop.y(), desktop.width(), desktop.height()}},
         {"screenCount", effects->screens().size()},
@@ -91,7 +98,12 @@ bool LiquidGlassEffect::isActive() const {
 void LiquidGlassEffect::reconfigure(ReconfigureFlags) {
     auto config = effects->config();
     config->reparseConfiguration();
-    m_settings = SinglrGlass::Settings::read(config->group(QStringLiteral("Effect-singlrliquidglass")));
+    m_materialConfig->reparseConfiguration();
+    m_paletteConfig->reparseConfiguration();
+    m_settings = SinglrGlass::Settings::readSurface(config->group(QStringLiteral("Effect-singlrliquidglass")),
+        m_materialConfig->group("Appearance"), m_materialConfig->group("Accessibility"));
+    const auto background = m_paletteConfig->group("Colors:Window").readEntry("BackgroundNormal", QColor(32, 32, 32));
+    m_dark = qGray(background.rgb()) < 192;
     m_diagnosticOverlay = config->group(QStringLiteral("Effect-singlrliquidglass")).readEntry("DiagnosticOverlay", false);
     for (auto &[w, surface] : m_surfaces) update(w);
     // One repaint for a settings change; never a timer or postPaint repaint loop.
@@ -100,6 +112,12 @@ void LiquidGlassEffect::reconfigure(ReconfigureFlags) {
 void LiquidGlassEffect::watch(EffectWindow *w) {
     if (!w->surface() || !w->window()->inherits("KWin::LayerShellV1Window") || m_surfaces.contains(w)) return;
     connect(w->window(), &Window::windowClassChanged, this, [this,w] { update(w); });
+    connect(w, &EffectWindow::windowHiddenChanged, this, [this,w] {
+        if (!w->isVisible()) {
+            effects->makeOpenGLContextCurrent();
+            m_surfaces.at(w).buffers.clear();
+        }
+    });
     auto &surface = m_surfaces[w];
     surface.blurConnection = connect(w->surface(), &SurfaceInterface::blurChanged, this, [this,w] { update(w); });
     update(w);
@@ -115,8 +133,8 @@ void LiquidGlassEffect::update(EffectWindow *w) {
     }
     if (!surface.item) surface.item = std::make_unique<BackgroundEffectItem>(w->windowItem());
     surface.lastResult = "waiting-for-draw";
-    surface.item->setEffectBoundingRect(w->surface()->blurRegion().boundingRect());
-    surface.item->setPixelsToExpandRepaintsBelowOpaqueRegions(24);
+    surface.item->setEffectBoundingRect(w->surface()->blurRegion().boundingRect().adjusted(-40, -40, 40, 40));
+    surface.item->setPixelsToExpandRepaintsBelowOpaqueRegions(40);
 }
 void LiquidGlassEffect::prePaintScreen(ScreenPrePaintData &data) {
     m_view = data.view;
@@ -135,7 +153,9 @@ bool LiquidGlassEffect::drawWindow(const RenderTarget &target, const RenderViewp
 void LiquidGlassEffect::render(const RenderTarget &target, const RenderViewport &viewport,
         EffectWindow *w, const Region &deviceRegion) {
     const auto shape = w->surface()->blurRegion().translated(w->pos());
-    const auto bounds = shape.boundingRect().rounded();
+    const auto panelBounds = shape.boundingRect().rounded();
+    // Overscan supplies real background to the lens on every side of the panel.
+    const auto bounds = panelBounds.adjusted(-40, -40, 40, 40).intersected(effects->virtualScreenGeometry());
     auto &surface = m_surfaces.at(w);
     surface.lastResult = "outside-viewport";
     if (bounds.isEmpty() || !bounds.intersects(viewport.renderRect().rounded())) return;
@@ -170,7 +190,11 @@ void LiquidGlassEffect::render(const RenderTarget &target, const RenderViewport 
     matrix.translate(scaledBounds.x(), scaledBounds.y());
     m_shader->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, matrix);
     m_shader->setUniform("sampler", 0);
-    m_shader->setUniform("extent", QVector2D(bounds.width(), bounds.height()));
+    m_shader->setUniform("extent", QVector2D(panelBounds.width(), panelBounds.height()));
+    m_shader->setUniform("sourceExtent", QVector2D(bounds.width(), bounds.height()));
+    m_shader->setUniform("inset", QVector2D(panelBounds.x()-bounds.x(), panelBounds.y()-bounds.y()));
+    m_shader->setUniform("liquid", m_settings.liquid ? 1.0f : 0.0f);
+    m_shader->setUniform("dark", m_dark ? 1.0f : 0.0f);
     m_shader->setUniform("radius", float(radius));
     m_shader->setUniform("strength", float(m_settings.intensity / 100.0));
     m_shader->setUniform("diagnosticOverlay", m_diagnosticOverlay ? 1.0f : 0.0f);

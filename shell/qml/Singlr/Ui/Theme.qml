@@ -15,16 +15,16 @@ Item {
     readonly property color shadow: "#59000000"
     readonly property color softShadow: "#10000000"
     readonly property color scrim: "#38000000"
-    readonly property color error: dark ? "#ef9a9a" : "#8f2727"
+    readonly property color error: materialStrength > 0 ? Palette.accentInk(Qt.color("#eb5757"),dark,contrast,materialStrength) : dark ? "#ef9a9a" : "#8f2727"
     readonly property color powerSaver: "#4ea7fc"
     readonly property color powerPerformance: "#eb5757"
     readonly property bool softwareRendering: Appearance.softwareRendering
     readonly property bool translucent: Appearance.effectiveMaterial !== "solid" && !softwareRendering
     readonly property real materialStrength: translucent ? Appearance.intensity / 100 : 0
     readonly property real blurRadius: materialStrength * 64
-    readonly property color surface: Palette.alpha(raised, Palette.materialOpacity(materialStrength))
-    readonly property color barSurface: Palette.alpha(panel, Palette.materialOpacity(materialStrength))
-    readonly property color dockSurface: Palette.alpha(panel, Palette.materialOpacity(materialStrength))
+    readonly property color surface: Palette.alpha(raised, Palette.materialOpacity(materialStrength, Appearance.liquidAvailable))
+    readonly property color barSurface: Palette.alpha(panel, Palette.materialOpacity(materialStrength, Appearance.liquidAvailable))
+    readonly property color dockSurface: Palette.alpha(panel, Palette.materialOpacity(materialStrength, Appearance.liquidAvailable))
     readonly property color sheen: Palette.alpha(text, .04)
     readonly property color wallpaperDefault: "#08090a"
     readonly property color wallpaperGlow: "#17191d"

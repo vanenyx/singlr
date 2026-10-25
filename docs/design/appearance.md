@@ -17,6 +17,10 @@ Se aplican solo a superficies flotantes y temporales del shell (dock, barra, pan
 notificaciones, OSD). Las ventanas de aplicaciones no cambian de material.
 
 **Intensidad (0–100):** controla a la vez la opacidad del tinte y la fuerza del desenfoque/refracción.
+Propuesta T252: transmisión 0–85 % lineal en señal de pantalla, adaptación suave de luminancia local del
+fondo para sostener AA sin placas ni contornos; sin plugin, curva conservadora 0–30 %. Vidrio
+comparte el pase de difusión con Liquid; el blur nativo sigue como base fija.
+Ver [justificación, evidencia y límites](../handoffs/T252-material-polish.md).
 0 equivale a sólido. Respeta «reducir transparencia» de accesibilidad.
 
 ### Liquid Glass: efecto de KWin propio

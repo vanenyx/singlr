@@ -40,6 +40,18 @@ Item {
         function append(id, title, category, urls, actions) {
             runner.append({id:id, display:title, category:category, url:urls.length ? urls[0] : "", actions:actions, subtext:"", decoration:""});
         }
+        function test_searchFieldHasNoOpaqueBacking() {
+            const input = findChild(launcher, "launcherInput"); verify(input);
+            let backgrounds = 0;
+            for (const child of input.children) {
+                if (child.z < 0 && child.color !== undefined) {
+                    ++backgrounds;
+                    compare(child.color.a, 0);
+                }
+                if (child.style !== undefined) compare(child.style, Text.Normal);
+            }
+            verify(backgrounds > 0); // native focus border remains, fill stays clear
+        }
         function test_calculationAndConversionCopy_data() {
             return [{tag:"calculator", id:"calculator_2+2", result:"4"},
                     {tag:"conversion", id:"unitconverter_10 km", result:"6.21371 mi"}];

@@ -27,6 +27,22 @@ private Q_SLOTS:
         group.writeEntry("Intensity", 40); group.writeEntry("Enabled", false); config.sync();
         config.reparseConfiguration(); QVERIFY(!SinglrGlass::Settings::read(group).active());
     }
+    void surfaceModesAndAccessibility() {
+        QTemporaryDir tmp;
+        KConfig config(tmp.filePath("settings"), KConfig::SimpleConfig);
+        auto effect = config.group("Effect-singlrliquidglass");
+        auto appearance = config.group("Appearance");
+        auto accessibility = config.group("Accessibility");
+        const auto read = [&] { return SinglrGlass::Settings::readSurface(effect, appearance, accessibility); };
+        QVERIFY(read().active()); QVERIFY(!read().liquid); // glass default
+        appearance.writeEntry("material", "solid"); QVERIFY(!read().active());
+        appearance.writeEntry("material", "liquid"); QVERIFY(!read().active());
+        effect.writeEntry("Enabled", true); QVERIFY(read().active()); QVERIFY(read().liquid);
+        appearance.writeEntry("intensity", 0); QVERIFY(!read().active());
+        appearance.writeEntry("intensity", 100); QVERIFY(read().active());
+        accessibility.writeEntry("reduceTransparency", true); QVERIFY(!read().active());
+        appearance.writeEntry("material", "glass"); QVERIFY(!read().active());
+    }
     void scope() {
         QVERIFY(SinglrGlass::eligible("singlr-shell", true, true));
         QVERIFY(!SinglrGlass::eligible("org.kde.dolphin", true, true));

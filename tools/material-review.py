@@ -10,6 +10,7 @@ import struct
 import subprocess
 import time
 import math
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -76,16 +77,20 @@ def open_surface(run, surface):
     # Idempotent even when the requested panel was already open.
     run('qdbus6', 'org.kde.plasmashell', '/PlasmaShell', 'org.kde.PlasmaShell.singlrClosePanels')
     time.sleep(.15)
-    run('qdbus6', 'org.kde.plasmashell', '/PlasmaShell', 'org.kde.PlasmaShell.' +
-        ('toggleControlCenter' if surface == 'control-center' else 'toggleLauncher'))
+    if surface != 'dock':
+        run('qdbus6', 'org.kde.plasmashell', '/PlasmaShell', 'org.kde.PlasmaShell.' +
+            {'control-center': 'toggleControlCenter', 'clipboard': 'toggleClipboard', 'launcher': 'toggleLauncher'}[surface])
     time.sleep(.7)
 
 
 def panel_windows(diagnostic, surface):
     candidates = [w for w in (diagnostic or {}).get('windows', [])
-                  if w['eligible'] and w['visible'] and w['region'][3] > 100]
-    return [w for w in candidates if (w['region'][2] == 340 if surface == 'control-center'
-                                     else w['region'][2] > 400)]
+                  if w['eligible'] and w['visible'] and w['region'][3] > 28]
+    if surface == 'dock':
+        return [w for w in candidates if w['region'][3] <= 100]
+    return [w for w in candidates if w['region'][3] > 100 and
+            (w['region'][2] == 340 if surface == 'control-center' else
+             w['region'][2] == 760 if surface == 'clipboard' else w['region'][2] > 400)]
 
 
 def panel_edge(diagnostic, surface):
@@ -132,23 +137,63 @@ def pixel_edge(rect, diagnostic, capture):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('descriptor', type=Path)
-    parser.add_argument('--mode', choices=('dark', 'light'), required=True)
+    parser.add_argument('descriptor', type=Path, nargs='?')
+    parser.add_argument('--mode', choices=('dark', 'light'))
     parser.add_argument('--material', choices=('solid', 'glass', 'liquid'))
     parser.add_argument('--intensity', type=int, default=65)
-    parser.add_argument('--surface', choices=('control-center', 'launcher'), help='Close panels and open this surface')
+    parser.add_argument('--surface', choices=('control-center', 'launcher', 'clipboard', 'dock'), help='Close panels and open this surface')
     parser.add_argument('--capture', type=Path)
-    parser.add_argument('--suite', type=Path, help='Capture all three materials on both surfaces, with edge crops and diagnostics')
+    parser.add_argument('--suite', type=Path, help='Capture all three materials on all three surfaces, with edge crops and diagnostics')
+    parser.add_argument('--shader-fixture', type=Path, help='Render production GLSL via software EGL; explicitly NOT compositor evidence')
+    parser.add_argument('--sweep', type=Path, help='Capture glass/liquid at 0/25/50/75/100 on all three surfaces')
+    parser.add_argument('--matrix', type=Path, help='Both themes, warm/white/black backdrops and three panels at five intensities')
+    parser.add_argument('--wallpaper', type=Path, help='Warm wallpaper for --matrix or --shader-fixture')
     parser.add_argument('--edge-rect', type=int, nargs=4, metavar=('X', 'Y', 'WIDTH', 'HEIGHT'), help='Override edge crop in screenshot pixels')
     parser.add_argument('--edge-zoom', type=int, default=4)
     parser.add_argument('--diagnostic-overlay', action='store_true', help='Magenta shader rim; diagnostic captures only')
     parser.add_argument('--without-effect', action='store_true', help='Unload the plugin for a real fallback/baseline comparison')
     args = parser.parse_args()
+    if args.shader_fixture:
+        if args.descriptor or args.capture or args.suite or args.sweep or args.matrix or args.material:
+            parser.error('--shader-fixture es independiente de la sesión y del material')
+        executable = ROOT / 'build/kwin/effects/singlr-liquidglass/singlr-material-optics-test'
+        if not executable.is_file():
+            parser.error('Construye primero el target singlr-material-optics-test')
+        result = subprocess.run([str(executable), str(args.shader_fixture.resolve()), *([str(args.wallpaper.resolve(strict=True))] if args.wallpaper else [])],
+                                env=dict(os.environ, QT_QPA_PLATFORM='offscreen'),
+                                capture_output=True, text=True, timeout=120)
+        if result.returncode:
+            raise RuntimeError(result.stderr + result.stdout)
+        print(json.dumps(json.loads(result.stdout), indent=2))
+        return
+    if args.matrix:
+        if not args.descriptor or not args.wallpaper or args.suite or args.sweep or args.material or args.capture:
+            parser.error('--matrix requiere descriptor y --wallpaper, sin otro tipo de captura')
+        env = environment(args.descriptor) # validate private profile BEFORE any mutation
+        destination = args.matrix.resolve()
+        destination.mkdir(parents=True, exist_ok=True)
+        warm = args.wallpaper.resolve(strict=True)
+        executable = ROOT / 'build/singlr-material-image'
+        backdrops = [('warm', warm)]
+        for color in ('white', 'black'):
+            path = destination / (color + '.png')
+            subprocess.run([str(executable), '--solid', str(path), color], check=True, timeout=20)
+            backdrops.append((color, path))
+        for backdrop, path in backdrops:
+            subprocess.run(['kwriteconfig6', '--file', 'singlr/singlr.conf', '--group', 'Appearance', '--key', 'wallpaper', '--notify', path.as_uri()], env=env, check=True, timeout=20)
+            for mode in ([args.mode] if args.mode else ['dark', 'light']):
+                for surface in ('launcher', 'control-center', 'clipboard'):
+                    subprocess.run([sys.executable, str(Path(__file__).resolve()), str(args.descriptor), '--mode', mode, '--surface', surface, '--sweep', str(destination / backdrop / mode)], check=True)
+        return
+    if not args.descriptor or not args.mode:
+        parser.error('La revisión de KWin requiere descriptor privado y --mode')
     if not 0 <= args.intensity <= 100 or not 1 <= args.edge_zoom <= 16:
         parser.error('Intensidad: 0–100; zoom: 1–16')
-    if args.suite and (args.capture or args.material or args.without_effect or args.diagnostic_overlay):
+    if args.sweep and args.suite:
+        parser.error('--sweep y --suite son excluyentes')
+    if (args.suite or args.sweep) and (args.capture or args.material or args.without_effect or args.diagnostic_overlay):
         parser.error('--suite no admite --capture, --material, --without-effect ni --diagnostic-overlay')
-    if not args.suite and not args.material:
+    if not (args.suite or args.sweep) and not args.material:
         parser.error('Especifica --material o --suite')
     if args.edge_rect and (min(args.edge_rect[:2]) < 0 or min(args.edge_rect[2:]) < 1):
         parser.error('Recorte: X/Y >= 0, WIDTH/HEIGHT > 0')
@@ -177,19 +222,22 @@ def main():
                 result['edgeCapture'] = str(crop_edge(path, rect, args.edge_zoom))
             path.with_suffix('.json').write_text(json.dumps(result, indent=2) + '\n')
         print(json.dumps(result))
-        if material == 'liquid' and args.intensity > 0 and surface and not args.without_effect:
+        if material in ('glass', 'liquid') and args.intensity > 0 and surface and loaded and not args.without_effect:
             if not any(w['draws'] > 0 for w in panel_windows(diagnostic, surface)):
                 raise RuntimeError('Plugin cargado pero sin pases del panel; revisar diagnóstico .json')
-    if args.suite:
-        for surface in ([args.surface] if args.surface else ['control-center', 'launcher']):
+    if args.suite or args.sweep:
+        for surface in ([args.surface] if args.surface else ['control-center', 'launcher', 'dock']):
             # Discover the native panel region before an opaque intensity-0 run.
             loaded = apply_material(run, args.mode, 'glass', max(1, args.intensity))
             open_surface(run, surface)
             rect = args.edge_rect or panel_edge(effect_diagnostics(run, loaded), surface)
-            for material in ('solid', 'glass', 'liquid'):
-                loaded = apply(material)
-                save(material, loaded, args.suite / f'{surface}-{material}-{args.mode}.png',
-                     surface, rect, not args.edge_rect)
+            for intensity in ([0, 25, 50, 75, 100] if args.sweep else [args.intensity]):
+                args.intensity = intensity
+                for material in (('glass', 'liquid') if args.sweep else ('solid', 'glass', 'liquid')):
+                    loaded = apply(material)
+                    suffix = f'-{intensity:03}' if args.sweep else ''
+                    save(material, loaded, (args.sweep or args.suite) / f'{surface}-{material}-{args.mode}{suffix}.png',
+                         surface, rect, not args.edge_rect)
     else:
         loaded = apply(args.material, without_effect=args.without_effect, diagnostic_overlay=args.diagnostic_overlay)
         if args.surface:

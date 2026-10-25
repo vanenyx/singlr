@@ -12,3 +12,8 @@ set_target_properties(singlr-liquidglass-test PROPERTIES CXX_STANDARD 23)
 target_link_libraries(singlr-liquidglass-test PRIVATE KWin::kwin Qt6::Test KF6::ConfigCore)
 target_compile_definitions(singlr-liquidglass-test PRIVATE GLASS_PLUGIN="$<TARGET_FILE:singlr-liquidglass>")
 add_dependencies(singlr-liquidglass-test singlr-liquidglass)
+
+# Explicit software-EGL shader verification; never installed or run by the shell.
+find_package(OpenGL REQUIRED COMPONENTS EGL OpenGL)
+add_executable(singlr-material-optics-test EXCLUDE_FROM_ALL tests/optics.cpp)
+target_link_libraries(singlr-material-optics-test PRIVATE Qt6::Gui OpenGL::EGL OpenGL::OpenGL)

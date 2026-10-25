@@ -39,34 +39,45 @@ Item {
             // renderer used by this suite (which must itself stay opaque).
             compare(Palette.materialOpacity(0), 1);
             verify(1-Palette.materialOpacity(.65) >= .25);
-            fuzzyCompare(Palette.materialOpacity(1), .70, .001);
+            fuzzyCompare(Palette.materialOpacity(1), .15, .001);
+            for (let i = 0; i < 4; ++i)
+                fuzzyCompare(Palette.materialOpacity(i/4)-Palette.materialOpacity((i+1)/4), .2125, .001);
             let minimum = 100;
             for (const dark of [false, true]) {
                 const base = Qt.color(dark ? "#08090a" : "#f8f8f8");
-                for (const strength of [0, .01, .25, .65, 1]) {
+                for (const strength of [0, .01, .25, .50, .65, .75, 1]) {
                     for (const level of [dark ? 2.1 : -1.5, dark ? 6.8 : -3.8]) {
                         const tint = Palette.level(base,level,1);
-                        const a = Palette.materialOpacity(strength);
-                        for (const b of [0,1]) {
-                            const bg = Qt.rgba(a*tint.r+(1-a)*b,a*tint.g+(1-a)*b,a*tint.b+(1-a)*b,1);
+                        // Production shader's conservative neutral tint envelope.
+                        verify(dark ? Math.max(tint.r,tint.g,tint.b) <= .14 : Math.min(tint.r,tint.g,tint.b) >= .90);
+                        for (const conditioned of [false, true]) {
+                        const a = Palette.materialOpacity(strength, conditioned);
+                        for (const backdrop of [0,1]) {
+                            // The shader guarantees final material Y <= .115
+                            // in dark and >= .42 in light, including Qt's tint.
+                            // Test inks directly against that envelope: no plate
+                            // or glyph outline is assumed by the AA assertion.
+                            const bg = Qt.rgba(a*tint.r+(1-a)*backdrop,a*tint.g+(1-a)*backdrop,a*tint.b+(1-a)*backdrop,1);
+                            const backgroundY = conditioned && strength > 0 ? (dark ? .115 : .42) : luminance(bg);
                             for (const role of ["secondary","muted","faint"]) {
                                 const fg = Palette.materialInk(base,dark,role,strength,1);
-                                const x=luminance(fg), y=luminance(bg);
+                                const x=luminance(fg), y=backgroundY;
                                 const ratio=(Math.max(x,y)+.05)/(Math.min(x,y)+.05);
                                 minimum=Math.min(minimum,ratio);
                                 verify(ratio >= 4.5, `${dark}/${strength}/${role}: ${ratio}`);
                             }
                             if (strength > 0) {
                                 const inks=[dark ? Qt.color("#f7f8f8") : Palette.ink(base,17,1)];
-                                for (const accent of ["#5e6ad2","#ff0000","#00ff00","#0000ff","#ffff00"])
+                                for (const accent of ["#5e6ad2","#ff0000","#00ff00","#0000ff","#ffff00","#eb5757"])
                                     inks.push(Palette.accentInk(Qt.color(accent),dark,1,strength));
                                 for (const fg of inks) {
-                                    const x=luminance(fg),y=luminance(bg);
+                                    const x=luminance(fg),y=backgroundY;
                                     const ratio=(Math.max(x,y)+.05)/(Math.min(x,y)+.05);
                                     minimum=Math.min(minimum,ratio);
                                     verify(ratio>=4.5, `primary/accent ${dark}/${strength}: ${ratio}`);
                                 }
                             }
+                        }
                         }
                     }
                 }

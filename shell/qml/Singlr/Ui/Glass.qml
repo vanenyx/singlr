@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
+import "Theme.js" as Palette
 Item {
     id: glass
     property Item backdrop
@@ -48,7 +49,7 @@ Item {
     // Explicit opaque reduced-effects material on software: no fake CPU blur.
     Rectangle {
         anchors.fill: parent; radius: glass.radius
-        color: !glass.rhi || !Theme.translucent ? Theme.raised : glass.compositorBlur || glass.canBlur ? Theme.surface : Theme.raised
+        color: !glass.rhi || !Theme.translucent ? Theme.raised : glass.compositorBlur ? Theme.surface : glass.canBlur ? Palette.alpha(Theme.raised, Palette.materialOpacity(Theme.materialStrength, false)) : Theme.raised
         border.width: 1; border.color: Theme.focusBorder
     }
     Rectangle { x:12; y:1; width:parent.width-24; height:1; color:Theme.sheen }

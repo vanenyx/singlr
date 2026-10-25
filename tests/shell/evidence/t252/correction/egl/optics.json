@@ -1,0 +1,1666 @@
+{
+    "comparisons": [
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 9.662564964157706,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 12.4909520609319,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 12.477750896057348,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 14.625315860215053,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 9.660992383512545,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 12.489648297491039,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 12.468494623655914,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 14.623770161290322,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 38.27290764790765,
+            "side": 0,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 2.3053751803751803,
+            "side": 1,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 8.600182149362476,
+            "side": 2,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 2.1784494535519126,
+            "side": 3,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 9.76221072119835,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 12.543398131784903,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 12.510716990658924,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 14.642059033913995,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 9.760611798367416,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 12.543586425986703,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 12.49904695783893,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 14.629154043591686,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 31.12136627906977,
+            "side": 0,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 8.43923611111111,
+            "side": 1,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 5.868449781659389,
+            "side": 2,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 7.089337700145561,
+            "side": 3,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 9.736581224081224,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 12.545807414557414,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 12.496295402545403,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 14.637121049621049,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 9.73521736021736,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 12.546241777491778,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 12.482812276562276,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 14.625137637637637,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 33.488247863247864,
+            "side": 0,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 5.955776862026862,
+            "side": 1,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 5.190958605664488,
+            "side": 2,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 2.6086056644880173,
+            "side": 3,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 12.909200268817205,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 10.717287186379929,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 9.275504032258064,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 7.572211021505376,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 12.918463261648746,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 10.691005824372759,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 9.203931451612902,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 7.479688620071685,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 10.690205627705629,
+            "side": 0,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 25.37914862914863,
+            "side": 1,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 10.542008196721312,
+            "side": 2,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 13.415585154826958,
+            "side": 3,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 14.06948687200202,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 11.297466969620466,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 9.314938357317176,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 7.955698266431036,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 14.068920937473703,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 11.242995245308423,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 9.215186611125137,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 7.859160144744593,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 17.220082364341085,
+            "side": 0,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 16.444323320413435,
+            "side": 1,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 23.588609898107716,
+            "side": 2,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 9.657265890344492,
+            "side": 3,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 13.949159874159875,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 11.277315708565709,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 9.440919490919491,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 8.010352316602317,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 13.951967145717147,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 11.22394894894895,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 9.350667631917633,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 7.92497854997855,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 16.407432844932845,
+            "side": 0,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 19.71382783882784,
+            "side": 1,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 25.160403050108933,
+            "side": 2,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "warm",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 16.89063180827887,
+            "side": 3,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 4,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 3,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 5,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 4,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 4,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 3,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 5,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 4,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 0,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 1,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 2,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 3,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 4,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 3,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 5,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 4,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 4,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 3,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 5,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 4,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 0,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 1,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 2,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 3,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 4,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 3,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 5,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 4,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 4,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 3,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 5,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 4,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 0,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 1,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 2,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 3,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 32.333333333333336,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 12,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 10.333333333333334,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 7,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 32.333333333333336,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 12,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 10.333333333333334,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 7,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 0,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 1,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 2,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 3,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 32.333333333333336,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 12,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 10.333333333333334,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 7,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 32.333333333333336,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 12,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 10.333333333333334,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 7,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 0,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 1,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 2,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 3,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 32.333333333333336,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 12,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 10.333333333333334,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 7,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 32.333333333333336,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 12,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 10.333333333333334,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 7,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 0,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 1,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 2,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "white",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 3,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 10,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 12,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 13,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 15,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 10,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 12,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 13,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 15,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 1.25,
+            "side": 0,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 1,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 2,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 3,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 10,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 12,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 13,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 15,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 10,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 12,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 13,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 15,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 1.25,
+            "side": 0,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 1,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 2,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 3,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 10,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 12,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 13,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 15,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 10,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 12,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 13,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 15,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 1.25,
+            "side": 0,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 1,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 2,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": false,
+            "liquidVersusGlassRim12pxRGB255": 0,
+            "side": 3,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 5.666666666666667,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 6,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 5.666666666666667,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 6,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 5.666666666666667,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 5.997983870967742,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 5.660618279569892,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 5.991935483870968,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 62.833333333333336,
+            "side": 0,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 33.166666666666664,
+            "side": 1,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 31.5,
+            "side": 2,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 23.75,
+            "side": 3,
+            "surface": "control-center"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 5.666666666666667,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 6,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 5.666666666666667,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 6,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 5.666666666666667,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 5.997854077253219,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 5.660228898426324,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 5.991416309012876,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 62.833333333333336,
+            "side": 0,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 33.166666666666664,
+            "side": 1,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 31.5,
+            "side": 2,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 23.75,
+            "side": 3,
+            "surface": "launcher"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 25,
+            "liquid": false,
+            "meanQuarterStepRGB255": 5.666666666666667,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 50,
+            "liquid": false,
+            "meanQuarterStepRGB255": 6,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 75,
+            "liquid": false,
+            "meanQuarterStepRGB255": 5.666666666666667,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 100,
+            "liquid": false,
+            "meanQuarterStepRGB255": 6,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 25,
+            "liquid": true,
+            "meanQuarterStepRGB255": 5.666666666666667,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 50,
+            "liquid": true,
+            "meanQuarterStepRGB255": 5.998069498069498,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 75,
+            "liquid": true,
+            "meanQuarterStepRGB255": 5.660875160875161,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "intensity": 100,
+            "liquid": true,
+            "meanQuarterStepRGB255": 5.992277992277992,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 62.833333333333336,
+            "side": 0,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 33.166666666666664,
+            "side": 1,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 31.5,
+            "side": 2,
+            "surface": "clipboard"
+        },
+        {
+            "backdrop": "black",
+            "dark": true,
+            "liquidVersusGlassRim12pxRGB255": 23.75,
+            "side": 3,
+            "surface": "clipboard"
+        }
+    ],
+    "compositedPixelsChecked": 2937600,
+    "kind": "surfaceless-EGL-production-shader-fixture-NOT-KWin",
+    "maximumDarkLuminance": 0.10307895410748198,
+    "minimumLightLuminance": 0.48674200454735544,
+    "renderer": "llvmpipe (LLVM 23.1.3, 256 bits)",
+    "version": "4.6 (Compatibility Profile) Mesa 26.2.5-arch1.1"
+}

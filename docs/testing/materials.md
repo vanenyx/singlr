@@ -1,3 +1,14 @@
+# T252 — matriz ampliada
+
+Ver [corrección y límites actuales](../handoffs/T252-material-correction.md).
+`--matrix DIR --wallpaper PNG` ejecuta ambos temas, fondo cálido/blanco/negro y las tres
+superficies solicitadas (lanzador, centro de control, portapapeles), con cinco intensidades.
+`material-review.py --sweep DIR` compara 0/25/50/75/100 en centro de control, lanzador y
+dock; repetir con `--mode dark` y `--mode light`. `--shader-fixture DIR` es una prueba
+EGL independiente, marcada como tal, que no necesita descriptor ni bus. Vidrio ahora
+usa el pase Singlr: para carga inactiva medir **Sólido**, para fallback Vidrio descargado.
+Build normal con `vulkan-headers` instalado, sin rutas temporales de cabeceras.
+
 # T248 / T249 — revisión y medición en la laptop AMD + NVIDIA
 
 **Corrección T249:** usar el [procedimiento actualizado](../handoffs/T249-liquidglass-fix.md#revisión-de-claude-fuera-del-sandbox)
@@ -106,7 +117,7 @@ bordes de alto contraste, tema claro/oscuro y escalas 100/125/150 %. Aprobación
 ## 3. Tiempo de frame y GPU, con/sin efecto
 
 Usar el mismo tamaño, escena y GPU. Hacer tres repeticiones por variante, alternando el
-orden: **Vidrio con plugin descargado**, **Vidrio con plugin cargado/inactivo**, **Liquid 65**.
+orden: **Vidrio con plugin descargado**, **Sólido con plugin cargado/inactivo**, **Liquid 65**.
 Añadir Sólido y Liquid 100. No comparar reposo con una escena animada.
 
 Instrumentar solo el KWin privado mediante un wrapper temporal en PATH. Cerrar el runner
@@ -128,7 +139,7 @@ abrir el fixture anterior añadiendo `'--', '--animate'` al comando qml6. Abrir 
 sobre el fixture **antes de los 20 s**. Mantenerlo abierto hasta terminar el log de 30 s.
 Repetir con una sesión nueva por variante; guardar CSV/log con material, repetición y tema.
 Para el baseline usar `--material glass --without-effect`. Para comprobar coste de la carga
-inactiva usar `--material glass` sin descargarlo.
+inactiva usar `--material solid` sin descargarlo.
 
 Validar primero que MangoHud se adjuntó a **kwin_wayland**, no qml6: debe producir CSV de ese
 proceso con frametimes y GPU. Si no engancha EGL o no produce CSV, la medición queda
