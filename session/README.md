@@ -239,3 +239,25 @@ T241: [apariencia KDE, integración GTK/CSD y límites](GTK.md). El shell sigue 
 paleta de KDE por eventos y usa su autoswitcher/knighttime. No hay horario ni
 servicio de apariencia propios. Las capturas GTK y la medida de recursos siguen
 pendientes por las restricciones de sockets del sandbox.
+
+## Aceptación reproducible y diagnóstico — T247
+
+La batería para la **sesión instalada**, con acciones, precondiciones, comprobación,
+limpieza y operador, está en [tests/session](../tests/session/README.md). Incluye
+inicio, bloqueo real, retirada/retorno de salida, caídas/ráfagas del shell,
+daemon-reexec, continuidad de pacman y logout/restauración en dos fases.
+Las comprobaciones visuales y de contraseña no se sustituyen por un PASS de script.
+El QML propio registra solo `SINGLR_LOCKSCREEN_READY` al instanciarse, sin datos de
+usuario ni autenticación; permite exigir evidencia positiva del tema y descartar
+fallback en el journal. No cambia PAM ni la recuperación segura de KScreenLocker.
+
+`singlr-doctor --output informe-nuevo.json` genera un informe privado 0600 de solo
+lectura: versiones, entorno de sesión permitido, unidades, canal de desarrollo
+configurado/en ejecución y eventos de error recientes clasificados. Omite mensajes
+libres, nombres, hostname, red, rutas y credenciales. Los datos no accesibles se
+marcan desconocidos; el comando no afirma que la sesión esté sana. También funciona
+desde TTY, con lo que el bus permita consultar. No necesita daemon ni root.
+
+Matriz inicial y pendientes: [compatibility.md](../docs/compatibility.md).
+La instalación limpia y vuelta a Plasma requieren usuario nuevo, paquete actualizado
+y entorno de prueba coordinado por el creador; no se ejecutaron sobre el host aquí.

@@ -56,3 +56,6 @@ install(FILES session/systemd/plasma-kwin_wayland.service.d/50-singlr-recovery.c
 add_subdirectory(session/appearance)
 install(DIRECTORY session/look-and-feel/ DESTINATION "${KDE_INSTALL_DATADIR}/plasma/look-and-feel")
 install(FILES session/xdg/kdeglobals DESTINATION "${KDE_INSTALL_LIBDIR}/singlr/xdg")
+
+# Read-only, privacy-filtered support report, available from a TTY as well.
+install(PROGRAMS tools/singlr-doctor DESTINATION "${KDE_INSTALL_BINDIR}")

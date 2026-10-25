@@ -26,6 +26,8 @@ import org.kde.breeze.components
 
 Item {
     id: lockScreenUi
+    // Constant diagnostic only: no authentication state or user input.
+    Component.onCompleted: console.info("SINGLR_LOCKSCREEN_READY")
 
     // If we're using software rendering, draw outlines instead of shadows
     // See https://bugs.kde.org/show_bug.cgi?id=398317

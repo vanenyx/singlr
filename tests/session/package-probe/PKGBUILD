@@ -1,0 +1,11 @@
+# Fixture without scripts, hooks, services, network or dependencies.
+pkgname=singlr-session-probe
+pkgver=1
+pkgrel=1
+pkgdesc='Disposable fixture for Singlr session continuity test'
+arch=('any')
+license=('LicenseRef-Singlr-Pending')
+package() {
+    install -d "$pkgdir/usr/share/singlr-session-probe"
+    printf '%s\n' 'T247 session continuity probe' > "$pkgdir/usr/share/singlr-session-probe/probe.txt"
+}
