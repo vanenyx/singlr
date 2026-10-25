@@ -53,6 +53,9 @@ class BuildTests(unittest.TestCase):
             state = json.loads((base / 'build/state.json').read_text())
             self.assertIn(str(header), state['deps'])
             self.assertTrue(any('/qt6/' in dep for dep in state['deps']))
+            for source in ('main.cpp', 'secretagent.cpp', 'secretagent.h', 'secretformat.cpp', 'secretformat.h'):
+                self.assertIn(str(ROOT / 'shell/session/src' / source), state['deps'])
+            self.assertFalse(any('/.compile-' in dep for dep in state['deps']))
             mtime = binary.stat().st_mtime_ns
             failure = subprocess.run(command, env=env | {'CXXFLAGS': '-include no_such_t204_header.h'},
                                      capture_output=True, text=True, timeout=30)

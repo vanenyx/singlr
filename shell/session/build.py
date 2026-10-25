@@ -24,16 +24,22 @@ def main():
     if not compiler or not shutil.which(compiler[0]) or not shutil.which('pkg-config'):
         raise RuntimeError('Se requieren g++ (o CXX) y pkg-config; no se instalan automáticamente')
     compiler[0] = shutil.which(compiler[0])
-    flags = subprocess.run(['pkg-config', '--cflags', '--libs', 'Qt6Gui', 'Qt6Qml', 'Qt6Quick', 'Qt6DBus', 'KF6WindowSystem'],
+    flags = subprocess.run(['pkg-config', '--cflags', '--libs', 'Qt6Gui', 'Qt6Qml', 'Qt6Quick', 'Qt6DBus', 'KF6WindowSystem', 'libnm'],
                            capture_output=True, text=True)
     if flags.returncode:
-        raise RuntimeError('Faltan cabeceras/metadatos de Qt6 Gui/Qml/Quick (qt6-base, qt6-declarative):\n' + flags.stderr)
+        raise RuntimeError('Faltan cabeceras/metadatos de Qt6 Gui/Qml/Quick o libnm (qt6-base, qt6-declarative, libnm):\n' + flags.stderr)
     command = compiler + ['-std=c++17', '-O2', '-fPIC'] + shlex.split(os.environ.get('CXXFLAGS', ''))
-    command += [str(HERE / 'src/main.cpp')] + shlex.split(flags.stdout) + [
+    command += shlex.split(flags.stdout) + [
         # KF6GlobalAccel no instala un .pc: cabeceras y biblioteca directas.
-        '-I/usr/include/KF6/KGlobalAccel', '-lKF6GlobalAccel', '-lLayerShellQtInterface']
+        '-I/usr/include/KF6/KGlobalAccel', '-lKF6GlobalAccel', '-lLayerShellQtInterface',
+        '-I/usr/include/KF6/NetworkManagerQt', '-lKF6NetworkManagerQt',
+        '-I/usr/include/KF6/KWallet', '-lKF6Wallet']
     command += shlex.split(os.environ.get('LDFLAGS', ''))
-    fingerprint = hashlib.sha256(json.dumps([command, stamp(compiler[0]),
+    libexec = subprocess.run(['pkg-config', '--variable=libexecdir', 'Qt6Core'],
+                             check=True, capture_output=True, text=True).stdout.strip()
+    moc = Path(libexec) / 'moc'
+    sources = sorted((HERE / 'src').glob('*.cpp'))
+    fingerprint = hashlib.sha256(json.dumps([command, [str(p) for p in sources], stamp(moc), stamp(compiler[0]),
                                 stamp(__file__)]).encode()).hexdigest()
     build = Path(os.environ.get('SINGLR_BUILD_DIR', str(HERE / 'build'))).resolve()
     build.mkdir(parents=True, exist_ok=True)
@@ -52,15 +58,24 @@ def main():
             pass
         with tempfile.TemporaryDirectory(prefix='.compile-', dir=build) as directory:
             binary, deps = Path(directory) / 'singlr-shell', Path(directory) / 'deps.d'
+            generated = Path(directory) / 'moc_secretagent.cpp'
+            includes = [flag for flag in command if flag.startswith(('-I', '-D'))]
+            subprocess.run([str(moc), *includes, str(HERE / 'src/secretagent.h'), '-o', str(generated)],
+                           check=True, stdout=sys.stderr)
+            # One translation unit preserves one atomic compiler invocation and one
+            # complete dependency file, including the moc input and system headers.
+            unity = Path(directory) / 'session.cpp'
+            unity.write_text(''.join(f'#include "{p}"\n' for p in [*sources, generated]))
             # -MD includes system headers: a Qt/LayerShellQt update invalidates the cache.
-            result = subprocess.run(command + ['-MD', '-MF', str(deps), '-o', str(binary)],
+            result = subprocess.run(command + [str(unity), '-MD', '-MF', str(deps), '-o', str(binary)],
                                     stdout=sys.stderr)
             if result.returncode:
                 raise RuntimeError('No se pudo compilar el lanzador. Revise el diagnóstico anterior; '
                                    'se requieren las cabeceras Qt6 y LayerShellQt/Shell y '
-                                   'libLayerShellQtInterface (layer-shell-qt). No se reutiliza un binario obsoleto.')
+                                   'libLayerShellQtInterface (layer-shell-qt), NetworkManagerQt y KWallet. No se reutiliza un binario obsoleto.')
             paths = shlex.split(deps.read_text().replace('\\\n', '').split(':', 1)[1])
-            dependencies = {str(Path(p).resolve()): stamp(p) for p in paths}
+            dependencies = {str(Path(p).resolve()): stamp(p) for p in paths
+                            if Path(p).resolve().parent != Path(directory).resolve()}
             binary.replace(output)
             temporary = build / 'state.json.tmp'
             temporary.write_text(json.dumps(dict(fingerprint=fingerprint, deps=dependencies,

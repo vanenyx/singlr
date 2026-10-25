@@ -44,7 +44,7 @@ from pathlib import Path
 out=Path(sys.argv[sys.argv.index('-o')+1])
 out.write_text('#!/bin/sh\\nexec qml6 \"$@\"\\n')
 out.chmod(0o755)
-Path(sys.argv[sys.argv.index('-MF')+1]).write_text('out: ' + sys.argv[sys.argv.index('-fPIC')+1] + '\\n')
+Path(sys.argv[sys.argv.index('-MF')+1]).write_text('out: ' + str(Path(__file__).resolve()) + '\\n')
 """)
         self.executable('dbus-run-session', '''import os,sys
 os.environ['DBUS_SESSION_BUS_ADDRESS']='unix:path=/tmp/fake-singlr-bus'

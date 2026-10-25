@@ -114,3 +114,157 @@ Evidencia del sandbox T204 en `tools/evidence/t204.txt`. El bus D-Bus real no pu
 crear su socket aquí (`Operation not permitted`): el E2E completo y los cierres
 manuales quedan pendientes fuera del sandbox. Claude ya verificó arranque y
 captura reales antes de T204; eso no acredita los nuevos pasos E2E.
+
+## T214: agente de secretos de NetworkManager
+
+Implementación técnica del [contrato autorizado](../../docs/phase1/secrets-contract.md).
+El lanzador adquiere `org.kde.plasmashell` antes de cargar QML y, solo si lo
+consigue y no se usa `--windowed`, construye `SecretAgent` y expone `SinglrSecrets`.
+NetworkManagerQt registra `org.singlr.networkmanagement` en el bus del sistema.
+Las peticiones conservan el mensaje D-Bus original hasta `provide`/`cancel`;
+`CancelGetSecrets`, una petición duplicada y la desaparición de NM invalidan el
+identificador y emiten `requestCancelled`. `RequestNew` evita leer la contraseña
+anterior y emite `retry=true`. Sin permiso de interacción se devuelve `NoSecrets`
+si no hay secretos suficientes. Las respuestas contienen solo secretos del ajuste
+solicitado, nunca el perfil completo.
+
+Compatibilidad contrastada con fuentes oficiales:
+
+- [plasma-nm v6.8.1, kded/secretagent.cpp](https://github.com/KDE/plasma-nm/blob/v6.8.1/kded/secretagent.cpp):
+  carpeta/servicio `Network Management`, clave `{uuid};nombre-del-ajuste`,
+  `Setting::secretsToStringMap()` serializado como objeto JSON compacto.
+- [QtKeychain, backend Unix](https://github.com/frankosterfeld/qtkeychain/blob/main/qtkeychain/keychain_unix.cpp):
+  el backend KWallet usa `NetworkWallet()`, carpeta igual al servicio y entradas
+  Password para texto JSON. También lee las entradas Map heredadas.
+- Cabeceras instaladas: NetworkManagerQt y KWallet **6.31.0**, plasma-nm **6.8.1**,
+  Qt **6.12.0**, revisadas el 24-10-2026. Se usan `Wallet::readMap` para el formato
+  heredado y `readPassword`/`writePassword` para el actual, sin migración al leer.
+
+Solo se persisten secretos `AgentOwned`, excluyendo `NotSaved`/`NotRequired` y
+los que administra el sistema. Un secreto suministrado por NM prevalece sobre
+una entrada antigua. Si KWallet falla, los secretos que traiga la conexión
+siguen sirviendo; una contraseña introducida puede usarse sin persistirla.
+`SaveSecrets`/`DeleteSecrets` notifican errores de almacenamiento. El borrado
+abarca las claves del UUID exacto, incluidos ajustes antiguos.
+
+La interacción de un único campo admite WPA-PSK, SAE, WEP, LEAP y 802.1x cuando
+NetworkManagerQt solo requiere `password`. VPN, certificados, PIN y métodos con
+varios secretos no tienen UI en este contrato y reciben `NoSecrets` si requieren
+interacción. No se implementan plugins de autenticación VPN ni migración desde
+archivos de texto históricos de plasma-nm.
+
+El supervisor live descarga `networkmanagement` antes de arrancar en sustitución
+y guarda un marcador para recargarlo en `stop` o si falla el arranque. No lo
+descarga con `--keep-plasma`. Un fallo al restaurar conserva el marcador para
+reintentar con `stop`. No se descarga ningún módulo desde las pruebas unitarias.
+
+Compilación: `build.py` ejecuta el `moc` del `libexecdir` de Qt6Core y compila una
+unidad agregada temporal para mantener una única invocación atómica y un archivo
+de dependencias completo. Enlaza `KF6NetworkManagerQt` y `KF6Wallet` directamente
+y obtiene los includes transitivos de GLib mediante `pkg-config libnm`. La caché
+incluye el ejecutable de moc, fuentes y cabeceras; omite los archivos temporales.
+
+### Validación fuera del sandbox (Claude)
+
+Integrar primero el QML de Codex 1 que consume `SinglrSecrets`. Desde una terminal
+de la sesión Wayland real, reservar una red de prueba WPA2/SAE y su interfaz;
+estos pasos desconectan temporalmente esa interfaz. No introducir contraseñas
+en argumentos de comandos, logs o evidencias.
+
+```bash
+cd /home/sunw/Projects/singlr-worktrees/codex-2
+shell/session/build.sh
+python3 -m unittest discover -s tests/shell -p 'test_*.py' -v
+
+nmcli -f DEVICE,TYPE,STATE device
+read -r -p 'Interfaz Wi-Fi de prueba: ' WIFI_DEVICE
+read -r -p 'SSID de prueba: ' WIFI_SSID
+ORIGINAL_UUID=$(nmcli -g GENERAL.CON-UUID device show "$WIFI_DEVICE")
+TEST_PROFILE="singlr-t214-$(date +%s)"
+
+tools/singlr-live.sh start
+qdbus6 org.kde.kded6 /kded org.kde.kded6.loadedModules
+# La lista no debe contener networkmanagement.
+
+nmcli connection add type wifi ifname "$WIFI_DEVICE" con-name "$TEST_PROFILE" \
+    ssid "$WIFI_SSID" wifi-sec.key-mgmt wpa-psk wifi-sec.psk-flags 1 \
+    connection.autoconnect no
+# Para una red exclusivamente WPA3, cambiar wpa-psk por sae.
+nmcli --wait 120 connection up id "$TEST_PROFILE" ifname "$WIFI_DEVICE"
+```
+
+Mientras espera el último comando, el centro de control debe abrir la fila del
+SSID y enfocar su contraseña sin abrir el diálogo de red de KDE. Introducir una
+contraseña incorrecta: debe volver a pedirla con «Contraseña incorrecta»
+(`RequestNew`). Introducir la correcta: la conexión debe activarse. Si NM termina
+la activación tras el fallo en lugar de enviar `RequestNew`, registrar ese resultado
+y reactivar el perfil; no dar por validado el camino `retry` sin observarlo.
+Para probar cancelación después de las reconexiones siguientes, usar:
+`nmcli connection down id "$TEST_PROFILE"`,
+`nmcli connection modify id "$TEST_PROFILE" wifi-sec.psk-flags 2` y
+`nmcli --wait 120 connection up id "$TEST_PROFILE" ifname "$WIFI_DEVICE"`.
+El flag `NotSaved` evita reutilizar la entrada de la cartera. Cancelar en QML:
+el comando debe terminar sin quedarse esperando. Para cancelación desde NM,
+volver a activar y ejecutar `nmcli connection down id "$TEST_PROFILE"` desde
+otra terminal mientras está abierto el campo: debe cerrarse mediante
+`requestCancelled`. Después restablecer
+`nmcli connection modify id "$TEST_PROFILE" wifi-sec.psk-flags 1`.
+
+```bash
+# Tras conectar correctamente: reconectar sin volver a escribir la contraseña.
+nmcli connection down id "$TEST_PROFILE"
+nmcli --wait 60 connection up id "$TEST_PROFILE" ifname "$WIFI_DEVICE"
+
+# Restaurar KDE y comprobar que puede leer el secreto guardado por Singlr.
+tools/singlr-live.sh stop
+qdbus6 org.kde.kded6 /kded org.kde.kded6.loadedModules
+# Debe volver a incluir networkmanagement.
+nmcli connection down id "$TEST_PROFILE"
+nmcli --wait 60 connection up id "$TEST_PROFILE" ifname "$WIFI_DEVICE"
+
+# Limpiar únicamente el perfil de prueba; se debe borrar su entrada de KWallet.
+nmcli connection delete id "$TEST_PROFILE"
+if [ -n "$ORIGINAL_UUID" ] && [ "$ORIGINAL_UUID" != '--' ]; then
+    nmcli --wait 60 connection up uuid "$ORIGINAL_UUID" ifname "$WIFI_DEVICE"
+fi
+tools/singlr-live.sh stop
+```
+
+Validar también la dirección KDE → Singlr con un perfil de prueba guardado
+previamente por KDE (`psk-flags=1`), y una entrada Map heredada si existe una de
+prueba. Para verificar el borrado por Singlr, borrar un perfil de prueba mientras
+Singlr está activo y comprobar en KWalletManager que desaparece solo su clave.
+No exportar ni fotografiar secretos. Como control, `start --keep-plasma` debe
+mantener cargado el módulo, y `tools/check-shell.sh` debe seguir cargando el modo
+`--windowed`, sin la propiedad `SinglrSecrets`.
+
+Límites pendientes: las pruebas de formato no acreditan el intercambio D-Bus
+real ni acceso a una cartera real. KWallet puede pedir autorización para la nueva
+aplicación o desbloquear la cartera; es un diálogo de la cartera independiente
+del diálogo de contraseña de red que sustituimos. Una configuración de QtKeychain
+forzada a libsecret/otro backend queda fuera de esta compatibilidad directa con
+KWallet. SIGKILL del supervisor requiere `tools/singlr-live.sh stop` para restaurar
+el módulo; no puede ejecutarse limpieza desde un proceso muerto.
+
+### Evidencia ejecutada en el sandbox (24-10-2026)
+
+- `shell/session/build.sh`: PASS, binario `shell/session/build/singlr-shell`.
+  Único aviso: deprecación ya existente de `LayerShellQt::Shell::useLayerShell`.
+- `python3 -m unittest discover -s tests/shell -p 'test_*.py' -v`:
+  **27 tests, PASS** (24,922 s): formato nativo, flags, restauración kded simulada,
+  caché/concurrencia/fallos de build y ciclo de vida de sesiones simulado.
+  Incluye detener el agente Singlr antes de restaurar KDE si falla el supervisor.
+  Se ajustó el compilador simulado al nuevo orden de argumentos.
+- `test_build.py` repetido tras añadir comprobaciones de las nuevas dependencias:
+  **PASS** (13,295 s).
+- `tools/check-shell.sh --output /tmp/singlr-t214-windowed.png`: **PASS**,
+  qmllint y carga/captura offscreen con `qml6`; no ejecuta el agente nativo.
+- Sonda QML temporal ejecutada con el binario nativo, `--windowed`, plataforma
+  offscreen, XDG temporales y ambos buses deshabilitados: **PASS**, el temporizador
+  comprueba `typeof SinglrSecrets === "undefined"` y sale con código 0. Salida:
+  `SINGLR_SECRETS_WINDOWED_ABSENT` (requiere `QT_FORCE_STDERR_LOGGING=1`).
+- `python3 scripts/check_setup.py` y `git diff --check`: **PASS**.
+- `dbus-run-session -- true`: bloqueado, `Failed to bind socket ... Operation
+  not permitted`; no se ejecutó integración real con NetworkManager/KWallet.
+
+No se modificó `shell/qml/**`, no se creó commit y no se tocó la sesión KDE activa.
