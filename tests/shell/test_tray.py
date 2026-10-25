@@ -58,6 +58,7 @@ class TrayTests(unittest.TestCase):
                                  str(ROOT / 'tests/shell/TrayProbe.qml'), '--', '--windowed'],
                                 capture_output=True, text=True, timeout=15,
                                 env=self.env | {'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/nonexistent',
+                                                'XDG_CONFIG_HOME': str(Path(self.tmp.name) / 'config'),
                                                 'DBUS_SYSTEM_BUS_ADDRESS': 'unix:path=/nonexistent'})
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('TRAY_WINDOWED_UNDEFINED true', result.stdout + result.stderr)

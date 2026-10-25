@@ -204,10 +204,13 @@ def inside(base, source, width, height, client_kind="singlr"):
         client_env = env.copy()
         if env.get('SINGLR_WAYLAND_DEBUG'):
             client_env['WAYLAND_DEBUG'] = '1'
-        command = (['plasmashell'] if client_kind == 'plasma' else
+        # Hold the private compositor/bus open while an external supervisor
+        # exercises shell crash/restart. The default runner follows its client.
+        command = (['sleep', 'infinity'] if client_kind == 'none' else
+                   ['plasmashell'] if client_kind == 'plasma' else
                    [str(ROOT / 'shell/session/qml-shell'), str(source)])
         client = subprocess.Popen(command, env=client_env)
-        save_descriptor(descriptor, env, client.pid)
+        save_descriptor(descriptor, env, None if client_kind == 'none' else client.pid)
         print(f'SINGLR_SESSION_FILE={descriptor}', flush=True)
         duration = int(env.get('SINGLR_DURATION_MS', '0')) / 1000
         deadline = time.monotonic() + duration if duration else None
@@ -235,7 +238,7 @@ def inside(base, source, width, height, client_kind="singlr"):
 
 
 def launch(source, size, client_kind="singlr"):
-    for command in (('plasmashell' if client_kind == 'plasma' else 'qml6'),
+    for command in (('sleep' if client_kind == 'none' else 'plasmashell' if client_kind == 'plasma' else 'qml6'),
                     'kwin_wayland', 'dbus-run-session', 'dbus-update-activation-environment'):
         if not shutil.which(command):
             raise RuntimeError(f'Falta herramienta requerida: {command}')
@@ -252,6 +255,12 @@ def launch(source, size, client_kind="singlr"):
         with tempfile.TemporaryDirectory(prefix='singlr-session-') as directory:
             base = Path(directory)
             env = runtime['isolated_environment'](base)
+            # Explicit fixture only: never copy the user's desktop preferences.
+            if client_kind != 'plasma' and os.environ.get('SINGLR_TEST_WALLPAPER'):
+                wallpaper = Path(os.environ['SINGLR_TEST_WALLPAPER']).resolve(strict=True)
+                config = Path(env['XDG_CONFIG_HOME']) / 'singlr/singlr.conf'
+                config.parent.mkdir()
+                config.write_text('[Appearance]\nwallpaper=' + wallpaper.as_uri() + '\n')
             for key in ('DISPLAY', 'WAYLAND_SOCKET', 'DBUS_SESSION_BUS_ADDRESS', 'DBUS_STARTER_ADDRESS',
                         'DBUS_STARTER_BUS_TYPE', 'SESSION_MANAGER', 'QT_WAYLAND_SHELL_INTEGRATION',
                         'XDG_ACTIVATION_TOKEN', 'DESKTOP_STARTUP_ID', '_KDE_APPLICATIONS_AS_SERVICE',
@@ -292,7 +301,7 @@ def launch(source, size, client_kind="singlr"):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--size', default='2048x1280')
-    parser.add_argument('--client', choices=('singlr', 'plasma'), default='singlr',
+    parser.add_argument('--client', choices=('singlr', 'plasma', 'none'), default='singlr',
                         help='Cliente del compositor privado; Plasma usa configuración temporal limpia')
     parser.add_argument('--entry', type=Path, default=ROOT / 'shell/qml/Shell.qml')
     parser.add_argument('--duration', type=float, help='Duración en segundos; sin opción, hasta cerrar KWin o Ctrl+C')

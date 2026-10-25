@@ -5,6 +5,9 @@ BindsTo=plasma-kwin_wayland.service
 After=plasma-kwin_wayland.service
 Before=plasma-kded6.service
 PartOf=singlr-workspace.target graphical-session.target
+StartLimitIntervalSec=60s
+StartLimitBurst=3
+OnFailure=singlr-shell-failed.service
 
 [Service]
 # Type=simple: declarar BusName=org.kde.plasmashell choca con plasma-plasmashell.service
@@ -14,4 +17,8 @@ ExecStart=/usr/lib/singlr/startsinglr-wayland --shell
 Slice=session.slice
 TimeoutStartSec=30
 TimeoutStopSec=10
-Restart=no
+Restart=on-failure
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=singlr-shell
+Environment="QT_MESSAGE_PATTERN=%%{type} %%{category}: %%{message}"

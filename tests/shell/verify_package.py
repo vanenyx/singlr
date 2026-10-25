@@ -16,6 +16,7 @@ def verify(stage):
         'usr/share/applications/singlr-settings.desktop',
         'usr/share/wayland-sessions/singlr.desktop',
         'usr/lib/systemd/user/singlr-shell.service',
+        'usr/lib/systemd/user/singlr-shell-failed.service',
         'usr/lib/systemd/user/singlr-workspace.target',
         'usr/share/aurorae/themes/Singlr/Singlrrc',
         'usr/share/kwin/effects/singlr-overview/metadata.json',

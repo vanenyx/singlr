@@ -19,6 +19,11 @@ Item {
             for (let i = 0; i < inventory.count; ++i) {
                 const surfaces = inventory.objectAt(i);
                 compare(surfaces.outputScreen, screen);
+                const background = findChild(surfaces, "backgroundSurface");
+                verify(background.item);
+                const wallpaper = findChild(background.item, "wallpaperImage");
+                verify(wallpaper);
+                compare(wallpaper.sourceSize, Qt.size(Math.ceil(screen.width * screen.devicePixelRatio), Math.ceil(screen.height * screen.devicePixelRatio)));
                 compare(findChild(surfaces, "barMenuSurface").active, false);
                 compare(findChild(surfaces, "trayMenuSurface").active, false);
                 const bar = findChild(surfaces, "screenTopBar");

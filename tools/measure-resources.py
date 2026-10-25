@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Measure only marked shell clients in private nested KWin sessions (Linux)."""
 import argparse
+import hashlib
 from datetime import datetime, timezone
 import json
 import os
@@ -156,6 +157,8 @@ def run_session(kind, args, folder):
             env = os.environ.copy()
             # Reproducible primary measure; opt in explicitly for profile overhead.
             env['SINGLR_PROFILE'] = '1' if args.profile else '0'
+            if args.wallpaper:
+                env['SINGLR_TEST_WALLPAPER'] = str(args.wallpaper)
             env.pop('SINGLR_DURATION_MS', None)
             process = subprocess.Popen([str(HERE / 'run-singlr.sh'), '--client', kind, '--size', args.size],
                                        env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
@@ -227,8 +230,13 @@ def main():
     parser.add_argument('--scenario', choices=('idle', 'open-panels'), default='idle')
     parser.add_argument('--profile', action='store_true', help='SINGLR_PROFILE=1; añade coste diagnóstico')
     parser.add_argument('--size', default='2048x1280')
+    parser.add_argument('--wallpaper', type=Path, help='imagen local para la configuración privada de Singlr')
     parser.add_argument('--output', type=Path, default=Path('/tmp') / datetime.now().strftime('singlr-resources-%Y%m%d-%H%M%S'))
     args = parser.parse_args()
+    if args.wallpaper:
+        args.wallpaper = args.wallpaper.resolve()
+        if not args.wallpaper.is_file():
+            parser.error('--wallpaper debe ser una imagen local existente')
     output = args.output.resolve()
     if output.exists() and any(output.iterdir()):
         parser.error('--output debe ser nuevo o vacío')
@@ -245,6 +253,9 @@ def main():
                          'Plasma limpio; krunner solo si se activa. open-panels se aplica a Singlr.',
                          'PSS excluye KWin, servicios auxiliares y memoria GPU no mapeada.'],
                   results=[], errors=[])
+    if args.wallpaper:
+        report['environment']['wallpaper'] = dict(path=str(args.wallpaper),
+            sha256=hashlib.sha256(args.wallpaper.read_bytes()).hexdigest())
     try:
         for command in (['kwin_wayland', '--version'], ['plasmashell', '--version'], ['pkg-config', '--modversion', 'Qt6Quick']):
             result = subprocess.run(command, capture_output=True, text=True, timeout=10)

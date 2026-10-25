@@ -9,11 +9,13 @@ singlr_configure_path(session/startsinglr-wayland startsinglr-wayland)
 singlr_configure_path(session/systemd/singlr-kwin-recover.service singlr-kwin-recover.service)
 singlr_configure_path(session/singlr.desktop singlr.desktop)
 singlr_configure_path(session/systemd/singlr-shell.service singlr-shell.service)
+singlr_configure_path(session/systemd/singlr-shell-failed.service singlr-shell-failed.service)
 singlr_configure_path(apps/settings/singlr-settings singlr-settings)
 install(PROGRAMS "${PROJECT_BINARY_DIR}/startsinglr-wayland" DESTINATION "${KDE_INSTALL_LIBDIR}/singlr")
 install(PROGRAMS "${PROJECT_BINARY_DIR}/singlr-settings" DESTINATION "${KDE_INSTALL_BINDIR}")
 install(FILES "${PROJECT_BINARY_DIR}/singlr.desktop" DESTINATION "${KDE_INSTALL_DATADIR}/wayland-sessions")
 install(FILES "${PROJECT_BINARY_DIR}/singlr-shell.service" session/systemd/singlr-workspace.target
+    "${PROJECT_BINARY_DIR}/singlr-shell-failed.service"
     DESTINATION "${KDE_INSTALL_SYSTEMDUSERUNITDIR}")
 install(FILES apps/settings/singlr-settings.desktop DESTINATION "${KDE_INSTALL_APPDIR}")
 # Main.qml is delivered by Codex 1. Fail at install time if it has not been integrated.
