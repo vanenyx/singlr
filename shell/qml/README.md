@@ -403,3 +403,28 @@ El log en vivo tras la recarga de 19:32:10 no presenta errores QML nuevos;
 permanece el aviso previo del portal. Los avisos D-Bus de la suite corresponden
 al sandbox. Queda la confirmación física del creador con su red y Bluetooth;
 las pruebas no conectan, desconectan ni olvidan dispositivos reales.
+
+### T217 — Páginas de geometría estable (P-011)
+
+Sustituye el comportamiento de expansión de T213/T216 por una sola `StackView`:
+principal → Wi-Fi → detalle/contraseña y principal → Bluetooth → dispositivo.
+El alto se calcula una vez con el contenido principal; todas las páginas usan
+ese mismo espacio, con desplazamiento interno. Las filas miden 36 px. Contraseña,
+errores (línea reservada), acciones y confirmación de olvido viven en páginas.
+`SinglrSecrets` abre directamente la página de contraseña, también al reintentar.
+Se conservan las claves y el orden de `StableDeviceModel`, eliminando congelación
+por hover, estados de expansión por clave y temporizador de alto de 400 ms.
+El historial de notificaciones tiene alto fijo de 620 px, filas de 36 px y detalle
+por página. Los menús de dock/barra ya toman una instantánea al abrir o son
+estáticos. Solo las páginas usan fundido cruzado de 120 ms; se eliminaron los
+movimientos de tamaño/posición, pulso/escala del dock y animaciones de listas.
+El indicador giratorio de conexión comunica progreso.
+
+Comprobado con Qt 6.12.0: qmllint completo con `-W 0` e imports locales,
+**exit 0, sin avisos**; qmltestrunner offscreen/software **70 passed / 0 failed**.
+La suite verifica altas/bajas y señal con filas constantes, orden/claves,
+altura del panel al navegar, Esc y ‹, contraseña/error/olvido, secretos y
+historial estable con 0/2/40 notificaciones. Los dobles no cambian la red ni
+Bluetooth. Preview QML revisado en `/tmp/t217-panels.png`; no sustituye la
+validación física del creador. API de StackView contrastada con
+[Qt 6.12](https://doc.qt.io/qt-6/qml-qtquick-controls-stackview.html).

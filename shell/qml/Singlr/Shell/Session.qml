@@ -104,9 +104,12 @@ Item {
         LayerShell.Window.margins.top: 12
         LayerShell.Window.margins.right: 16
         LayerShell.Window.exclusionZone: 0
-        LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
+        LayerShell.Window.keyboardInteractivity: notifications.historyOpen ? LayerShell.Window.KeyboardInteractivityOnDemand : LayerShell.Window.KeyboardInteractivityNone
         LayerShell.Window.scope: "singlr-notifications"
-        NotificationCenter { id: notifications; live: true; sessionMode: true }
+        NotificationCenter {
+            id: notifications; live: true; sessionMode: true
+            onHistoryOpenChanged: if (historyOpen) Qt.callLater(function() { if (notifications.historyOpen) notificationsWindow.requestActivate(); })
+        }
     }
     // Tight, independent layer surfaces: never enlarge the dock's input region.
     Window {

@@ -44,6 +44,7 @@ Rectangle {
     readonly property var candidates: ["org.kde.dolphin.desktop", "org.kde.konsole.desktop", "firefox.desktop", "org.kde.kate.desktop", "systemsettings.desktop"]
     property var pinUrls: []
     property url settingsLocation: "file://" + StandardPaths.writableLocation(StandardPaths.GenericConfigLocation) + "/singlr/dock.json"
+    readonly property var pinStore: pinSettings.item
     readonly property bool pinsLoaded: pinSettings.status === Loader.Ready
     // Settings uses QSettings/INI, even with the requested dock.json filename.
     Loader {
@@ -63,7 +64,7 @@ Rectangle {
         id: pinSettings
     }
     function refreshPins() {
-        if (pinSettings.item && pinSettings.item.pins) return;
+        if (pinStore && pinStore.pins) return;
         let found = [];
         for (let i = 0; i < applications.count; ++i) found.push(applications.get(i, "fileName"));
         pinUrls = candidates.filter(n => found.indexOf(n) >= 0).map(n => "applications:" + n);
@@ -137,7 +138,7 @@ Rectangle {
             taskSource.requestRemoveLauncher(url);
         } else taskSource.requestAddLauncher(url);
         pinUrls = Array.from(tasks.launcherList, String);
-        if (pinSettings.item) { pinSettings.item.pins = JSON.stringify(pinUrls); pinSettings.item.sync(); }
+        if (pinStore) { pinStore.pins = JSON.stringify(pinUrls); pinStore.sync(); }
         closeMenu();
     }
     function beginLaunch(row, task) {

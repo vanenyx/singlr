@@ -23,10 +23,11 @@ Item {
         WifiRow {
             width: 308
             handler: networkHandlerStub
-            onEditRequested: editing = true
-            onEditFinished: editing = false
         }
     }
+    Component { id: detailsSpy; SignalSpy { signalName: "detailsRequested" } }
+    Component { id: passwordComponent; WifiPage { width: 308; handler: networkHandlerStub; passwordPage: true } }
+    Component { id: detailComponent; WifiPage { width: 308; handler: networkHandlerStub } }
     Component { id: toggleComponent; Toggle { text: "Wi-Fi"; width: 308 } }
     Component { id: sliderComponent; SliderControl { width: 308; from: 0; to: 100; value: 50 } }
     TestCase {
@@ -58,18 +59,15 @@ Item {
             const open = createRow({SecurityType: Network.Enums.NoneSecurity});
             mouseClick(findChild(open, "networkRow")); compare(networkHandlerStub.operation, "add"); compare(networkHandlerStub.args, ["/device/1", "/ap/1", ""]);
         }
-        function test_passwordEnterEscapeAndInlineError() {
-            const row = createRow(); const button = findChild(row, "networkRow");
-            mouseClick(button); verify(row.editing); compare(networkHandlerStub.operation, "");
-            const field = findChild(row, "wifiPassword"); verify(field.activeFocus);
-            field.text = "example-password";
-            keyClick(Qt.Key_Escape); verify(!row.editing); compare(field.text, ""); compare(networkHandlerStub.operation, "");
-            mouseClick(button); field.text = "example-password";
-            keyClick(Qt.Key_Return); compare(networkHandlerStub.operation, "add"); compare(networkHandlerStub.args[2], "example-password");
-            verify(!row.editing); compare(field.text, ""); verify(row.requested);
+        function test_passwordPageReservedErrorAndSubmission() {
+            const page = createTemporaryObject(passwordComponent, fixture, {networkData: networkFixture()});
+            const field = findChild(page, "wifiPassword");
+            const height = page.height;
+            const error = findChild(page, "wifiError"); compare(error.height, 36);
+            field.text = "example-password"; page.submit();
+            compare(networkHandlerStub.operation, "add"); compare(networkHandlerStub.args[2], "example-password"); compare(field.text, "");
             networkHandlerStub.connectionActivationFailed("", "Contraseña incorrecta");
-            compare(row.failure, "Contraseña incorrecta"); verify(!row.requested); verify(!button.busy);
-            mouseClick(button); verify(row.editing);
+            compare(page.failure, "Contraseña incorrecta"); compare(page.height, height); compare(error.height, 36);
         }
         function test_activationFailureAndSuccess() {
             const row = createRow({Uuid: "known", ConnectionPath: "/connection/1"});
@@ -79,17 +77,19 @@ Item {
             verify(row.failure.length > 0); verify(!row.requested);
             row.networkData = networkFixture({Uuid: "known", ConnectionPath: "/connection/1", ConnectionState: Network.Enums.Activated});
             compare(row.failure, ""); const button = findChild(row, "networkRow"); compare(button.status, "Conectada");
-            button.actionTriggered(); verify(row.menuOpen); wait(30);
-            mouseClick(findChild(row, "disconnectNetwork")); compare(networkHandlerStub.operation, "deactivate"); compare(networkHandlerStub.args, ["/connection/1", "/device/1"]);
+            compare(row.height, 36);
         }
         function test_forgetConfirmationAndRightClick() {
             const row = createRow({Uuid: "known", ConnectionPath: "/connection/1"});
+            const spy = createTemporaryObject(detailsSpy, fixture, {target: row});
             mouseClick(findChild(row, "networkRow"), 60, 18, Qt.RightButton);
-            verify(row.menuOpen); wait(30); compare(networkHandlerStub.operation, "");
-            mouseClick(findChild(row, "forgetNetwork")); verify(row.confirmingForget); wait(30);
+            compare(spy.count, 1); compare(row.height, 36);
+            const page = createTemporaryObject(detailComponent, fixture, {networkData: row.networkData});
+            const height = page.height;
+            mouseClick(findChild(page, "forgetNetwork")); verify(page.confirmingForget); wait(30); compare(page.height, height);
             compare(networkHandlerStub.operation, "");
-            mouseClick(findChild(row, "confirmForget")); compare(networkHandlerStub.operation, "remove");
-            compare(networkHandlerStub.args, ["/connection/1"]); verify(!row.menuOpen);
+            mouseClick(findChild(page, "confirmForget")); compare(networkHandlerStub.operation, "remove");
+            compare(networkHandlerStub.args, ["/connection/1"]);
         }
         function test_neutralControlsKeyboard() {
             const toggle = createTemporaryObject(toggleComponent, fixture);

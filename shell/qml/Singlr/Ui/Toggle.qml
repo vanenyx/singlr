@@ -18,12 +18,10 @@ Controls.Switch {
         x: sw.width - width; y: (sw.height - height) / 2
         color: sw.checked ? Theme.control : "#1fffffff"
         border.color: sw.visualFocus ? Theme.control : "transparent"
-        Behavior on color { ColorAnimation { duration: 120 } }
         Rectangle {
             width: 16; height: 16; radius: 8; y: 2
             x: sw.checked ? parent.width - width - 2 : 2
             color: sw.checked ? "#16171a" : "#d0d6e0"
-            Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         }
     }
     background: Item { }

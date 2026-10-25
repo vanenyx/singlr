@@ -107,26 +107,27 @@ Item {
             verify(panel !== null);
             secretAgent.operation = "";
             secretAgent.secretRequested("request-1", "Red protegida", "saved-uuid", true);
-            compare(panel.page, "wifi");
-            const row = findChild(panel, "secretWifiRow");
-            const field = findChild(row, "wifiPassword");
+            compare(panel.page, "network");
+            let field = findChild(panel.navigation.currentItem, "wifiPassword");
             tryCompare(field, "activeFocus", true);
-            compare(panel.secretRetry, true); compare(row.secretRetry, true); tryCompare(row, "editing", true);
+            compare(panel.secretRetry, true);
             field.text = "test-password"; keyClick(Qt.Key_Return);
             compare(secretAgent.operation, "provide"); compare(secretAgent.request, "request-1");
             compare(secretAgent.password, "test-password"); compare(field.text, "");
             secretAgent.secretRequested("request-2", "Red protegida", "saved-uuid", false);
+            field = findChild(panel.navigation.currentItem, "wifiPassword");
             tryCompare(field, "activeFocus", true);
-            keyClick(Qt.Key_Escape); compare(panel.page, "main");
+            keyClick(Qt.Key_Escape); compare(panel.page, "wifi");
+            wait(150);
             compare(secretAgent.operation, "cancel"); compare(secretAgent.request, "request-2");
             secretAgent.secretRequested("request-3", "Red protegida", "saved-uuid", false);
-            secretAgent.requestCancelled("request-3"); compare(panel.secretId, ""); verify(!row.editing);
+            secretAgent.requestCancelled("request-3"); compare(panel.secretId, "");
         }
         function test_controlCenterLoadAndEscape() {
             const panel = createTemporaryObject(panelComponent, parent);
             verify(panel !== null);
             panelClosed.target = panel; panelClosed.clear();
-            panel.page = "wifi";
+            panel.openPage("wifi"); wait(150);
             panel.forceActiveFocus(); keyClick(Qt.Key_Escape); compare(panel.page, "main"); compare(panelClosed.count, 0);
             keyClick(Qt.Key_Escape); compare(panelClosed.count, 1);
         }

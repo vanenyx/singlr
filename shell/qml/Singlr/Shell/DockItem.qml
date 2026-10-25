@@ -35,19 +35,13 @@ Controls.Control {
     Item {
         id: iconContainer
         anchors.horizontalCenter: parent.horizontalCenter; y: 5; width: 32; height: 32
-        scale: tile.launching ? 1 : pointer.pressed ? 0.94 : pointer.containsMouse ? 1.08 : 1
+        scale: 1
         Item {
             id: pulse; anchors.fill: parent
             AppIcon { visible: !tile.task?.singlrGrid; anchors.fill: parent; source: tile.task?.decoration }
             Icon { anchors.centerIn: parent; visible: !!tile.task?.singlrGrid; name: "squares-four"; width: 24; height: 24; font.pixelSize: 24; color: Theme.secondary }
-            SequentialAnimation on scale {
-                running: tile.launching; loops: Animation.Infinite
-                NumberAnimation { from: 1; to: 1.08; duration: 450; easing.type: Easing.InOutSine }
-                NumberAnimation { from: 1.08; to: 1; duration: 450; easing.type: Easing.InOutSine }
-                onStopped: pulse.scale = 1
-            }
+
         }
-        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
     }
     MouseArea { id: pointer; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton; onContainsMouseChanged: {
         const center = tile.mapToItem(null, tile.width / 2, 0).x;

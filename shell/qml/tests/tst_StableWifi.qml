@@ -31,7 +31,10 @@ Item {
         function scan(entries) { scanModel.entries = entries; layoutChanged(); dataChanged(); }
     }
     property string removedPath: ""
-    Component { id: listFactory; StableWifiList { width: 308; handler: handlerStub; pageActive: true } }
+    SystemControls { id: testAudio }
+    QtObject { id: testNotifications; property bool inhibited: false; function setInhibited(value) { inhibited = value; } }
+    Component { id: panelFactory; ControlCenter { width: 340; audio: testAudio; notifications: testNotifications; networkSource: scanModel; networkActions: handlerStub } }
+    Component { id: listFactory; StableWifiList { width: 308; height: 200; handler: handlerStub; pageActive: true } }
     TestCase {
         name: "StableWifi"; when: windowShown
         function entry(name, signal, uuid = "", active = false) {
@@ -43,55 +46,21 @@ Item {
         }
         function setupList() {
             const list = createTemporaryObject(listFactory, fixture);
-            list.pointerInside = false;
             list.stableModel.sync([entry("A", 90), entry("B", 50, "b"), entry("C", 20)]);
             list.forceLayout(); wait(40);
             return list;
         }
-        function test_changingSourceEvery100msWhileTyping() {
-            const list = setupList();
-            scanModel.entries = [entry("A", 90), entry("B", 50, "b"), entry("C", 20)];
-            list.sourceModel = scanModel;
-            const row = list.itemAtIndex(0);
-            verify(row); row.editRequested();
-            const field = findChild(row, "wifiPassword");
-            field.text = "secret-kept-on-A";
-            const key = row.deviceKey;
-            for (let i = 0; i < 10; ++i) {
-                // Double of an NM scan: order, strength, connection, arrivals and removals change.
-                scanModel.scan([entry("C", 99 - i, "", true), entry("B", i, "b"), entry("D", 70), entry("A", i)]);
-                wait(100);
-                compare(list.itemAtIndex(0), row);
-                compare(row.deviceKey, key); compare(field.text, "secret-kept-on-A");
-                compare(list.stableModel.rows.count, 3);
-                compare(row.networkData.Signal, i);
-            }
-            row.editFinished(); wait(40); list.forceLayout();
-            compare(list.stableModel.rows.get(0).payload.Name, "C");
-            compare(list.stableModel.rows.count, 4);
-            compare(field.text, "");
-        }
-        function test_menuAndForgetStayOnKey() {
+        function test_scanPreservesRowsAndViewport() {
             const list = setupList(); const row = list.itemAtIndex(1);
-            mouseClick(findChild(row, "networkRow"), 60, 18, Qt.RightButton);
-            verify(row.menuOpen); wait(40); compare(list.menuKey, "uuid:b");
-            mouseClick(findChild(row, "forgetNetwork")); verify(row.confirmingForget);
-            list.stableModel.sync([entry("C", 100, "", true), entry("B", 1, "b"), entry("D", 70)]);
-            wait(100); compare(list.itemAtIndex(1), row); compare(row.deviceKey, "uuid:b");
-            mouseClick(findChild(row, "confirmForget")); compare(fixture.removedPath, "/connection/B");
-            wait(30); compare(list.menuKey, ""); compare(list.stableModel.rows.count, 3);
-            compare(list.stableModel.indexOf(entry("A", 0).deviceKey), -1);
-        }
-        function test_hoverDefersStructureButNotSignal() {
-            const list = setupList();
-            list.pointerInside = true;
-            list.stableModel.sync([entry("B", 99, "b", true), entry("D", 10)]);
-            compare(list.stableModel.rows.count, 3);
-            compare(list.stableModel.rows.get(0).payload.Name, "A");
-            compare(list.stableModel.rows.get(1).payload.Signal, 99);
-            list.pointerInside = false;
-            compare(list.stableModel.rows.count, 2);
-            compare(list.stableModel.rows.get(0).deviceKey, "uuid:b");
+            const height = list.height;
+            for (let i = 0; i < 10; ++i) {
+                list.stableModel.sync([entry("B", i, "b"), entry("D", 70), entry("A", 1)]);
+                list.forceLayout(); wait(10);
+                compare(list.itemAtIndex(1), row); compare(row.height, 36);
+                compare(row.networkData.Signal, i); compare(list.height, height);
+            }
+            list.stableModel.sync([entry("B", 80, "b")]);
+            compare(list.height, height); compare(row.height, 36);
         }
         function test_connectionChangesRestoreOpeningOrder() {
             const list = setupList();
@@ -101,6 +70,28 @@ Item {
             compare(list.stableModel.rows.get(0).payload.Name, "C");
             compare(list.stableModel.rows.get(1).payload.Name, "A");
             compare(list.stableModel.rows.get(2).payload.Name, "B");
+        }
+        function test_panelHeightAndNavigation() {
+            scanModel.entries = [entry("A", 90), entry("B", 50, "b")];
+            const panel = createTemporaryObject(panelFactory, fixture);
+            wait(80); const height = panel.implicitHeight; panel.height = height;
+            panel.openPage("wifi"); wait(150);
+            const list = findChild(panel, "wifiList"); list.forceLayout();
+            const data = list.stableModel.rows.get(0).payload;
+            for (let i = 0; i < 5; ++i) {
+                scanModel.scan([entry("B", i, "b"), entry("A", 90-i), entry("New"+i, i)]);
+                wait(30); list.forceLayout();
+                compare(panel.implicitHeight, height); compare(panel.height, height);
+                for (let j = 0; j < list.count; ++j) if (list.itemAtIndex(j)) compare(list.itemAtIndex(j).height, 36);
+            }
+            panel.openNetwork(data, false); wait(150); compare(panel.navigation.depth, 3); compare(panel.implicitHeight, height);
+            mouseClick(findChild(panel.navigation.currentItem, "pageBack")); wait(150); compare(panel.page, "wifi");
+            panel.openNetwork(data, true); wait(150); compare(panel.implicitHeight, height);
+            const field = findChild(panel.navigation.currentItem, "wifiPassword"); field.forceActiveFocus(); keyClick(Qt.Key_Escape); wait(150);
+            compare(panel.page, "wifi"); compare(panel.navigation.depth, 2);
+            panel.forceActiveFocus(); keyClick(Qt.Key_Escape); wait(150); compare(panel.page, "main");
+            panel.openPage("bluetooth"); wait(150); compare(panel.implicitHeight, height);
+            panel.back(); wait(150); compare(panel.page, "main");
         }
         function test_orderFixedUntilNextOpening() {
             const list = setupList();

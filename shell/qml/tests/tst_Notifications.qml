@@ -71,6 +71,20 @@ Item {
             center.backendObject.entries = [expired]; compare(center.popups.length, 0); compare(center.entries.length, 1);
             center.backendObject.entries = []; compare(center.popups.length, 0);
         }
+        function test_historyHeightRowsAndPages() {
+            center.historyOpen = true;
+            const height = center.height;
+            center.backendObject.entries = [entry(1), entry(2)]; wait(30);
+            const list = findChild(center, "notificationList"); list.forceLayout();
+            compare(list.itemAtIndex(0).height, 36);
+            center.backendObject.entries = Array.from({length: 40}, (_, i) => entry(i + 1)); wait(30);
+            compare(center.height, height); list.forceLayout();
+            const pages = findChild(center, "notificationPages");
+            mouseClick(list.itemAtIndex(0)); wait(150); compare(pages.depth, 2); compare(center.height, height);
+            mouseClick(findChild(pages.currentItem, "notificationBack")); wait(150); compare(pages.depth, 1);
+            mouseClick(list.itemAtIndex(0)); wait(150); pages.forceActiveFocus(); keyClick(Qt.Key_Escape); wait(150); compare(pages.depth, 1);
+            center.backendObject.entries = []; wait(30); compare(center.height, height);
+        }
         function test_cardActions() {
             const card = createTemporaryObject(cardComponent, root, {entry:entry(1)});
             root.testedCard = card; invoked.clear(); dismissed.clear();

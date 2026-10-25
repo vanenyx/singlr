@@ -19,19 +19,30 @@ Controls.Control {
     signal closed()
     signal openRequested()
     implicitWidth: 340
-    property real requestedHeight: Math.min(760, (page === "main" ? content.implicitHeight : detailContent.implicitHeight) + 32)
-    implicitHeight: 400
-    onRequestedHeightChanged: if (!heightThrottle.running) heightThrottle.start()
-    Timer { id: heightThrottle; interval: 400; onTriggered: panel.implicitHeight = panel.requestedHeight }
-    Behavior on implicitHeight { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-    property string page: "main"
+    implicitHeight: 560
+    readonly property string page: pages.currentItem ? pages.currentItem.objectName : "main"
+    readonly property alias navigation: pages
+    property var networkSource: availableNetworks
+    property var networkActions: networkHandler
+    property var selectedNetwork: ({})
+    property string selectedKey: ""
+    property var selectedDevice: null
+    function openPage(name) {
+        if (pages.busy) return;
+        pages.pushItem(name === "wifi" ? wifiComponent : bluetoothComponent);
+    }
+    function openNetwork(data, passwordPage) {
+        secretRetry = false;
+        selectedNetwork = data;
+        selectedKey = data.Uuid ? "uuid:" + data.Uuid : "ssid:" + JSON.stringify([data.Ssid, data.SecurityType]);
+        pages.pushItem(networkComponent, {passwordPage: passwordPage});
+    }
+    function resetPages() { if (pages.depth > 1) pages.popToIndex(0, Controls.StackView.Immediate); }
     // Context property supplied only by the native session launcher.
     // qmllint disable unqualified
     property var secrets: typeof SinglrSecrets !== "undefined" ? SinglrSecrets : null
     // qmllint enable unqualified
     property string secretId: ""
-    property string secretSsid: ""
-    property string secretUuid: ""
     property bool secretRetry: false
     readonly property bool bluetoothEnabled: !Bluetooth.Manager.bluetoothBlocked && Bluetooth.Manager.adapters.some(adapter => adapter.powered)
     function setBluetooth(value) {
@@ -44,26 +55,25 @@ Controls.Control {
         if (request && secrets) secrets.cancel(request);
     }
     function back() {
-        if (page !== "main") { cancelSecret(); editingWifi = ""; page = "main"; forceActiveFocus(); }
+        if (pages.depth > 1) { cancelSecret(); pages.popCurrentItem(pages.busy ? Controls.StackView.Immediate : Controls.StackView.PopTransition); }
         else closed();
+        forceActiveFocus();
     }
     Connections {
         target: panel.secrets
         function onSecretRequested(requestId, ssid, connectionUuid, retry) {
-            if (panel.secretId && panel.secretId !== requestId) panel.cancelSecret();
-            panel.secretSsid = ssid; panel.secretUuid = connectionUuid; panel.secretRetry = retry;
-            panel.openRequested(); panel.page = "wifi"; panel.secretId = requestId;
-            Qt.callLater(function() {
-                const viewport = detailScroll.contentItem as Flickable;
-                if (viewport) viewport.contentY = 0;
-            });
+            panel.cancelSecret(); panel.openRequested(); panel.resetPages();
+            pages.pushItem(wifiComponent, {}, Controls.StackView.Immediate);
+            panel.selectedKey = "";
+            panel.secretId = requestId; panel.secretRetry = retry;
+            panel.selectedNetwork = {Name: ssid, Ssid: ssid, Uuid: connectionUuid, Signal: 0, SecurityType: Network.Enums.Wpa2Psk, ConnectionState: Network.Enums.Deactivated};
+            pages.pushItem(networkComponent, {passwordPage: true});
         }
         function onRequestCancelled(requestId) {
-            if (panel.secretId === requestId) panel.secretId = "";
+            if (panel.secretId === requestId) { panel.secretId = ""; if (panel.page === "network") panel.back(); }
         }
     }
     property string errorText: ""
-    property string editingWifi: ""
     property bool opened: true
     palette.window: Theme.raised
     palette.windowText: Theme.text
@@ -76,7 +86,7 @@ Controls.Control {
     palette.highlight: Theme.control
     onOpenedChanged: {
         if (opened) networkHandler.requestScan();
-        else { cancelSecret(); editingWifi = ""; errorText = ""; page = "main"; }
+        else { cancelSecret(); errorText = ""; resetPages(); }
     }
     Component.onCompleted: if (opened) networkHandler.requestScan()
     Timer { interval: 15000; running: panel.opened; repeat: true; onTriggered: networkHandler.requestScan() }
@@ -96,13 +106,21 @@ Controls.Control {
     Network.NetworkModel { id: networks }
     Network.AppletProxyModel { id: availableNetworks; sourceModel: networks }
     Volume.SinkModel { id: sinks }
-    Controls.ScrollView {
-        x: panel.page === "main" ? 16 : -16; y: 16
-        width: parent.width - 32; height: parent.height - 32
-        opacity: panel.page === "main" ? 1 : 0
-        visible: opacity > 0; enabled: panel.page === "main"
-        Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-        Behavior on opacity { NumberAnimation { duration: 160 } }
+    Controls.StackView {
+        id: pages; anchors.fill: parent; anchors.margins: 16; clip: true
+        initialItem: mainComponent
+        pushEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 120 } }
+        pushExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 120 } }
+        popEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 120 } }
+        popExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 120 } }
+        replaceEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 120 } }
+        replaceExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 120 } }
+    }
+    Component {
+        id: mainComponent
+        Controls.ScrollView {
+        objectName: "main"
+        Component.onCompleted: Qt.callLater(function() { panel.implicitHeight = Math.min(760, content.implicitHeight + 32); })
         contentWidth: availableWidth
         clip: true
         Column {
@@ -113,26 +131,26 @@ Controls.Control {
                 Tool { icon: "x"; description: "Cerrar"; onClicked: panel.closed() }
             }
             Row {
-                width: parent.width; height: 44; spacing: 10
+                width: parent.width; height: 36; spacing: 10
                 Toggle { width: 34; checked: enabledConnections.wirelessEnabled; enabled: enabledConnections.wirelessHwEnabled; Accessible.name: "Wi-Fi"; onToggled: networkHandler.enableWireless(checked) }
                 Column {
                     width: parent.width - 82
-                    UiText { height: 22; text: "Wi-Fi" }
-                    UiText { width: parent.width; height: 20; text: enabledConnections.wirelessEnabled ? network.activeConnections || "Sin conexión" : "Desactivado"; color: Theme.secondary; font.pixelSize: 11; elide: Text.ElideRight }
+                    UiText { height: 18; text: "Wi-Fi" }
+                    UiText { width: parent.width; height: 18; text: enabledConnections.wirelessEnabled ? network.activeConnections || "Sin conexión" : "Desactivado"; color: Theme.secondary; font.pixelSize: 11; elide: Text.ElideRight }
                 }
-                Tool { icon: "caret-right"; description: "Redes Wi-Fi"; onClicked: panel.page = "wifi" }
+                Tool { icon: "caret-right"; description: "Redes Wi-Fi"; onClicked: panel.openPage("wifi") }
             }
             Row {
-                width: parent.width; height: 44; spacing: 10
+                width: parent.width; height: 36; spacing: 10
                 Toggle { width: 34; checked: panel.bluetoothEnabled; enabled: Bluetooth.Manager.adapters.length > 0; Accessible.name: "Bluetooth"; onToggled: panel.setBluetooth(checked) }
                 Column {
                     width: parent.width - 82
-                    UiText { height: 22; text: "Bluetooth" }
-                    UiText { width: parent.width; height: 20; color: Theme.secondary; font.pixelSize: 11; elide: Text.ElideRight
+                    UiText { height: 18; text: "Bluetooth" }
+                    UiText { width: parent.width; height: 18; color: Theme.secondary; font.pixelSize: 11; elide: Text.ElideRight
                         text: !panel.bluetoothEnabled ? "Desactivado" : Bluetooth.Manager.devices.filter(device => device.connected).map(device => device.friendlyName).join(", ") || "Sin conexión"
                     }
                 }
-                Tool { icon: "caret-right"; description: "Dispositivos Bluetooth"; onClicked: panel.page = "bluetooth" }
+                Tool { icon: "caret-right"; description: "Dispositivos Bluetooth"; onClicked: panel.openPage("bluetooth") }
             }
             Rectangle { width: parent.width; height: 1; color: Theme.border }
             Column {
@@ -241,91 +259,94 @@ Controls.Control {
             }
         }
     }
-    Controls.ScrollView {
-        id: detailScroll
-        x: panel.page === "main" ? 48 : 16; y: 16
-        width: parent.width - 32; height: parent.height - 32
-        opacity: panel.page === "main" ? 0 : 1
-        visible: opacity > 0; enabled: panel.page !== "main"
-        Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-        Behavior on opacity { NumberAnimation { duration: 160 } }
-        contentWidth: availableWidth; clip: true
-        Column {
-            id: detailContent; width: detailScroll.availableWidth; spacing: 8
+    }
+    Component {
+        id: wifiComponent
+        Item {
+            objectName: "wifi"
             Row {
-                width: parent.width; height: 36; spacing: 8
-                Tool { icon: "caret-left"; description: "Volver"; onClicked: panel.back() }
-                UiText { width: parent.width - 78; height: 36; weight: 600; text: panel.page === "bluetooth" ? "Bluetooth" : "Wi-Fi" }
-                Toggle {
-                    width: 34; Accessible.name: panel.page === "wifi" ? "Wi-Fi" : "Bluetooth"
-                    checked: panel.page === "wifi" ? enabledConnections.wirelessEnabled : panel.bluetoothEnabled
-                    enabled: panel.page === "wifi" ? enabledConnections.wirelessHwEnabled : Bluetooth.Manager.adapters.length > 0
-                    onToggled: { if (panel.page === "wifi") networkHandler.enableWireless(checked); else panel.setBluetooth(checked); }
-                }
+                width: parent.width; height: 36
+                Tool { objectName: "pageBack"; icon: "caret-left"; description: "Volver"; onClicked: panel.back() }
+                UiText { width: parent.width - 62; height: 36; text: "Wi-Fi"; weight: 600 }
+                Toggle { width: 34; checked: enabledConnections.wirelessEnabled; Accessible.name: "Wi-Fi"; onToggled: networkHandler.enableWireless(checked) }
             }
-            WifiRow {
-                objectName: "secretWifiRow"
-                width: parent.width; visible: panel.page === "wifi" && !!panel.secretId
-                height: visible ? implicitHeight : 0
-                handler: networkHandler
-                networkData: ({Name: panel.secretSsid, Ssid: panel.secretSsid, Uuid: panel.secretUuid,
-                    DevicePath: "", SpecificPath: "/", ConnectionPath: "", Signal: 0,
-                    SecurityType: Network.Enums.Wpa2Psk, Type: Network.Enums.Wireless,
-                    ItemType: Network.NetworkModelItem.AvailableAccessPoint, ConnectionState: Network.Enums.Deactivated})
-                secretRequestId: panel.secretId; secretRetry: panel.secretRetry
-                editing: visible && panel.opened
-                onSecretSubmitted: password => { const request = panel.secretId; panel.secretId = ""; if (request && panel.secrets) panel.secrets.provide(request, password); }
-                onSecretCancelled: panel.cancelSecret()
-                onEditFinished: panel.cancelSecret()
+            StableWifiList {
+                id: wifiList; objectName: "wifiList"; y: 44; width: parent.width; height: parent.height - 80
+                handler: panel.networkActions; sourceModel: panel.networkSource
+                pageActive: panel.opened && panel.page === "wifi"
+                onNetworkUpdated: (key, data) => { if (key === panel.selectedKey || (panel.secretId && data.Ssid === panel.selectedNetwork.Ssid)) panel.selectedNetwork = data; }
+                onPasswordRequested: data => panel.openNetwork(data, true)
+                onDetailsRequested: data => panel.openNetwork(data, false)
                 onSettingsRequested: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement")
             }
-            Column {
-                width: parent.width; visible: panel.page === "wifi" && enabledConnections.wirelessEnabled
-                StableWifiList {
-                    width: detailContent.width
-                    sourceModel: availableNetworks
-                    handler: networkHandler
-                    pageActive: panel.opened && panel.page === "wifi"
-                    secretActive: !!panel.secretId
-                    suppressedSsid: panel.secretSsid
-                    onSettingsRequested: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement")
-                }
-                ControlRow { width: parent.width; glyph: "gear"; text: "Más ajustes de red…"; onClicked: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement") }
+            ControlRow { y: parent.height - 36; width: parent.width; height: 36; text: "Más ajustes de red…"; glyph: "gear"; onClicked: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement") }
+        }
+    }
+    Component {
+        id: networkComponent
+        Controls.ScrollView {
+            id: networkPage
+            objectName: "network"
+            property bool passwordPage: false
+            contentWidth: availableWidth; clip: true
+            WifiPage {
+                width: networkPage.availableWidth
+                networkData: panel.selectedNetwork; handler: panel.networkActions
+                passwordPage: networkPage.passwordPage; requestId: panel.secretId; retry: panel.secretRetry
+                onBackRequested: panel.back()
+                onPasswordRequested: data => panel.openNetwork(data, true)
+                onSecretSubmitted: password => { const id = panel.secretId; panel.secretId = ""; if (id && panel.secrets) panel.secrets.provide(id, password); }
+                onSettingsRequested: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement")
             }
-            Column {
-                width: parent.width; visible: panel.page === "bluetooth" && panel.bluetoothEnabled
-                ListView {
-                    id: bluetoothList
-                    width: parent.width; height: contentHeight
-                    interactive: false; reuseItems: false; currentIndex: -1
-                    cacheBuffer: 100000
-                    model: bluetoothStable.rows
-                    add: null; remove: null; displaced: null; move: null; populate: null
-                    HoverHandler { id: bluetoothHover }
-                    StableDeviceModel { id: bluetoothStable; frozen: bluetoothHover.hovered }
-                    function refresh() {
-                        const snapshot = Bluetooth.Manager.devices.filter(device => device.paired).map(device => ({
-                            deviceKey: device.address, payload: {name: device.friendlyName, connected: device.connected, device: device}, rank: 0, active: device.connected
-                        }));
-                        bluetoothStable.sync(snapshot);
-                    }
-                    Timer { interval: 100; running: panel.page === "bluetooth"; repeat: true; triggeredOnStart: true; onTriggered: bluetoothList.refresh() }
-                    delegate: ControlRow {
-                        required property var payload
-                        width: bluetoothList.width; height: 36
-                        glyph: "bluetooth"
-                        status: payload.connected ? "Conectado" : ""
-                        text: payload.name; clip: true
-                        onClicked: {
-                            const device = payload.device;
-                            if (!device) return;
-                            const call = device.connected ? device.disconnectFromDevice() : device.connectToDevice();
-                            call.finished.connect(function(result) { if (result.error) panel.errorText = result.errorText; });
-                        }
-                    }
+        }
+    }
+    Component {
+        id: bluetoothComponent
+        Item {
+            objectName: "bluetooth"
+            Row {
+                width: parent.width; height: 36
+                Tool { objectName: "pageBack"; icon: "caret-left"; description: "Volver"; onClicked: panel.back() }
+                UiText { width: parent.width - 28; height: 36; text: "Bluetooth"; weight: 600 }
+            }
+            ListView {
+                id: bluetoothList; y: 44; width: parent.width; height: parent.height - 44; clip: true
+                reuseItems: false; currentIndex: -1
+                model: bluetoothStable.rows
+                add: null; remove: null; displaced: null; move: null; populate: null
+                StableDeviceModel { id: bluetoothStable }
+                function refresh() {
+                    bluetoothStable.sync(Bluetooth.Manager.devices.filter(device => device.paired).map(device => ({deviceKey: device.address, payload: {name: device.friendlyName, connected: device.connected, device: device}, rank: 0, active: device.connected})));
+                }
+                Timer { interval: 100; running: panel.opened; repeat: true; triggeredOnStart: true; onTriggered: bluetoothList.refresh() }
+                delegate: ControlRow {
+                    required property var payload
+                    width: bluetoothList.width; height: 36; glyph: "bluetooth"; text: payload.name; status: payload.connected ? "Conectado" : ""
+                    onClicked: { panel.selectedDevice = payload.device; panel.errorText = ""; pages.pushItem(deviceComponent); }
                 }
             }
-            UiText { width: parent.width; visible: !!panel.errorText; text: panel.errorText; color: "#ef9a9a"; wrapMode: Text.Wrap }
+        }
+    }
+    Component {
+        id: deviceComponent
+        Column {
+            objectName: "device"; spacing: 8
+            Row {
+                width: parent.width; height: 36
+                Tool { objectName: "pageBack"; icon: "caret-left"; description: "Volver"; onClicked: panel.back() }
+                UiText { width: parent.width - 28; height: 36; text: panel.selectedDevice ? panel.selectedDevice.friendlyName : "Dispositivo"; elide: Text.ElideRight }
+            }
+            UiText { width: parent.width; height: 36; text: panel.selectedDevice && panel.selectedDevice.connected ? "Conectado" : "Desconectado" }
+            ControlRow {
+                width: parent.width; height: 36; text: panel.selectedDevice && panel.selectedDevice.connected ? "Desconectar" : "Conectar"
+                onClicked: {
+                    const device = panel.selectedDevice;
+                    if (!device) return;
+                    const call = device.connected ? device.disconnectFromDevice() : device.connectToDevice();
+                    call.finished.connect(function(result) { if (result.error) panel.errorText = result.errorText; });
+                }
+            }
+            UiText { width: parent.width; height: 36; text: panel.errorText; color: "#ef9a9a"; elide: Text.ElideRight }
         }
     }
 }

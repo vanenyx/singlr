@@ -10,14 +10,14 @@ Item {
     property bool live: false
     property bool sessionMode: false
     property bool historyOpen: false
-    property var entries: backend.item ? backend.item.entries : []
+    property var entries: backendObject ? backendObject.entries : []
     property var popups: []
     property var seen: ({})
     property var hovered: ({})
     property bool unread: false
-    readonly property bool inhibited: backend.item ? backend.item.inhibited : false
-    readonly property bool serverValid: backend.item ? backend.item.serverValid : false
-    readonly property string ownerName: backend.item ? backend.item.ownerName : ""
+    readonly property bool inhibited: backendObject ? backendObject.inhibited : false
+    readonly property bool serverValid: backendObject ? backendObject.serverValid : false
+    readonly property string ownerName: backendObject ? backendObject.ownerName : ""
     readonly property var grouped: entries.slice().sort((a,b) => a.app.localeCompare(b.app) || new Date(b.time) - new Date(a.time))
     width: 360; height: historyOpen ? panel.height : stack.height
     ListModel { id: popupRows }
@@ -35,10 +35,10 @@ Item {
         }
     }
     function toggle() { historyOpen = !historyOpen; }
-    function setInhibited(value) { if (backend.item) backend.item.setInhibited(value); }
+    function setInhibited(value) { if (backendObject) backendObject.setInhibited(value); }
     function dispatch(id, action) {
         popups = popups.filter(p => p.entry.id !== id);
-        if (backend.item) backend.item.dispatch(id, action);
+        if (backendObject) backendObject.dispatch(id, action);
     }
     function clearAll() { for (const e of entries.slice()) dispatch(e.id, "close"); unread = false; }
     function ingest() {
@@ -62,7 +62,10 @@ Item {
         seen = known; popups = next;
     }
     onEntriesChanged: ingest()
-    onHistoryOpenChanged: if (historyOpen) { unread = false; if (backend.item) backend.item.markRead(); }
+    onHistoryOpenChanged: {
+        if (historyOpen) { unread = false; if (backendObject) backendObject.markRead(); Qt.callLater(function() { if (center.historyOpen) historyPages.forceActiveFocus(); }); }
+        else if (historyPages.depth > 1) historyPages.popToIndex(0, Controls.StackView.Immediate);
+    }
     Loader {
         id: backend
         sourceComponent: center.backendOverride || (center.live ? realBackend : demoBackend)
@@ -113,11 +116,9 @@ Item {
                 onInvoked: action => center.dispatch(notificationId, action)
             }
         }
-        add: Transition { ParallelAnimation { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 160 } NumberAnimation { property: "x"; from: 8; to: 0; duration: 160 } } }
-        move: Transition { NumberAnimation { properties: "y"; duration: 160 } }
     }
     Rectangle {
-        id: panel; width: 360; height: Math.min(620, panelHeader.height + history.contentHeight + 28); visible: center.historyOpen
+        id: panel; width: 360; height: 620; visible: center.historyOpen
         radius: 10; color: center.sessionMode ? "#e6191a1b" : Theme.raised; border.color: Theme.border
         Column {
             id: panelHeader; x: 14; y: 10; width: parent.width - 28; spacing: 4
@@ -140,23 +141,50 @@ Item {
             UiText { visible: center.live && !center.serverValid; width: parent.width; text: "Servidor no disponible · " + center.ownerName; color: Theme.secondary; wrapMode: Text.Wrap }
             UiText { visible: !center.entries.length; height: visible ? 40 : 0; text: "No tienes notificaciones"; color: Theme.muted }
         }
-        ListView {
-            id: history; x: 0; y: panelHeader.height + 18; width: parent.width; height: parent.height - y - 10; clip: true; spacing: 6
-            model: center.grouped
-            delegate: Column {
-                id: historyRow
-                required property var modelData
-                required property int index
-                width: 360
-                UiText {
-                    width: 332; x: 14; height: visible ? 28 : 0
-                    visible: historyRow.index === 0 || center.grouped[historyRow.index - 1].app !== historyRow.modelData.app
-                    text: historyRow.modelData.app; color: Theme.muted; font.pixelSize: 11; weight: 590
+        Controls.StackView {
+            id: historyPages; objectName: "notificationPages"
+            x: 14; y: 132; width: parent.width - 28; height: parent.height - y - 14
+            clip: true; initialItem: historyComponent
+            Keys.onEscapePressed: {
+                if (depth > 1) popCurrentItem();
+                else center.historyOpen = false;
+            }
+            pushEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 120 } }
+            pushExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 120 } }
+            popEnter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 120 } }
+            popExit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 120 } }
+        }
+        Component {
+            id: historyComponent
+            ListView {
+                id: history; objectName: "notificationList"; clip: true
+                model: center.grouped
+                add: null; remove: null; displaced: null; move: null; populate: null
+                delegate: ControlRow {
+                    required property var modelData
+                    width: history.width; height: 36; glyph: "bell"
+                    text: modelData.app + " · " + modelData.title
+                    onClicked: { historyPages.pushItem(notificationComponent, {entry: modelData}); historyPages.forceActiveFocus(); }
                 }
-                NotificationCard {
-                    entry: historyRow.modelData; sessionMode: center.sessionMode
-                    onDismissed: center.dispatch(historyRow.modelData.id, "close")
-                    onInvoked: action => center.dispatch(historyRow.modelData.id, action)
+            }
+        }
+        Component {
+            id: notificationComponent
+            Item {
+                id: detail
+                required property var entry
+                Row {
+                    width: parent.width; height: 36
+                    Tool { objectName: "notificationBack"; icon: "caret-left"; description: "Volver"; onClicked: historyPages.popCurrentItem() }
+                    UiText { width: parent.width - 28; height: 36; text: detail.entry.app; weight: 600 }
+                }
+                Controls.ScrollView {
+                    y: 44; width: parent.width; height: parent.height - 44; clip: true; contentWidth: availableWidth
+                    NotificationCard {
+                        width: parent.width; entry: detail.entry; sessionMode: center.sessionMode
+                        onDismissed: { center.dispatch(detail.entry.id, "close"); historyPages.popCurrentItem(); }
+                        onInvoked: action => center.dispatch(detail.entry.id, action)
+                    }
                 }
             }
         }

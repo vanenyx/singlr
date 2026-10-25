@@ -6,27 +6,18 @@ ListView {
     id: list
     required property var handler
     property var sourceModel: null
-    property string suppressedSsid: ""
-    property bool secretActive: false
     property bool pageActive: false
-    property string editingKey: ""
-    property string menuKey: ""
-    property bool pointerInside: hover.hovered
     readonly property alias stableModel: stable
+    signal passwordRequested(var data)
+    signal detailsRequested(var data)
+    signal networkUpdated(string key, var data)
     signal settingsRequested()
-    implicitHeight: contentHeight
-    height: contentHeight
-    interactive: false
+    clip: true
     reuseItems: false
     currentIndex: -1
-    cacheBuffer: 100000
     model: stable.rows
     add: null; remove: null; displaced: null; move: null; populate: null
-    HoverHandler { id: hover; acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad }
-    StableDeviceModel {
-        id: stable
-        frozen: list.pointerInside || !!list.editingKey || !!list.menuKey || list.secretActive
-    }
+    StableDeviceModel { id: stable }
     function keyFor(data) {
         return data.Uuid ? "uuid:" + data.Uuid : "ssid:" + JSON.stringify([data.Ssid, data.SecurityType]);
     }
@@ -45,6 +36,7 @@ ListView {
             snapshot.push({deviceKey: key, payload: data, rank: data.Signal, active: data.ConnectionState === Network.Enums.Activated});
         }
         stable.sync(snapshot);
+        for (const entry of snapshot) networkUpdated(entry.deviceKey, entry.payload);
     }
     Connections {
         target: list.sourceModel
@@ -57,36 +49,15 @@ ListView {
     }
     function scheduleRefresh() { Qt.callLater(refresh); }
     Component.onCompleted: scheduleRefresh()
-    onPageActiveChanged: {
-        if (pageActive) { refresh(); stable.openSession(); }
-        else {
-            if (editingKey) { const state = stable.stateFor(editingKey); state.password = ""; state.editing = false; }
-            if (menuKey) { const state = stable.stateFor(menuKey); state.menuOpen = false; state.confirmingForget = false; }
-            editingKey = ""; menuKey = "";
-        }
-    }
+    onPageActiveChanged: if (pageActive) { refresh(); stable.openSession(); }
     delegate: WifiRow {
         required property string deviceKey
         required property var payload
-        required property var interaction
         width: list.width
         networkData: payload
-        rowState: interaction
         handler: list.handler
-        visible: !(list.secretActive && networkData.Ssid === list.suppressedSsid)
-        height: visible ? implicitHeight : 0
-        editing: list.pageActive && list.editingKey === deviceKey
-        onEditRequested: {
-            if (list.editingKey && list.editingKey !== deviceKey) stable.stateFor(list.editingKey).password = "";
-            list.editingKey = deviceKey;
-        }
-        onEditFinished: list.editingKey = ""
-        onMenuOpenChanged: {
-            if (menuOpen) {
-                if (list.menuKey && list.menuKey !== deviceKey) stable.stateFor(list.menuKey).menuOpen = false;
-                list.menuKey = deviceKey;
-            } else if (list.menuKey === deviceKey) list.menuKey = "";
-        }
+        onPasswordRequested: list.passwordRequested(networkData)
+        onDetailsRequested: list.detailsRequested(networkData)
         onSettingsRequested: list.settingsRequested()
     }
 }

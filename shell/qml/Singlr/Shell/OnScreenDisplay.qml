@@ -11,7 +11,6 @@ Item {
     property string message: ""
     readonly property bool surfaceVisible: showing || opacity > 0
     opacity: showing ? 1 : 0
-    Behavior on opacity { NumberAnimation { duration: 120 } }
     function show(symbol, value, text = "") {
         icon = symbol; percent = value; message = text; showing = true; timeout.restart();
     }
