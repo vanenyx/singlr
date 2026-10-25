@@ -27,11 +27,25 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <csignal>
+#include <QLoggingCategory>
+#include <QSocketNotifier>
+#include <sys/socket.h>
+#include <unistd.h>
+#include "configmigration.h"
+#include "wallpaperprovider.h"
+
+Q_LOGGING_CATEGORY(shellLog, "singlr.shell")
 
 namespace
 {
-volatile std::sig_atomic_t quitRequested = 0;
-void requestQuit(int) { quitRequested = 1; }
+int quitSockets[2] = {-1, -1};
+void requestQuit(int) {
+    const int saved = errno;
+    const char byte = 1;
+    const auto ignored = ::write(quitSockets[1], &byte, 1);
+    (void)ignored;
+    errno = saved;
+}
 // Región con esquinas redondeadas para que el desenfoque no asome fuera del radio.
 QRegion roundedRegion(const QSize &size, int radius)
 {
@@ -142,35 +156,51 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_DisableSessionManager);
     QGuiApplication app(argc, argv);
     qunsetenv("QT_WAYLAND_SHELL_INTEGRATION");
+    if (::socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0, quitSockets) != 0) {
+        qCCritical(shellLog) << "Cannot install shutdown signal notifier";
+        return 1;
+    }
+    QSocketNotifier quitNotifier(quitSockets[0], QSocketNotifier::Read);
+    QObject::connect(&quitNotifier, &QSocketNotifier::activated, &app, [&app, &quitNotifier] {
+        quitNotifier.setEnabled(false);
+        app.quit();
+    });
     std::signal(SIGTERM, requestQuit);
     std::signal(SIGINT, requestQuit);
-    QTimer signalTimer;
-    QObject::connect(&signalTimer, &QTimer::timeout, &app, [&app] { if (quitRequested) app.quit(); });
-    signalTimer.start(100);
     app.setApplicationName(QStringLiteral("singlr-shell"));
     app.setDesktopFileName(QStringLiteral("singlr-shell"));
+    if (!SinglrConfig::migrate()) {
+        qCCritical(shellLog) << "Cannot migrate configuration" << SinglrConfig::path();
+        return 1;
+    }
     // Logotipos originales de las apps: hicolor contiene los iconos que instala cada
     // aplicación; los temas tipo WhiteSur los encierran en placas. Breeze cubre lo que falte.
     QIcon::setThemeName(QStringLiteral("hicolor"));
     QIcon::setFallbackThemeName(QStringLiteral("breeze"));
 
     if (argc < 3) {
-        qCritical("uso: singlr-shell <import-path> <Shell.qml> [-- argumentos]");
+        qCCritical(shellLog, "uso: singlr-shell <import-path> <Shell.qml> [-- argumentos]");
         return 2;
     }
     QQmlApplicationEngine engine;
+    engine.addImageProvider(QStringLiteral("singlrwallpaper"), new SinglrWallpaper::Provider);
+    engine.rootContext()->setContextProperty(QStringLiteral("SinglrWallpaperProvider"), true);
     engine.addImportPath(QString::fromLocal8Bit(argv[1]));
     auto bus = QDBusConnection::sessionBus();
-    const bool ownsPlasma = !app.arguments().contains(QStringLiteral("--windowed"))
-        && !app.arguments().contains(QStringLiteral("--no-takeover"))
-        && bus.registerService(QStringLiteral("org.kde.plasmashell"));
+    const bool takeover = !app.arguments().contains(QStringLiteral("--windowed"))
+        && !app.arguments().contains(QStringLiteral("--no-takeover"));
+    const bool ownsPlasma = takeover && bus.registerService(QStringLiteral("org.kde.plasmashell"));
+    if (takeover && !ownsPlasma) {
+        qCCritical(shellLog) << "Cannot acquire org.kde.plasmashell; refusing a partial or duplicate shell";
+        return 1;
+    }
     bool shortcutsCleanupDone = false;
     const auto cleanupShortcuts = [ownsPlasma, &shortcutsCleanupDone] {
         if (!ownsPlasma || shortcutsCleanupDone)
             return;
         shortcutsCleanupDone = true;
         if (!SinglrShortcuts::restoreKWin())
-            qWarning("Singlr: backup de atajos pendiente; reintente --restore-shortcuts");
+            qCWarning(shellLog, "Backup de atajos pendiente; reintente --restore-shortcuts");
     };
     const auto restoreShortcuts = qScopeGuard(cleanupShortcuts);
     QObject::connect(&app, &QCoreApplication::aboutToQuit, &app, cleanupShortcuts);
@@ -182,8 +212,10 @@ int main(int argc, char *argv[])
         engine.rootContext()->setContextProperty(QStringLiteral("SinglrTray"), tray);
     }
     engine.load(QUrl::fromLocalFile(QString::fromLocal8Bit(argv[2])));
-    if (engine.rootObjects().isEmpty())
+    if (engine.rootObjects().isEmpty()) {
+        qCCritical(shellLog) << "Cannot load shell QML" << argv[2];
         return 1;
+    }
     // Solo en modo sesión: el objeto raíz expone la sesión en su propiedad «surface».
     const auto dumpProfile = [&engine] {
         QJsonArray windows;
@@ -235,7 +267,7 @@ int main(int argc, char *argv[])
     }
     if (ownsPlasma) {
         if (!SinglrShortcuts::applyKWin())
-            qWarning("Singlr: no se pudieron aplicar los atajos KWin; se restaurará el backup al salir");
+            qCWarning(shellLog, "No se pudieron aplicar los atajos KWin; se restaurará el backup al salir");
     }
     for (QWindow *window : QGuiApplication::allWindows())
         if (auto *quick = qobject_cast<QQuickWindow *>(window))

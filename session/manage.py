@@ -18,6 +18,7 @@ FILES = {
     'usr/lib/singlr/startsinglr-wayland': ('startsinglr-wayland', 0o755),
     'usr/lib/systemd/user/singlr-workspace.target': ('systemd/singlr-workspace.target', 0o644),
     'usr/lib/systemd/user/singlr-shell.service': ('systemd/singlr-shell.service', 0o644),
+    'usr/lib/systemd/user/singlr-shell-failed.service': ('systemd/singlr-shell-failed.service', 0o644),
 }
 MANIFEST = 'usr/lib/singlr/session-install.json'
 

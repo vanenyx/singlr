@@ -11,7 +11,7 @@ depends=('bash' 'python' 'qt6-base' 'qt6-declarative' 'qt6-svg'
          'libnm' 'networkmanager' 'plasma-workspace' 'plasma-desktop' 'kwin'
          'plasma-nm' 'plasma-pa' 'bluez-qt' 'bluedevil' 'kitemmodels' 'kcmutils' 'milou'
          'breeze-icons' 'powerdevil' 'polkit-kde-agent' 'xdg-desktop-portal-kde'
-         'pipewire' 'pipewire-pulse' 'wireplumber' 'systemd')
+         'pipewire' 'pipewire-pulse' 'wireplumber' 'systemd' 'kdialog')
 makedepends=('cmake' 'ninja' 'extra-cmake-modules' 'pkgconf')
 source=("singlr-$pkgver.tar.gz")
 sha256sums=('SKIP') # Local development snapshot; pin a checksum before distributing.

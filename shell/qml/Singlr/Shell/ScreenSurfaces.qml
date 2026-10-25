@@ -30,7 +30,12 @@ Item {
                 LayerShell.Window.exclusionZone: -1
                 LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
                 LayerShell.Window.scope: "desktop"
-                Background { anchors.fill: parent; TapHandler { onTapped: surfaces.controller.closeMenus() } }
+                Background {
+                    anchors.fill: parent
+                    pixelSize: Qt.size(Math.ceil(surfaces.outputScreen.width * surfaces.outputScreen.devicePixelRatio),
+                                       Math.ceil(surfaces.outputScreen.height * surfaces.outputScreen.devicePixelRatio))
+                    TapHandler { onTapped: surfaces.controller.closeMenus() }
+                }
             }
         }
     }

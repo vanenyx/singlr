@@ -1,0 +1,12 @@
+[Unit]
+Description=Report Singlr shell failure after automatic recovery is exhausted
+PartOf=graphical-session.target
+After=singlr-shell.service
+
+[Service]
+Type=oneshot
+# Restore the standard KWin shortcuts even when the shell could not clean up.
+ExecStart=-/usr/lib/singlr/singlr-shell --restore-shortcuts
+# A separate KDE dialog works without the shell's notification server.
+ExecStart=/usr/bin/kdialog --title Singlr --error "El escritorio no pudo recuperarse tras varios fallos. Las aplicaciones y la sesión siguen abiertas. Puede abrir una terminal con Ctrl+Alt+T y ejecutar: systemctl --user reset-failed singlr-shell; systemctl --user start singlr-shell. Consulte: journalctl --user -u singlr-shell"
+SyslogIdentifier=singlr-shell

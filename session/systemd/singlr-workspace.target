@@ -2,8 +2,10 @@
 Description=Singlr Wayland Workspace
 # Portals start AFTER graphical-session.target: do not add implicit After=Wants.
 DefaultDependencies=no
-Requires=graphical-session.target singlr-shell.service plasma-kwin_wayland.service
-BindsTo=graphical-session.target singlr-shell.service plasma-kwin_wayland.service
+Requires=graphical-session.target plasma-kwin_wayland.service
+BindsTo=graphical-session.target plasma-kwin_wayland.service
+# Like plasma-core.target, keep KWin and the session alive if the shell fails.
+Wants=singlr-shell.service
 # BusName=org.kde.ksmserver in the KDE unit supplies readiness after KWin.
 # A successful KDE logout quits ksmserver; its exit must stop our target too.
 Requires=plasma-ksmserver.service
