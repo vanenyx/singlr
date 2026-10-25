@@ -1,0 +1,12 @@
+{
+    "KPackageStructure": "Plasma/Shell",
+    "KPlugin": {
+        "Id": "org.singlr.desktop",
+        "Name": "Singlr",
+        "Description": "Singlr session and lock screen",
+        "Version": "0.1.0",
+        "License": "GPL-2.0-or-later"
+    },
+    "X-Plasma-APIVersion": "2",
+    "X-Plasma-FallbackPackage": "org.kde.plasma.desktop"
+}

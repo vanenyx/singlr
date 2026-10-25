@@ -62,6 +62,15 @@ class SessionEntryTests(unittest.TestCase):
                     else:
                         self.assertEqual(entry.main(), 0)
                 self.assertEqual(events[0], ('apply', {'recover_pending': True}))
+                imported = next(event for event in events
+                                if isinstance(event, tuple) and event[0] == 'dbus-update-activation-environment')
+                self.assertIn('PLASMA_DEFAULT_SHELL=org.singlr.desktop', imported)
+                start = events.index(('systemctl', '--user', 'start', 'singlr-workspace.target'))
+                self.assertLess(events.index(imported), start)
+                cleared = next(event for event in events
+                               if isinstance(event, tuple) and event[:3] == ('systemctl', '--user', 'unset-environment')
+                               and 'SINGLR_DEV_ROOT' in event)
+                self.assertIn('PLASMA_DEFAULT_SHELL', cleared)
                 stop = events.index(('systemctl', '--user', 'stop', 'singlr-workspace.target',
                                      'graphical-session.target'))
                 self.assertEqual(events[stop + 1], 'restore-kwin')
@@ -101,6 +110,13 @@ class SessionEntryTests(unittest.TestCase):
                                       {'SESSION_MANAGER', 'ICEAUTHORITY'})
         self.assertIn('SESSION_MANAGER=old-ice', command.call_args.args)
         self.assertIn('ICEAUTHORITY=/old-auth', command.call_args.args)
+
+    def test_previous_shell_package_environment_restored(self):
+        with patch.object(entry, 'run') as command:
+            entry.restore_environment({'PLASMA_DEFAULT_SHELL': 'org.kde.plasma.desktop'},
+                                      {'PLASMA_DEFAULT_SHELL'})
+        self.assertEqual(command.call_args.args, ('systemctl', '--user', 'set-environment',
+                                                'PLASMA_DEFAULT_SHELL=org.kde.plasma.desktop'))
 
     def test_roundtrip_and_dry_run(self):
         with tempfile.TemporaryDirectory() as tmp:
