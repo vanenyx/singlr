@@ -17,7 +17,7 @@ class SessionActionsTests(unittest.TestCase):
         cls.tmp = tempfile.TemporaryDirectory(prefix='singlr-session-actions-')
         cls.addClassCleanup(cls.tmp.cleanup)
         flags = shlex.split(subprocess.check_output(
-            ['pkg-config', '--cflags', '--libs', 'Qt6Core', 'Qt6DBus'], text=True))
+            ['pkg-config', '--cflags', '--libs', 'Qt6Core', 'Qt6DBus', 'Qt6Gui'], text=True))
         libexec = subprocess.check_output(['pkg-config', '--variable=libexecdir', 'Qt6Core'], text=True).strip()
         moc = str(Path(cls.tmp.name) / 'moc_system.cpp')
         subprocess.run([str(Path(libexec) / 'moc'), str(ROOT / 'shell/session/src/system.h'), '-o', moc], check=True)
@@ -26,7 +26,7 @@ class SessionActionsTests(unittest.TestCase):
                         '-I' + str(ROOT / 'shell/session/src'),
                         str(ROOT / 'tests/shell/session_actions.cpp'),
                         str(ROOT / 'shell/session/src/system.cpp'), moc,
-                        *flags, '-o', cls.binary], check=True, timeout=60)
+                        *flags, '-lLayerShellQtInterface', '-o', cls.binary], check=True, timeout=60)
 
     def test_disconnected_bus_and_qml_contract(self):
         result = subprocess.run([self.binary, '--offline'], capture_output=True, text=True, timeout=10)

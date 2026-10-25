@@ -10,6 +10,12 @@ Wants=plasma-polkit-agent.service plasma-powerdevil.service
 Wants=plasma-xdg-desktop-portal-kde.service xdg-desktop-portal.service
 Wants=plasma-kactivitymanagerd.service
 Wants=pipewire.socket pipewire-pulse.socket wireplumber.service
+# Servicios que también arranca plasma-workspace.target (salvo plasmashell, KRunner y ksmserver):
+# desbloqueo de KWallet con la contraseña de inicio (cookies y claves de navegadores), atajos,
+# accesibilidad, iconos de bandeja XEmbed, menús globales, carpetas de usuario y apps de inicio automático.
+Wants=plasma-kwallet-pam.service plasma-kglobalaccel.service plasma-kaccess.service
+Wants=plasma-xembedsniproxy.service plasma-gmenudbusmenuproxy.service xdg-user-dirs.service
+Wants=xdg-desktop-autostart.target
 After=graphical-session-pre.target plasma-kwin_wayland.service singlr-shell.service
 Before=graphical-session.target
 Conflicts=shutdown.target
