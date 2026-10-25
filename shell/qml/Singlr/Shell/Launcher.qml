@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import "ApplicationActions.js" as ApplicationActions
 import org.kde.milou as Milou
 import org.kde.kquickcontrolsaddons as Addons
 import Singlr.Ui
@@ -74,15 +75,17 @@ FocusScope {
     function makeEntries() {
         if (!selectedResult) return [];
         const row = selectedResult.rowData;
-        let entries = selectedActions.map((a, i) => ({label: String(a.text || "").replace(/&/g, ""),
+        const url = appUrl(row);
+        // App menus share the desktop actions with the dock. KRunner actions
+        // remain available for other result types without duplicating app actions.
+        let entries = url ? ApplicationActions.entries(systemBridge, url) : selectedActions.map((a, i) => ({label: String(a.text || "").replace(/&/g, ""),
             icon: "dots-three", enabled: a.enabled !== false, action: "runner", runnerAction: i}));
         const urls = resultUrls(row);
         if (!appUrl(row) && urls.length && urls.every(u => u.startsWith("file:")) && systemBridge) {
             entries.push({label: "Mostrar en carpeta", icon: "folder", action: "folder"});
         }
-        const url = appUrl(row);
         if (url && dockController) entries.push({label: dockController.isPinned(url) ? "Quitar del dock" : "Mantener en el dock",
-            icon: "push-pin", action: "pin", url: url, keep: !dockController.isPinned(url)});
+            icon: "push-pin", action: "pin", separator: entries.length > 0, url: url, keep: !dockController.isPinned(url)});
         return entries;
     }
     function move(delta) {
@@ -101,6 +104,9 @@ FocusScope {
         if (!entry || selectedIndex < 0) return;
         const idx = resultsModel.index(selectedIndex, 0);
         if (entry.action === "pin") dockController.setPinned(entry.url, entry.keep);
+        else if (entry.action === "application") {
+            if (systemBridge.launchApplicationAction(entry.url, entry.name)) close();
+        }
         else if (entry.action === "folder") { systemBridge.showInFolder(resultUrls(selectedResult.rowData)); close(); }
         else if (resultsModel.runAction(idx, entry.runnerAction)) close();
     }

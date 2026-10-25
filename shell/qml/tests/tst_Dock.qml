@@ -54,6 +54,10 @@ Item {
     }
     QtObject {
         id: bridge
+        property var actions: []
+        property var launched: []
+        function applicationActions(url) { return actions; }
+        function launchApplicationAction(url, name) { launched = [url, name]; return true; }
         property bool overviewAvailable: false
         property string invoked: ""
         function acceptsUrls(url, urls) { return url === "applications:browser.desktop" && urls.every(u => u.endsWith(".txt")); }
@@ -66,6 +70,7 @@ Item {
         name: "DockBehaviour"; when: windowShown
         function task() { return doubleModel.get(0); }
         function init() {
+            dock.systemBridge = bridge; bridge.actions = []; bridge.launched = [];
             dock.closeMenu(); dock.hideTooltip(); dock.requestedWindows = ({}); dock.launching = ({});
             doubleModel.delayActive = false; doubleModel.clear(); doubleModel.calls = []; doubleModel.launcherList = []; doubleModel.activatedId = "";
             doubleModel.children = [
@@ -245,6 +250,34 @@ Item {
                                        "activate:{e0000000-0000-0000-0000-000000000001}",
                                        "activate:{a0000000-0000-0000-0000-000000000001}"]);
         }
+        function test_desktopActionsWithoutNewInstanceCapability() {
+            bridge.actions = [{name:"new-window", text:"Nueva ventana", iconName:"window-new"},
+                              {name:"new-private-window", text:"Incógnito", iconName:""}];
+            doubleModel.setProperty(0, "IsNewInstanceable", false);
+            dock.openContext(0, task());
+            compare(dock.menuEntries.filter(e => e.action === "application").length, 2);
+            verify(!dock.menuEntries.some(e => e.action === "new"));
+            compare(dock.menuEntries[4].iconName, "window-new");
+            verify(dock.menuEntries[4].separator); verify(dock.menuEntries[6].separator);
+            dock.runMenu(5);
+            compare(bridge.launched, ["applications:browser.desktop", "new-private-window"]);
+            compare(doubleModel.calls, []); verify(!dock.menuOpen);
+        }
+        function test_genericNewWindowFallback() {
+            bridge.actions = [{name:"new-window", text:"Nouvelle fenêtre", iconName:""}];
+            dock.openContext(0, task());
+            verify(!dock.menuEntries.some(e => e.action === "new"));
+            bridge.actions = [{name:"preferences", text:"Preferencias", iconName:""}];
+            dock.openContext(0, task());
+            dock.runMenu(dock.menuEntries.findIndex(e => e.action === "new"));
+            compare(doubleModel.calls, ["new"]);
+            doubleModel.setProperty(0, "IsNewInstanceable", false);
+            doubleModel.setProperty(0, "IsLauncher", true);
+            dock.openContext(0, task());
+            verify(!dock.menuEntries.some(e => e.action === "new"));
+            verify(dock.menuEntries.every(e => e.enabled));
+            verify(!dock.menuEntries.some(e => e.action === "close"));
+        }
         function test_quitClosesAllWindows() {
             dock.openContext(0,task());
             compare(dock.menuEntries.map(e => e.label).slice(-3),["Nueva ventana","Fijar en el dock","Salir"]);
@@ -257,7 +290,7 @@ Item {
         function test_menuKeyboardAndWindowSelection() {
             dock.openContext(0, task());
             compare(dock.contextWindows.length,4); compare(dock.menuEntries.length,7);
-            compare(dock.menuHeight,222);
+            compare(dock.menuHeight,231);
             wait(1); keyClick(Qt.Key_Down); compare(dock.menuIndex,1);
             keyClick(Qt.Key_Return); compare(doubleModel.activatedId,"20"); verify(!dock.menuOpen);
             dock.openContext(0, task()); wait(1); keyClick(Qt.Key_Escape); verify(!dock.menuOpen);

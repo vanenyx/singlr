@@ -1,4 +1,5 @@
 find_package(KF6Service 6.0 REQUIRED)
+find_package(KF6KIO 6.0 REQUIRED)
 add_executable(singlr-shell
     src/main.cpp src/launcherbridge.h
     src/shortcuts.cpp src/shortcuts.h
@@ -9,7 +10,7 @@ add_executable(singlr-shell
     src/system.cpp src/system.h
 )
 target_link_libraries(singlr-shell PRIVATE
-    KF6::Service Qt6::Gui Qt6::Qml Qt6::Quick Qt6::DBus Qt6::Widgets
+    KF6::Service KF6::KIOGui Qt6::Gui Qt6::Qml Qt6::Quick Qt6::DBus Qt6::Widgets
     KF6::WindowSystem KF6::GlobalAccel KF6::NetworkManagerQt KF6::Wallet
     LayerShellQt::Interface PkgConfig::LIBNM
 )

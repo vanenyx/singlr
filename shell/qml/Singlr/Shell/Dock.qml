@@ -4,6 +4,7 @@ import QtQuick.Controls as Controls
 import QtQuick.Effects
 import QtCore
 import "DockLogic.js" as DockLogic
+import "ApplicationActions.js" as ApplicationActions
 import Qt.labs.folderlistmodel
 import org.kde.taskmanager as TaskManager
 import Singlr.Ui
@@ -119,11 +120,17 @@ Rectangle {
     function openContext(row, task) {
         hideTooltip(); contextTask = task;
         contextWindows = DockLogic.ordered(windows(row, task));
-        menuEntries = contextWindows.map(w => ({label: w.title, id: w.id, action: "window", active: w.active, enabled: true})).concat([
-        {label: "Nueva ventana", icon: "plus", shortcut: "⏎", action: "new", separator: contextWindows.length > 0, enabled: !!(task.IsLauncher || task.IsNewInstanceable)},
-        {label: task.IsLauncher || task.HasLauncher ? "Quitar del dock" : "Fijar en el dock", icon: "push-pin", action: "pin", enabled: !!(task.LauncherUrlWithoutIcon || task.LauncherUrl)},
-        {label: "Salir", icon: "x", action: "close", separator: true, enabled: !!task.IsClosable && contextWindows.length > 0}
-        ]);
+        const url = String(task.LauncherUrlWithoutIcon || task.LauncherUrl || "");
+        const actions = ApplicationActions.entries(systemBridge, url);
+        if (task.IsNewInstanceable && !ApplicationActions.hasNewWindow(actions))
+            actions.push({label: "Nueva ventana", icon: "plus", shortcut: "⏎", action: "new", enabled: true});
+        if (actions.length) actions[0].separator = contextWindows.length > 0;
+        const entries = contextWindows.map(w => ({label: w.title, id: w.id, action: "window", active: w.active, enabled: true})).concat(actions);
+        if (url) entries.push({label: task.IsLauncher || task.HasLauncher ? "Quitar del dock" : "Fijar en el dock",
+            icon: "push-pin", action: "pin", separator: actions.length > 0, enabled: true});
+        if (task.IsClosable && contextWindows.length > 0)
+            entries.push({label: "Salir", icon: "x", action: "close", separator: entries.length > 0, enabled: true});
+        menuEntries = entries;
         contextRow = row;
         Qt.callLater(() => dockMenu.contentItem.forceActiveFocus());
     }
@@ -131,6 +138,10 @@ Rectangle {
         const entry = menuEntries[index];
         if (!entry || !entry.enabled) return;
         if (entry.action === "window") { activateWindow(contextRow, contextTask, entry.id); closeMenu(); }
+        else if (entry.action === "application") {
+            systemBridge.launchApplicationAction(entry.url, entry.name);
+            closeMenu();
+        }
         else if (entry.action === "new") newInstance();
         else if (entry.action === "close") closeTask();
         else togglePin();
@@ -228,7 +239,7 @@ Rectangle {
         }
     }
     function newInstance() {
-        if (contextRow < 0 || !contextTask || !(contextTask.IsLauncher || contextTask.IsNewInstanceable)) return;
+        if (contextRow < 0 || !contextTask || !contextTask.IsNewInstanceable) return;
         if (contextTask.IsLauncher) beginLaunch(contextRow, contextTask);
         else taskSource.requestNewInstance(taskSource.index(contextRow, 0));
         closeMenu();
