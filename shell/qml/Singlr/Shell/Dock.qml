@@ -287,7 +287,7 @@ Rectangle {
         }
         Rectangle { visible: pinned.count > 0; width: 1; height: 20; y: 14; color: "#14ffffff" }
         DockItem { sessionMode: dock.sessionMode; onTooltipRequested: (text, center) => dock.showTooltip(text, center); task: ({AppName: "Todas las aplicaciones", singlrGrid: true, decoration: ""}); onActivated: dock.applicationsRequested() }
-        Tool { objectName: "overviewButton"; visible: dock.overviewAvailable; width: 32; height: 48; icon: "squares-four"; iconSize: 20; description: "Multitarea"; onClicked: dock.systemBridge.invokeShortcut("kwin", "Singlr Overview") }
+        Tool { objectName: "overviewButton"; visible: dock.overviewAvailable; width: 32; height: 48; icon: "cards-three"; iconSize: 20; description: "Multitarea"; onClicked: dock.systemBridge.invokeShortcut("kwin", "Singlr Overview") }
     }
     component TaskEntry: Item {
         id: entry
