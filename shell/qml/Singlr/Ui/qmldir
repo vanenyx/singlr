@@ -8,3 +8,6 @@ Tool 1.0 Tool.qml
 Button 1.0 Button.qml
 ListItem 1.0 ListItem.qml
 ShortcutHint 1.0 ShortcutHint.qml
+Toggle 1.0 Toggle.qml
+SliderControl 1.0 SliderControl.qml
+ControlRow 1.0 ControlRow.qml

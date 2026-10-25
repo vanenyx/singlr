@@ -1,6 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls as Controls
+import QtQuick.Controls.Basic as Controls
+import org.kde.kitemmodels as ItemModels
+import org.kde.kcmutils as KCMUtils
 import org.kde.plasma.private.volume as Volume
 import org.kde.plasma.private.battery as Battery
 import org.kde.plasma.private.batterymonitor as Power
@@ -13,35 +15,6 @@ import Singlr.Ui
 Controls.Control {
     id: panel
 
-    // Controles al estilo Linear: pista tenue, relleno y tirador blancos (Theme.control).
-    component SinglrSwitch: Controls.Switch {
-        id: sw
-        indicator: Rectangle {
-            implicitWidth: 34; implicitHeight: 20; radius: 10
-            x: sw.width - width - sw.rightPadding; y: (sw.height - height) / 2
-            color: sw.checked ? Theme.control : "#ffffff1f"
-            Behavior on color { ColorAnimation { duration: 120 } }
-            Rectangle {
-                width: 16; height: 16; radius: 8; y: 2
-                x: sw.checked ? parent.width - width - 2 : 2
-                color: sw.checked ? "#16171a" : "#d0d6e0"
-                Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-            }
-        }
-    }
-    component SinglrSlider: Controls.Slider {
-        id: sl
-        background: Rectangle {
-            x: sl.leftPadding; y: sl.topPadding + sl.availableHeight / 2 - height / 2
-            width: sl.availableWidth; height: 4; radius: 2; color: "#ffffff1f"
-            Rectangle { width: sl.visualPosition * parent.width; height: parent.height; radius: 2; color: Theme.control }
-        }
-        handle: Rectangle {
-            x: sl.leftPadding + sl.visualPosition * (sl.availableWidth - width); y: sl.topPadding + sl.availableHeight / 2 - height / 2
-            width: 14; height: 14; radius: 7; color: Theme.control
-            border.color: "#00000033"
-        }
-    }
     required property SystemControls audio
     required property var notifications
     signal closed()
@@ -49,7 +22,7 @@ Controls.Control {
     implicitHeight: Math.min(760, content.implicitHeight + 32)
     property string errorText: ""
     property bool networksExpanded: false
-    property var pendingWifi: null
+    property string editingWifi: ""
     property bool opened: true
     palette.window: Theme.raised
     palette.windowText: Theme.text
@@ -57,11 +30,14 @@ Controls.Control {
     palette.button: Theme.hover
     palette.buttonText: Theme.text
     palette.base: Theme.panel
+    palette.accent: Theme.control
+    palette.highlightedText: "#16171a"
     palette.highlight: Theme.control
     onOpenedChanged: {
         if (opened) networkHandler.requestScan();
-        else { pendingWifi = null; wifiPassword.clear(); errorText = ""; }
+        else { editingWifi = ""; errorText = ""; }
     }
+    Component.onCompleted: if (opened) networkHandler.requestScan()
     Timer { interval: 15000; running: panel.opened; repeat: true; onTriggered: networkHandler.requestScan() }
     function openSettings() {
         if (settingsApp.count > 0 && settingsApp.trigger(0, "", null)) panel.closed();
@@ -75,8 +51,13 @@ Controls.Control {
     Brightness.ScreenBrightnessControl { id: brightness }
     Network.NetworkStatus { id: network }
     Network.EnabledConnections { id: enabledConnections }
-    Network.Handler { id: networkHandler; onConnectionActivationFailed: (path, message) => panel.errorText = message }
+    Network.Handler { id: networkHandler }
     Network.NetworkModel { id: networks }
+    Network.AppletProxyModel { id: availableNetworks; sourceModel: networks }
+    ItemModels.KSortFilterProxyModel {
+        id: signalNetworks; sourceModel: availableNetworks
+        sortRoleName: "Signal"; sortOrder: Qt.DescendingOrder; sortColumn: 0
+    }
     Volume.SinkModel { id: sinks }
     Controls.ScrollView {
         anchors.fill: parent; anchors.margins: 16
@@ -89,7 +70,7 @@ Controls.Control {
                 UiText { width: parent.width - 28; height: 28; text: "Centro de control"; weight: 600 }
                 Tool { icon: "x"; description: "Cerrar"; onClicked: panel.closed() }
             }
-            SinglrSwitch {
+            Toggle {
                 width: parent.width; text: "Wi-Fi"; checked: enabledConnections.wirelessEnabled
                 enabled: enabledConnections.wirelessHwEnabled
                 onToggled: networkHandler.enableWireless(checked)
@@ -98,60 +79,44 @@ Controls.Control {
                 width: parent.width; height: 24; elide: Text.ElideRight; color: Theme.secondary
                 text: network.activeConnections || "Sin conexión activa"
             }
-            Tool {
-                width: parent.width; height: 28; icon: panel.networksExpanded ? "caret-down" : "caret-right"
-                label: panel.networksExpanded ? "Ocultar redes" : "Ver redes"
+            ControlRow {
+                width: parent.width; glyph: panel.networksExpanded ? "caret-down" : "caret-right"
+                text: panel.networksExpanded ? "Ocultar redes" : "Ver redes"
                 enabled: enabledConnections.wirelessEnabled
                 onClicked: panel.networksExpanded = !panel.networksExpanded
             }
-            // NetworkManager owns connections and credentials. Enterprise setup
-            // remains in System Settings, where KDE supports certificates/EAP.
             Column {
-                width: parent.width; visible: panel.networksExpanded
+                width: parent.width; visible: panel.networksExpanded && enabledConnections.wirelessEnabled
+                // Two groups preserve strict signal ordering after the active network.
                 Repeater {
-                    model: networks
-                    delegate: Tool {
+                    model: signalNetworks
+                    delegate: WifiRow {
                         required property var model
-                        width: parent.width; height: visible ? 30 : 0
-                        visible: model.Type === Network.Enums.Wireless && enabledConnections.wirelessEnabled
-                        icon: model.ConnectionState === Network.Enums.Activated ? "check" : "wifi-high"
-                        label: model.Name; clip: true
-                        description: model.Name + (model.ConnectionState === Network.Enums.Activated ? ", conectada" : "")
-                        onClicked: {
-                            if (model.ConnectionState === Network.Enums.Activated) return;
-                            if (model.ConnectionPath) networkHandler.activateConnection(model.ConnectionPath, model.DevicePath, model.SpecificPath);
-                            else if (model.SecurityType === Network.Enums.NoneSecurity || model.SecurityType === Network.Enums.OWE)
-                                networkHandler.addAndActivateConnection(model.DevicePath, model.SpecificPath);
-                            else if ([Network.Enums.StaticWep, Network.Enums.WpaPsk, Network.Enums.Wpa2Psk, Network.Enums.SAE].indexOf(model.SecurityType) >= 0) {
-                                panel.pendingWifi = {name: model.Name, device: model.DevicePath, accessPoint: model.SpecificPath};
-                                wifiPassword.clear(); wifiPassword.forceActiveFocus();
-                            } else panel.openSettings();
-                        }
+                        width: content.width; networkData: model; handler: networkHandler
+                        visible: eligible && connected
+                        height: visible ? implicitHeight : 0
+                        editing: visible && panel.opened && panel.editingWifi === identity
+                        onEditRequested: panel.editingWifi = identity
+                        onEditFinished: panel.editingWifi = ""
+                        onSettingsRequested: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement")
                     }
                 }
-            }
-            Column {
-                width: parent.width; spacing: 4; visible: panel.pendingWifi !== null
-                UiText { width: parent.width; height: 24; text: panel.pendingWifi ? "Conectar a " + panel.pendingWifi.name : "" }
-                Controls.TextField {
-                    id: wifiPassword; width: parent.width; placeholderText: "Contraseña de la red"
-                    echoMode: TextInput.Password; Accessible.name: "Contraseña Wi-Fi"
-                    onAccepted: connectWifi.clicked()
-                }
-                Row {
-                    spacing: 8
-                    Controls.Button {
-                        id: connectWifi; text: "Conectar"; enabled: wifiPassword.length > 0 && panel.pendingWifi !== null
-                        onClicked: {
-                            if (!enabled) return;
-                            networkHandler.addAndActivateConnection(panel.pendingWifi.device, panel.pendingWifi.accessPoint, wifiPassword.text);
-                            wifiPassword.clear(); panel.pendingWifi = null;
-                        }
+                Repeater {
+                    model: signalNetworks
+                    delegate: WifiRow {
+                        required property var model
+                        width: content.width; networkData: model; handler: networkHandler
+                        visible: eligible && !connected
+                        height: visible ? implicitHeight : 0
+                        editing: visible && panel.opened && panel.editingWifi === identity
+                        onEditRequested: panel.editingWifi = identity
+                        onEditFinished: panel.editingWifi = ""
+                        onSettingsRequested: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement")
                     }
-                    Controls.Button { text: "Cancelar"; onClicked: { wifiPassword.clear(); panel.pendingWifi = null; } }
                 }
+                ControlRow { width: parent.width; glyph: "gear"; text: "Más ajustes de red…"; onClicked: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement") }
             }
-            SinglrSwitch {
+            Toggle {
                 id: bluetoothToggle; width: parent.width; text: "Bluetooth"
                 visible: Bluetooth.Manager.adapters.length > 0
                 checked: !Bluetooth.Manager.bluetoothBlocked && Bluetooth.Manager.adapters.some(adapter => adapter.powered)
@@ -164,12 +129,13 @@ Controls.Control {
                 width: parent.width; visible: bluetoothToggle.checked
                 Repeater {
                     model: Bluetooth.Manager.devices
-                    delegate: Tool {
+                    delegate: ControlRow {
                         required property var modelData
-                        width: parent.width; height: visible ? 30 : 0
+                        width: parent.width; height: visible ? 36 : 0
                         visible: modelData.paired
-                        icon: modelData.connected ? "check" : "bluetooth"
-                        label: modelData.friendlyName; clip: true
+                        glyph: "bluetooth"
+                        status: modelData.connected ? "Conectado" : ""
+                        text: modelData.friendlyName; clip: true
                         onClicked: {
                             const call = modelData.connected ? modelData.disconnectFromDevice() : modelData.connectToDevice();
                             call.finished.connect(function(result) { if (result.error) panel.errorText = result.errorText; });
@@ -185,7 +151,7 @@ Controls.Control {
                     Tool { icon: panel.audio.sink && panel.audio.sink.muted ? "speaker-slash" : "speaker-high"; description: "Silenciar salida"; onClicked: panel.audio.toggleMute(panel.audio.sink) }
                     UiText { width: parent.width - 28; height: 28; text: panel.audio.sink ? panel.audio.sink.description : ""; elide: Text.ElideRight }
                 }
-                SinglrSlider {
+                SliderControl {
                     width: parent.width; from: 0; to: 100; stepSize: 1
                     value: panel.audio.percent(panel.audio.sink)
                     enabled: !!panel.audio.sink && panel.audio.sink.volumeWritable
@@ -194,11 +160,11 @@ Controls.Control {
                 }
                 Repeater {
                     model: sinks
-                    delegate: Tool {
+                    delegate: ControlRow {
                         required property var model
-                        width: parent.width; height: 28
-                        icon: model.Default ? "check" : "speaker-high"
-                        label: model.Description; clip: true
+                        width: parent.width; height: 36
+                        glyph: model.Default ? "check" : "speaker-high"
+                        text: model.Description; clip: true
                         onClicked: model.PulseObject.default = true
                     }
                 }
@@ -210,7 +176,7 @@ Controls.Control {
                     Tool { icon: panel.audio.source && panel.audio.source.muted ? "microphone-slash" : "microphone"; description: "Silenciar micrófono"; onClicked: panel.audio.toggleMute(panel.audio.source, true) }
                     UiText { width: parent.width - 28; height: 28; text: "Micrófono"; color: Theme.secondary }
                 }
-                SinglrSlider {
+                SliderControl {
                     width: parent.width; from: 0; to: 100; stepSize: 1
                     value: panel.audio.percent(panel.audio.source)
                     enabled: !!panel.audio.source && panel.audio.source.volumeWritable
@@ -225,32 +191,63 @@ Controls.Control {
                     required property var model
                     width: content.width; visible: brightness.isBrightnessAvailable
                     UiText { width: parent.width; height: 26; text: "Brillo · " + brightnessDisplay.model.label; elide: Text.ElideRight }
-                    SinglrSlider {
+                    SliderControl {
                         width: parent.width; from: 0; to: brightnessDisplay.model.maxBrightness; stepSize: 1
                         value: brightnessDisplay.model.brightness; Accessible.name: "Brillo de " + brightnessDisplay.model.label
                         onMoved: brightness.setBrightness(brightnessDisplay.model.displayName, Math.round(value))
                     }
                 }
             }
-            UiText {
-                width: parent.width; height: visible ? 28 : 0
-                visible: battery.hasInternalBatteries && battery.hasCumulative
-                text: "Batería · " + battery.percent + " %" + (battery.pluggedIn ? " · Conectada" : "")
-            }
-            Controls.ComboBox {
-                width: parent.width; visible: power.profiles.length > 0
-                model: power.profiles; currentIndex: power.profiles.indexOf(power.activeProfile)
-                Accessible.name: "Perfil de energía"
-                onActivated: power.setProfile(currentText)
-            }
-            UiText { width: parent.width; height: visible ? 32 : 0; visible: !!power.profileError; text: power.profileError; wrapMode: Text.Wrap }
-            SinglrSwitch {
+            Toggle {
                 width: parent.width; text: "No molestar"; checked: panel.notifications.inhibited
                 onToggled: panel.notifications.setInhibited(checked)
             }
             Rectangle { width: parent.width; height: 1; color: Theme.border }
-            Tool { width: parent.width; height: 32; icon: "gear"; label: "Configuración del sistema"; onClicked: panel.openSettings() }
+            ControlRow { width: parent.width; glyph: "gear"; text: "Configuración del sistema"; onClicked: panel.openSettings() }
             UiText { width: parent.width; height: visible ? implicitHeight : 0; visible: !!panel.errorText; text: panel.errorText; wrapMode: Text.Wrap; color: Theme.secondary }
+            Column {
+                width: parent.width; spacing: 8
+                visible: battery.hasInternalBatteries && battery.hasCumulative
+                Rectangle { width: parent.width; height: 1; color: Theme.border }
+                Row {
+                    spacing: 8; height: 30
+                    Icon { name: "battery-high"; width: 22; height: 22; anchors.verticalCenter: parent.verticalCenter }
+                    UiText { height: 30; text: battery.percent + " %"; font.pixelSize: 20; weight: 590 }
+                }
+                UiText {
+                    width: parent.width; color: Theme.secondary
+                    text: {
+                        const minutes = Math.floor(battery.smoothedRemainingMsec / 60000);
+                        const duration = Math.floor(minutes / 60) + " h " + String(minutes % 60).padStart(2, "0") + " min";
+                        if (battery.state === Battery.BatteryControlModel.Charging) return "Cargando" + (minutes > 0 ? " · llena en " + duration : "");
+                        if (battery.pluggedIn) return battery.state === Battery.BatteryControlModel.FullyCharged ? "Conectado · batería llena" : "Conectado, sin cargar";
+                        return "Batería" + (minutes > 0 ? " · quedan " + duration : "");
+                    }
+                }
+                Rectangle {
+                    width: parent.width; height: 3; radius: 2; color: "#1fffffff"
+                    Rectangle { width: parent.width * battery.percent / 100; height: 3; radius: 2; color: Theme.control }
+                }
+                Row {
+                    width: parent.width; spacing: 2; visible: power.profiles.length > 0
+                    Repeater {
+                        model: [{key: "power-saver", title: "Ahorro"}, {key: "balanced", title: "Equilibrado"}, {key: "performance", title: "Rendimiento"}]
+                        delegate: Controls.Button {
+                            id: profileButton
+                            required property var modelData
+                            width: (content.width - 4) / 3; height: 30
+                            text: modelData.title; enabled: power.profiles.indexOf(modelData.key) >= 0
+                            Accessible.name: "Perfil " + text
+                            Accessible.checkable: true; Accessible.checked: power.activeProfile === modelData.key
+                            opacity: enabled ? 1 : 0.4
+                            contentItem: UiText { text: profileButton.text; font.pixelSize: 11; horizontalAlignment: Text.AlignHCenter; color: power.activeProfile === profileButton.modelData.key ? "#16171a" : Theme.secondary }
+                            background: Rectangle { radius: 5; color: power.activeProfile === profileButton.modelData.key ? Theme.control : profileButton.hovered ? Theme.hover : Theme.raised; border.color: profileButton.visualFocus ? Theme.control : "transparent" }
+                            onClicked: power.setProfile(modelData.key)
+                        }
+                    }
+                }
+                UiText { width: parent.width; visible: !!power.profileError; text: power.profileError; color: "#ef9a9a"; wrapMode: Text.Wrap }
+            }
         }
     }
 }

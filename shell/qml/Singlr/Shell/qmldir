@@ -14,3 +14,4 @@ NotificationCenter 1.0 NotificationCenter.qml
 SystemControls 1.0 SystemControls.qml
 OnScreenDisplay 1.0 OnScreenDisplay.qml
 ControlCenter 1.0 ControlCenter.qml
+WifiRow 1.0 WifiRow.qml

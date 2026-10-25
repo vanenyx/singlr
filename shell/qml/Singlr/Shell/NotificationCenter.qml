@@ -133,18 +133,9 @@ Item {
                 }
                 Tool { icon: "x"; width: 28; description: "Cerrar historial"; onClicked: center.historyOpen = false }
             }
-            Controls.Switch {
-                id: dnd; width: parent.width; height: 32; leftPadding: 0; rightPadding: 48
-                text: "No molestar"; checked: center.inhibited
+            Toggle {
+                width: parent.width; text: "No molestar"; checked: center.inhibited
                 onToggled: center.setInhibited(checked)
-                contentItem: UiText { text: dnd.text; color: Theme.secondary }
-                indicator: Rectangle {
-                    x: dnd.width - width; y: (dnd.height - height) / 2
-                    width: 32; height: 18; radius: 9
-                    color: dnd.checked ? Theme.control : Theme.hover
-                    border.color: dnd.activeFocus ? Theme.accentText : Theme.focusBorder
-                    Rectangle { x: dnd.checked ? 16 : 3; y: 3; width: 12; height: 12; radius: 6; color: Theme.secondary; Behavior on x { NumberAnimation { duration: 160 } } }
-                }
             }
             UiText { visible: center.live && !center.serverValid; width: parent.width; text: "Servidor no disponible · " + center.ownerName; color: Theme.secondary; wrapMode: Text.Wrap }
             UiText { visible: !center.entries.length; height: visible ? 40 : 0; text: "No tienes notificaciones"; color: Theme.muted }

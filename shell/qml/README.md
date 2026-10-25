@@ -336,3 +336,40 @@ persisten avisos previos de SVG y portal. Pendiente: recorrido físico de hover,
 menú contextual y pérdida de foco entre aplicaciones en la sesión real.
 Una captura adicional con búsqueda «konsole» abortó en KRunner/KIO en el sandbox
 (`QWidget ... without QApplication`); el lanzador vacío sí se captura.
+
+### T213 — Centro de control
+
+Petición explícita del creador: filas de 36 px, texto de 13 px e iconos Phosphor
+ de 16 px, controles neutros según P-010 y batería como última sección.
+`ControlRow` comparte alineación, teclado, estado y acción entre Wi-Fi, Bluetooth
+ y salidas de audio. `Toggle` y `SliderControl` usan Qt Quick Controls Basic con
+ geometría propia y paleta neutra. El alfa de la pista es `#1fffffff`: QML utiliza
+`#AARRGGBB`, por lo que `#ffffff1f` produciría amarillo opaco.
+
+Contratos comprobados en los qmltypes y `ConnectionItemDelegate.qml` instalados
+ de plasma-nm **6.8.1**, Qt **6.12.0**. `AppletProxyModel` aporta disponibilidad;
+ una segunda ordenación por `Signal` y dos grupos de filas colocan primero la
+ conectada y luego las demás por señal, sin priorizar historial. Se comprueban
+`ItemType` y `SpecificPath` para omitir conexiones sin punto de acceso.
+El patrón de conexión sigue el [applet oficial de KDE](https://github.com/KDE/plasma-nm/blob/master/applet/ConnectionItem.qml),
+ contrastado con las firmas locales `activateConnection`,
+`addAndActivateConnection` y `deactivateConnection`. La ruta histórica de
+`/usr/share/plasma/plasmoids/org.kde.plasma.networkmanagement/` no existe en esta
+ instalación. Los ajustes abren `systemsettings kcm_networkmanagement` mediante
+`KCMUtils.KCMLauncher.openSystemSettings`.
+
+Contraseña dentro de la fila, mostrar/ocultar, Enter para conectar y Esc para
+ cancelar y limpiar. Progreso por estado nativo, errores por
+`connectionActivationFailed`, transición fallida y timeout. El agente de secretos
+ de KDE sigue siendo responsable de autenticación; falta comprobar con una red
+ de prueba los errores de contraseña reales y si el agente presenta diálogos.
+Las redes empresariales abren el KCM para configurar certificados/EAP.
+
+Validación: qmllint completo sin avisos; qmltestrunner offscreen/software **61
+ passed / 0 failed**. Los siete resultados del caso nuevo incluyen carga,
+ disponibilidad, cuatro niveles de señal, llamadas de conexión/desconexión,
+ contraseña por teclado, errores, éxito y controles neutros. Usa un Handler doble;
+ no cambia la red activa. La [captura de componentes](captures/control-center-components-t213.png)
+ es una composición QML con datos de prueba, revisada visualmente, no una captura
+ de la sesión del creador. El log en vivo termina con carga correcta, sin errores
+ QML nuevos; permanece el aviso previo de registro del portal para `singlr-shell`.
