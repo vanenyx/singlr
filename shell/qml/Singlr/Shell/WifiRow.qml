@@ -9,6 +9,16 @@ Column {
     required property var networkData
     required property var handler
     property bool editing: false
+    property string secretRequestId: ""
+    property bool secretRetry: false
+    property bool menuOpen: false
+    property bool confirmingForget: false
+    signal secretSubmitted(string password)
+    signal secretCancelled()
+    onSecretRequestIdChanged: {
+        password.clear();
+        if (secretRequestId) Qt.callLater(function() { if (wifi.secretRequestId && wifi.editing) password.forceActiveFocus(); });
+    }
     readonly property string identity: networkData.DevicePath + ":" + networkData.Ssid
     readonly property bool connected: networkData.ConnectionState === Network.Enums.Activated
     readonly property bool activating: networkData.ConnectionState === Network.Enums.Activating
@@ -25,9 +35,11 @@ Column {
     signal editFinished()
     signal settingsRequested()
     spacing: 4
+    onVisibleChanged: if (!visible) { menuOpen = false; confirmingForget = false; }
     onEditingChanged: {
         password.clear(); password.echoMode = TextInput.Password;
         if (editing) password.forceActiveFocus();
+        else { menuOpen = false; confirmingForget = false; }
     }
     onConnectedChanged: if (connected) { requested = false; attempted = false; failure = ""; timeout.stop(); }
     onActivatingChanged: {
@@ -45,6 +57,9 @@ Column {
     }
     function connectPassword() {
         if (!password.length || requested) return;
+        if (secretRequestId) {
+            const value = password.text; password.clear(); secretSubmitted(value); editFinished(); return;
+        }
         begin();
         handler.addAndActivateConnection(networkData.DevicePath, networkData.SpecificPath, password.text);
         password.clear(); editFinished();
@@ -66,12 +81,18 @@ Column {
         text: wifi.networkData.Name
         glyph: wifi.networkData.Signal < 25 ? "wifi-none" : wifi.networkData.Signal < 50 ? "wifi-low" : wifi.networkData.Signal < 75 ? "wifi-medium" : "wifi-high"
         secured: wifi.secured
-        secondaryText: wifi.networkData.Signal + " %"
+        secondaryText: wifi.secretRequestId ? "" : wifi.networkData.Signal + " %"
         status: wifi.connected ? "Conectada" : ""
         busy: wifi.activating || wifi.requested
-        actionText: wifi.connected ? "Desconectar" : ""
-        onActionTriggered: wifi.handler.deactivateConnection(wifi.networkData.ConnectionPath, wifi.networkData.DevicePath)
+        actionText: !wifi.secretRequestId && wifi.networkData.Uuid ? "…" : ""
+        onActionTriggered: { wifi.menuOpen = !wifi.menuOpen; wifi.confirmingForget = false; }
+        TapHandler {
+            acceptedButtons: Qt.RightButton
+            onTapped: { if (!wifi.secretRequestId && wifi.networkData.Uuid) { wifi.menuOpen = !wifi.menuOpen; wifi.confirmingForget = false; } }
+        }
+        Keys.onMenuPressed: { if (wifi.networkData.Uuid) wifi.menuOpen = !wifi.menuOpen; }
         onClicked: {
+            wifi.menuOpen = false;
             if (wifi.connected || busy) return;
             if (wifi.networkData.Uuid) {
                 wifi.begin();
@@ -81,6 +102,18 @@ Column {
                 wifi.handler.addAndActivateConnection(wifi.networkData.DevicePath, wifi.networkData.SpecificPath);
             } else if (wifi.staticPassword) wifi.editRequested();
             else wifi.settingsRequested();
+        }
+    }
+    Column {
+        width: parent.width - 26; x: 26; spacing: 2; visible: wifi.menuOpen
+        ControlRow { width: parent.width; visible: wifi.connected && !wifi.confirmingForget; objectName: "disconnectNetwork"; text: "Desconectar"; onClicked: { wifi.handler.deactivateConnection(wifi.networkData.ConnectionPath, wifi.networkData.DevicePath); wifi.menuOpen = false; } }
+        ControlRow { width: parent.width; visible: !wifi.confirmingForget; objectName: "forgetNetwork"; text: "Olvidar red"; onClicked: wifi.confirmingForget = true }
+        ControlRow { width: parent.width; visible: !wifi.confirmingForget; text: "Ajustes…"; onClicked: { wifi.menuOpen = false; wifi.settingsRequested(); } }
+        UiText { width: parent.width; visible: wifi.confirmingForget; text: "¿Olvidar «" + wifi.networkData.Name + "»?"; wrapMode: Text.Wrap }
+        Row {
+            visible: wifi.confirmingForget; spacing: 8
+            Tool { objectName: "confirmForget"; icon: "check"; label: "Olvidar"; onClicked: { wifi.handler.removeConnection(wifi.networkData.ConnectionPath); wifi.menuOpen = false; wifi.confirmingForget = false; } }
+            Tool { icon: "x"; label: "Cancelar"; onClicked: { wifi.confirmingForget = false; wifi.menuOpen = false; } }
         }
     }
     Column {
@@ -98,7 +131,7 @@ Column {
                 Accessible.name: "Contraseña de " + wifi.networkData.Name
                 background: Rectangle { radius: 5; color: Theme.panel; border.color: password.activeFocus ? Theme.focusBorder : Theme.border }
                 onAccepted: wifi.connectPassword()
-                Keys.onEscapePressed: event => { password.clear(); wifi.editFinished(); row.forceActiveFocus(); event.accepted = true; }
+                Keys.onEscapePressed: event => { password.clear(); if (wifi.secretRequestId) wifi.secretCancelled(); wifi.editFinished(); row.forceActiveFocus(); event.accepted = false; }
             }
             Tool {
                 icon: password.echoMode === TextInput.Password ? "eye" : "eye-slash"
@@ -109,12 +142,12 @@ Column {
         Row {
             spacing: 8
             Tool { icon: "check"; label: "Conectar"; enabled: password.length > 0; onClicked: wifi.connectPassword() }
-            Tool { icon: "x"; label: "Cancelar"; onClicked: { password.clear(); wifi.editFinished(); row.forceActiveFocus(); } }
+            Tool { icon: "x"; label: "Cancelar"; onClicked: { password.clear(); if (wifi.secretRequestId) wifi.secretCancelled(); wifi.editFinished(); row.forceActiveFocus(); } }
         }
     }
     UiText {
-        width: parent.width - 34; x: 26; visible: !!wifi.failure
-        text: wifi.failure; color: "#ef9a9a"; wrapMode: Text.Wrap; elide: Text.ElideNone
+        width: parent.width - 34; x: 26; visible: !!wifi.failure || (!!wifi.secretRequestId && wifi.secretRetry)
+        text: wifi.secretRequestId && wifi.secretRetry ? "Contraseña incorrecta" : wifi.failure; color: "#ef9a9a"; wrapMode: Text.Wrap; elide: Text.ElideNone
         Accessible.role: Accessible.AlertMessage
     }
 }

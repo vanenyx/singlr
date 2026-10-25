@@ -15,6 +15,7 @@ Item {
         signal connectionActivationFailed(string path, string message)
         function activateConnection(path, device, ap) { operation = "activate"; args = [path, device, ap]; }
         function addAndActivateConnection(device, ap, password = "") { operation = "add"; args = [device, ap, password]; }
+        function removeConnection(path) { operation = "remove"; args = [path]; }
         function deactivateConnection(path, device) { operation = "deactivate"; args = [path, device]; }
     }
     Component {
@@ -78,7 +79,17 @@ Item {
             verify(row.failure.length > 0); verify(!row.requested);
             row.networkData = networkFixture({Uuid: "known", ConnectionPath: "/connection/1", ConnectionState: Network.Enums.Activated});
             compare(row.failure, ""); const button = findChild(row, "networkRow"); compare(button.status, "Conectada");
-            button.actionTriggered(); compare(networkHandlerStub.operation, "deactivate"); compare(networkHandlerStub.args, ["/connection/1", "/device/1"]);
+            button.actionTriggered(); verify(row.menuOpen); wait(30);
+            mouseClick(findChild(row, "disconnectNetwork")); compare(networkHandlerStub.operation, "deactivate"); compare(networkHandlerStub.args, ["/connection/1", "/device/1"]);
+        }
+        function test_forgetConfirmationAndRightClick() {
+            const row = createRow({Uuid: "known", ConnectionPath: "/connection/1"});
+            mouseClick(findChild(row, "networkRow"), 60, 18, Qt.RightButton);
+            verify(row.menuOpen); wait(30); compare(networkHandlerStub.operation, "");
+            mouseClick(findChild(row, "forgetNetwork")); verify(row.confirmingForget); wait(30);
+            compare(networkHandlerStub.operation, "");
+            mouseClick(findChild(row, "confirmForget")); compare(networkHandlerStub.operation, "remove");
+            compare(networkHandlerStub.args, ["/connection/1"]); verify(!row.menuOpen);
         }
         function test_neutralControlsKeyboard() {
             const toggle = createTemporaryObject(toggleComponent, fixture);

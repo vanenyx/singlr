@@ -41,6 +41,16 @@ Item {
         property bool inhibited: false
         function setInhibited(value) { inhibited = value; }
     }
+    QtObject {
+        id: secretAgent
+        property string operation: ""
+        property string request: ""
+        property string password: ""
+        signal secretRequested(string requestId, string ssid, string connectionUuid, bool retry)
+        signal requestCancelled(string requestId)
+        function provide(requestId, value) { operation = "provide"; request = requestId; password = value; }
+        function cancel(requestId) { operation = "cancel"; request = requestId; }
+    }
     SystemControls { id: audio; sink: output; source: input; player: mediaPlayer.stub }
     OnScreenDisplay { id: osd; width: 240; height: 44 }
     Component { id: panelComponent; ControlCenter { width: 340; audio: fixture.controls; notifications: fixture.notificationState } }
@@ -92,11 +102,33 @@ Item {
             tryCompare(osd, "surfaceVisible", false, 500);
             osd.request("showText", ["input-keyboard", "Español"]); compare(osd.message, "Español"); compare(osd.percent, -1);
         }
+        function test_inlineSecretContract() {
+            const panel = createTemporaryObject(panelComponent, fixture, {secrets: secretAgent});
+            verify(panel !== null);
+            secretAgent.operation = "";
+            secretAgent.secretRequested("request-1", "Red protegida", "saved-uuid", true);
+            compare(panel.page, "wifi");
+            const row = findChild(panel, "secretWifiRow");
+            const field = findChild(row, "wifiPassword");
+            tryCompare(field, "activeFocus", true);
+            compare(panel.secretRetry, true); compare(row.secretRetry, true); tryCompare(row, "editing", true);
+            field.text = "test-password"; keyClick(Qt.Key_Return);
+            compare(secretAgent.operation, "provide"); compare(secretAgent.request, "request-1");
+            compare(secretAgent.password, "test-password"); compare(field.text, "");
+            secretAgent.secretRequested("request-2", "Red protegida", "saved-uuid", false);
+            tryCompare(field, "activeFocus", true);
+            keyClick(Qt.Key_Escape); compare(panel.page, "main");
+            compare(secretAgent.operation, "cancel"); compare(secretAgent.request, "request-2");
+            secretAgent.secretRequested("request-3", "Red protegida", "saved-uuid", false);
+            secretAgent.requestCancelled("request-3"); compare(panel.secretId, ""); verify(!row.editing);
+        }
         function test_controlCenterLoadAndEscape() {
             const panel = createTemporaryObject(panelComponent, parent);
             verify(panel !== null);
             panelClosed.target = panel; panelClosed.clear();
-            panel.forceActiveFocus(); keyClick(Qt.Key_Escape); compare(panelClosed.count, 1);
+            panel.page = "wifi";
+            panel.forceActiveFocus(); keyClick(Qt.Key_Escape); compare(panel.page, "main"); compare(panelClosed.count, 0);
+            keyClick(Qt.Key_Escape); compare(panelClosed.count, 1);
         }
     }
 }

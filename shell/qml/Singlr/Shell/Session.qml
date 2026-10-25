@@ -53,7 +53,13 @@ Item {
         LayerShell.Window.activateOnShow: true
         LayerShell.Window.scope: "singlr-control-center"
         onActiveChanged: if (!active && visible) visible = false
-        ControlCenter { id: controlPanel; anchors.fill: parent; audio: systemControls; opened: controlWindow.visible; notifications: session.notificationCenter; onClosed: controlWindow.visible = false }
+        ControlCenter { id: controlPanel; anchors.fill: parent; audio: systemControls; opened: controlWindow.visible; notifications: session.notificationCenter; onClosed: controlWindow.visible = false
+            onOpenRequested: {
+                if (!controlWindow.visible) session.toggleControlCenter();
+                controlFocus.stop();
+                controlWindow.requestActivate();
+            }
+        }
     }
     // --no-background: sobre una sesión Plasma real se conserva el fondo del usuario.
     readonly property bool showBackground: Qt.application.arguments.indexOf("--no-background") < 0
