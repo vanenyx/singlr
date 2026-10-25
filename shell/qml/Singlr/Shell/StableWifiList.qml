@@ -9,7 +9,7 @@ ListView {
     property bool pageActive: false
     readonly property alias stableModel: stable
     signal passwordRequested(var data)
-    signal detailsRequested(var data)
+    signal menuRequested(var data, var anchor, real px, real py)
     signal networkUpdated(string key, var data)
     signal settingsRequested()
     clip: true
@@ -57,7 +57,7 @@ ListView {
         networkData: payload
         handler: list.handler
         onPasswordRequested: list.passwordRequested(networkData)
-        onDetailsRequested: list.detailsRequested(networkData)
+        onMenuRequested: (anchor, px, py) => list.menuRequested(networkData, anchor, px, py)
         onSettingsRequested: list.settingsRequested()
     }
 }

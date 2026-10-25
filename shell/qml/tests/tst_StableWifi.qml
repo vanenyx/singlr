@@ -84,8 +84,10 @@ Item {
                 compare(panel.implicitHeight, height); compare(panel.height, height);
                 for (let j = 0; j < list.count; ++j) if (list.itemAtIndex(j)) compare(list.itemAtIndex(j).height, 36);
             }
-            panel.openNetwork(data, false); wait(150); compare(panel.navigation.depth, 3); compare(panel.implicitHeight, height);
-            mouseClick(findChild(panel.navigation.currentItem, "pageBack")); wait(150); compare(panel.page, "wifi");
+            panel.openNetworkMenu(data, list, list.width - 10, 40); wait(30);
+            const menu = findChild(panel, "controlContextMenu");
+            verify(menu.opened); compare(panel.navigation.depth, 2); compare(panel.implicitHeight, height);
+            keyClick(Qt.Key_Escape); wait(30); verify(!menu.visible); compare(panel.page, "wifi");
             panel.openNetwork(data, true); wait(150); compare(panel.implicitHeight, height);
             const field = findChild(panel.navigation.currentItem, "wifiPassword"); field.forceActiveFocus(); keyClick(Qt.Key_Escape); wait(150);
             compare(panel.page, "wifi"); compare(panel.navigation.depth, 2);

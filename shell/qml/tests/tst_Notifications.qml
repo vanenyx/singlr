@@ -13,6 +13,8 @@ Item {
             property bool serverValid: true
             property string ownerName: "Test"
             property var calls: []
+            function canMute(entry) { return !!entry.desktopEntry; }
+            function muteApp(entry) { calls.push([entry.id, "mute"]); }
             function markRead() { calls.push("read"); }
             function setInhibited(value) { inhibited = value; }
             function dispatch(id, action) { calls.push([id, action]); }
@@ -84,6 +86,22 @@ Item {
             mouseClick(findChild(pages.currentItem, "notificationBack")); wait(150); compare(pages.depth, 1);
             mouseClick(list.itemAtIndex(0)); wait(150); pages.forceActiveFocus(); keyClick(Qt.Key_Escape); wait(150); compare(pages.depth, 1);
             center.backendObject.entries = []; wait(30); compare(center.height, height);
+        }
+        function test_historyContextActions() {
+            center.historyOpen = true;
+            const height = center.height;
+            center.backendObject.entries = [Object.assign(entry(1), {desktopEntry: "test-app"})]; wait(30);
+            const list = findChild(center, "notificationList"); list.forceLayout();
+            mouseClick(list.itemAtIndex(0), 40, 18, Qt.RightButton); wait(20);
+            const menu = findChild(center, "notificationContextMenu"); verify(menu.opened);
+            compare(menu.entries.map(e => e.label), ["Descartar", "Silenciar esta app", "Ajustes de notificaciones…"]);
+            compare(center.height, height); compare(findChild(center, "notificationPages").depth, 1);
+            keyClick(Qt.Key_Down); keyClick(Qt.Key_Return);
+            compare(center.backendObject.calls[center.backendObject.calls.length - 1], [1, "mute"]);
+            center.openContext(entry(2), list, 20, 40); wait(20); compare(menu.entries.length, 2);
+            keyClick(Qt.Key_Escape); verify(!menu.visible); verify(center.historyOpen);
+            center.openContext(entry(2), list, 20, 40); wait(20); keyClick(Qt.Key_Return);
+            compare(center.backendObject.calls[center.backendObject.calls.length - 1], [2, "close"]); compare(center.height, height);
         }
         function test_cardActions() {
             const card = createTemporaryObject(cardComponent, root, {entry:entry(1)});

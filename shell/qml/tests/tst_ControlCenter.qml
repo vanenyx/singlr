@@ -25,9 +25,8 @@ Item {
             handler: networkHandlerStub
         }
     }
-    Component { id: detailsSpy; SignalSpy { signalName: "detailsRequested" } }
+    Component { id: detailsSpy; SignalSpy { signalName: "menuRequested" } }
     Component { id: passwordComponent; WifiPage { width: 308; handler: networkHandlerStub; passwordPage: true } }
-    Component { id: detailComponent; WifiPage { width: 308; handler: networkHandlerStub } }
     Component { id: toggleComponent; Toggle { text: "Wi-Fi"; width: 308 } }
     Component { id: sliderComponent; SliderControl { width: 308; from: 0; to: 100; value: 50 } }
     TestCase {
@@ -84,12 +83,7 @@ Item {
             const spy = createTemporaryObject(detailsSpy, fixture, {target: row});
             mouseClick(findChild(row, "networkRow"), 60, 18, Qt.RightButton);
             compare(spy.count, 1); compare(row.height, 36);
-            const page = createTemporaryObject(detailComponent, fixture, {networkData: row.networkData});
-            const height = page.height;
-            mouseClick(findChild(page, "forgetNetwork")); verify(page.confirmingForget); wait(30); compare(page.height, height);
-            compare(networkHandlerStub.operation, "");
-            mouseClick(findChild(page, "confirmForget")); compare(networkHandlerStub.operation, "remove");
-            compare(networkHandlerStub.args, ["/connection/1"]);
+
         }
         function test_neutralControlsKeyboard() {
             const toggle = createTemporaryObject(toggleComponent, fixture);

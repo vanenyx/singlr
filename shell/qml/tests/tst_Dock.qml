@@ -168,7 +168,7 @@ Item {
         function test_menuKeyboardAndWindowSelection() {
             dock.openContext(0, task());
             compare(dock.contextWindows.length,4); compare(dock.menuEntries.length,7);
-            compare(dock.menuHeight,236);
+            compare(dock.menuHeight,222);
             wait(1); keyClick(Qt.Key_Down); compare(dock.menuIndex,1);
             keyClick(Qt.Key_Return); compare(doubleModel.activatedId,"20"); verify(!dock.menuOpen);
             dock.openContext(0, task()); wait(1); keyClick(Qt.Key_Escape); verify(!dock.menuOpen);

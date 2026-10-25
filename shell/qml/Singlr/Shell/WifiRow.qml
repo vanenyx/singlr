@@ -20,7 +20,7 @@ Item {
     property bool sawActivation: false
     property string failure: ""
     signal passwordRequested()
-    signal detailsRequested()
+    signal menuRequested(var anchor, real px, real py)
     signal settingsRequested()
     height: 36
     implicitHeight: 36
@@ -48,6 +48,17 @@ Item {
         id: timeout; interval: 45000
         onTriggered: if (wifi.requested && !wifi.connected) wifi.fail("No se pudo conectar. Comprueba la contraseña y vuelve a intentarlo.");
     }
+    function connectNetwork() {
+        if (connected || activating || requested) return;
+        if (networkData.Uuid) {
+            begin();
+            handler.activateConnection(networkData.ConnectionPath, networkData.DevicePath, networkData.SpecificPath);
+        } else if (!secured) {
+            begin();
+            handler.addAndActivateConnection(networkData.DevicePath, networkData.SpecificPath);
+        } else if (staticPassword) passwordRequested();
+        else settingsRequested();
+    }
     ControlRow {
         id: row
         objectName: "networkRow"
@@ -59,19 +70,9 @@ Item {
         status: wifi.connected ? "Conectada" : ""
         busy: wifi.activating || wifi.requested
         actionText: "…"
-        onActionTriggered: wifi.detailsRequested()
-        TapHandler { acceptedButtons: Qt.RightButton; onTapped: wifi.detailsRequested() }
-        Keys.onMenuPressed: wifi.detailsRequested()
-        onClicked: {
-            if (wifi.connected || busy) return;
-            if (wifi.networkData.Uuid) {
-                wifi.begin();
-                wifi.handler.activateConnection(wifi.networkData.ConnectionPath, wifi.networkData.DevicePath, wifi.networkData.SpecificPath);
-            } else if (!wifi.secured) {
-                wifi.begin();
-                wifi.handler.addAndActivateConnection(wifi.networkData.DevicePath, wifi.networkData.SpecificPath);
-            } else if (wifi.staticPassword) wifi.passwordRequested();
-            else wifi.settingsRequested();
-        }
+        onActionTriggered: wifi.menuRequested(row, row.width - 28, row.height)
+        TapHandler { acceptedButtons: Qt.RightButton; onTapped: eventPoint => wifi.menuRequested(row, eventPoint.position.x, eventPoint.position.y) }
+        Keys.onMenuPressed: wifi.menuRequested(row, row.width - 28, row.height)
+        onClicked: wifi.connectNetwork()
     }
 }

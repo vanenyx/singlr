@@ -114,7 +114,7 @@ Item {
     // Tight, independent layer surfaces: never enlarge the dock's input region.
     Window {
         id: dockMenuWindow
-        transientParent: null; visible: dock.menuOpen; width: 260; height: dock.menuHeight; color: "transparent"
+        transientParent: null; visible: dock.menuOpen; width: 240; height: dock.menuHeight; color: "transparent"
         LayerShell.Window.layer: LayerShell.Window.LayerTop
         LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
         LayerShell.Window.margins.bottom: dockWindow.height + 18

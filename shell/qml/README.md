@@ -428,3 +428,35 @@ historial estable con 0/2/40 notificaciones. Los dobles no cambian la red ni
 Bluetooth. Preview QML revisado en `/tmp/t217-panels.png`; no sustituye la
 validación física del creador. API de StackView contrastada con
 [Qt 6.12](https://doc.qt.io/qt-6/qml-qtquick-controls-stackview.html).
+
+
+### T218 — Menús contextuales flotantes (P-012)
+
+`Singlr.Ui.ContextMenu` usa `Popup.Item` dentro de la ventana existente: 240 px,
+radio 8, filas de 28 px, Phosphor de 14 px, texto de 13 px, separadores y sombra.
+Posición junto al cursor o «…», limitada por el panel; sin transición ni cambios
+de geometría del contenido. ↑/↓, Enter, Esc y cierre al pulsar fuera. Olvidar
+requiere dos activaciones en la misma fila; Esc cancela la confirmación.
+
+Wi-Fi y Bluetooth sustituyen sus páginas de detalle por este menú. Contraseña
+y secretos mantienen su página y foco de entrada. El historial conserva la
+lectura de notificaciones y ofrece acciones por clic derecho/«…». Silenciar
+quita `ShowPopups` y `ShowPopupsInDoNotDisturbMode` mediante `NM.Settings` cuando
+hay `DesktopEntryRole` o `NotifyRcNameRole`, conserva historial y guarda la
+preferencia. El dock comparte el componente, dentro de su ventana layer-shell.
+El glifo `trash` procede del CSS Phosphor ya incluido.
+
+Contratos contrastados con Qt 6.12.0 y qmltypes locales de Plasma/BluezQt:
+[Popup.Item y límites](https://doc.qt.io/qt-6/qml-qtquick-controls-popup.html),
+[preferencias de NotificationManager](https://github.com/KDE/plasma-workspace/blob/master/libnotificationmanager/settings.cpp).
+
+Verificado con los comandos completos anteriores: **qmllint exit 0 sin avisos**;
+**qmltestrunner offscreen/software 77 passed, 0 failed**. Incluye límites,
+altura constante, doble confirmación y cancelación, teclado, clic fuera,
+acciones Wi-Fi/Bluetooth, contraseña con foco, acciones del historial y dock.
+Los dobles no modifican conexiones ni preferencias reales. Capturas de prueba
+claro/oscuro revisadas en `/tmp/t218-menu-{dark,light}.png`; no acreditan
+interacción física. Log vivo revisado tras recargas: sin errores QML nuevos;
+permanece el aviso previo de registro del portal para `singlr-shell`.
+Pendiente la comprobación física de conectividad, preferencias y devolución
+de foco entre ventanas layer-shell en KWin.

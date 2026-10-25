@@ -11,3 +11,4 @@ ShortcutHint 1.0 ShortcutHint.qml
 Toggle 1.0 Toggle.qml
 SliderControl 1.0 SliderControl.qml
 ControlRow 1.0 ControlRow.qml
+ContextMenu 1.0 ContextMenu.qml

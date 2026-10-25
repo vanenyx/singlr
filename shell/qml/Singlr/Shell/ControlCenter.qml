@@ -32,12 +32,52 @@ Controls.Control {
         pages.pushItem(name === "wifi" ? wifiComponent : bluetoothComponent);
     }
     function openNetwork(data, passwordPage) {
+        if (!passwordPage) return;
         secretRetry = false;
         selectedNetwork = data;
         selectedKey = data.Uuid ? "uuid:" + data.Uuid : "ssid:" + JSON.stringify([data.Ssid, data.SecurityType]);
         pages.pushItem(networkComponent, {passwordPage: passwordPage});
     }
     function resetPages() { if (pages.depth > 1) pages.popToIndex(0, Controls.StackView.Immediate); }
+    function openNetworkMenu(data, anchor, px, py) {
+        selectedNetwork = data;
+        selectedKey = data.Uuid ? "uuid:" + data.Uuid : "ssid:" + JSON.stringify([data.Ssid, data.SecurityType]);
+        const entries = [{label: data.ConnectionState === Network.Enums.Activated ? "Desconectar" : "Conectar", icon: "wifi-high", shortcut: "⏎", action: "wifi"}];
+        if (data.Uuid) entries.push({label: "Olvidar red", icon: "trash", shortcut: "Supr", action: "forgetWifi", destructive: true, confirmation: "¿Olvidar red? Pulsa de nuevo"});
+        entries.push({label: "Ajustes…", icon: "gear", separator: true, action: "wifiSettings"});
+        contextMenu.entries = entries;
+        contextMenu.showAt(anchor, px, py);
+    }
+    function openDeviceMenu(device, anchor, px, py) {
+        selectedDevice = device; errorText = "";
+        contextMenu.entries = [
+            {label: device.connected ? "Desconectar" : "Conectar", icon: "bluetooth", shortcut: "⏎", action: "bluetooth"},
+            {label: "Olvidar dispositivo", icon: "trash", destructive: true, confirmation: "¿Olvidar? Pulsa de nuevo", action: "forgetBluetooth"},
+            {label: "Ajustes…", icon: "gear", separator: true, action: "bluetoothSettings"}
+        ];
+        contextMenu.showAt(anchor, px, py);
+    }
+    ContextMenu {
+        id: contextMenu; objectName: "controlContextMenu"; parent: panel
+        onTriggered: entry => {
+            const n = panel.selectedNetwork;
+            if (entry.action === "forgetWifi") panel.networkActions.removeConnection(n.ConnectionPath);
+            else if (entry.action === "wifiSettings") KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement");
+            else if (entry.action === "bluetoothSettings") KCMUtils.KCMLauncher.openSystemSettings("kcm_bluetooth");
+            else if (entry.action === "wifi") {
+                if (n.ConnectionState === Network.Enums.Activated) panel.networkActions.deactivateConnection(n.ConnectionPath, n.DevicePath);
+                else if (n.Uuid) panel.networkActions.activateConnection(n.ConnectionPath, n.DevicePath, n.SpecificPath);
+                else if (n.SecurityType === Network.Enums.NoneSecurity || n.SecurityType === Network.Enums.OWE) panel.networkActions.addAndActivateConnection(n.DevicePath, n.SpecificPath);
+                else if ([Network.Enums.StaticWep, Network.Enums.WpaPsk, Network.Enums.Wpa2Psk, Network.Enums.SAE].indexOf(n.SecurityType) >= 0) Qt.callLater(() => panel.openNetwork(n, true));
+                else KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement");
+            } else {
+                const device = panel.selectedDevice;
+                if (!device) return;
+                const call = entry.action === "forgetBluetooth" ? device.adapter.removeDevice(device) : device.connected ? device.disconnectFromDevice() : device.connectToDevice();
+                call.finished.connect(function(result) { if (result.error) panel.errorText = result.errorText; });
+            }
+        }
+    }
     // Context property supplied only by the native session launcher.
     // qmllint disable unqualified
     property var secrets: typeof SinglrSecrets !== "undefined" ? SinglrSecrets : null
@@ -86,7 +126,7 @@ Controls.Control {
     palette.highlight: Theme.control
     onOpenedChanged: {
         if (opened) networkHandler.requestScan();
-        else { cancelSecret(); errorText = ""; resetPages(); }
+        else { contextMenu.close(); cancelSecret(); errorText = ""; resetPages(); }
     }
     Component.onCompleted: if (opened) networkHandler.requestScan()
     Timer { interval: 15000; running: panel.opened; repeat: true; onTriggered: networkHandler.requestScan() }
@@ -279,7 +319,7 @@ Controls.Control {
                 pageActive: panel.opened && panel.page === "wifi"
                 onNetworkUpdated: (key, data) => { if (key === panel.selectedKey || (panel.secretId && data.Ssid === panel.selectedNetwork.Ssid)) panel.selectedNetwork = data; }
                 onPasswordRequested: data => panel.openNetwork(data, true)
-                onDetailsRequested: data => panel.openNetwork(data, false)
+                onMenuRequested: (data, anchor, px, py) => panel.openNetworkMenu(data, anchor, px, py)
                 onSettingsRequested: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement")
             }
             ControlRow { y: parent.height - 36; width: parent.width; height: 36; text: "Más ajustes de red…"; glyph: "gear"; onClicked: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement") }
@@ -316,7 +356,7 @@ Controls.Control {
                 UiText { width: parent.width - 28; height: 36; text: "Bluetooth"; weight: 600 }
             }
             ListView {
-                id: bluetoothList; y: 44; width: parent.width; height: parent.height - 44; clip: true
+                id: bluetoothList; y: 44; width: parent.width; height: parent.height - 80; clip: true
                 reuseItems: false; currentIndex: -1
                 model: bluetoothStable.rows
                 add: null; remove: null; displaced: null; move: null; populate: null
@@ -328,31 +368,15 @@ Controls.Control {
                 delegate: ControlRow {
                     required property var payload
                     width: bluetoothList.width; height: 36; glyph: "bluetooth"; text: payload.name; status: payload.connected ? "Conectado" : ""
-                    onClicked: { panel.selectedDevice = payload.device; panel.errorText = ""; pages.pushItem(deviceComponent); }
+                    id: deviceRow
+                    actionText: "…"
+                    onClicked: panel.openDeviceMenu(payload.device, deviceRow, width - 28, height)
+                    onActionTriggered: panel.openDeviceMenu(payload.device, deviceRow, width - 28, height)
+                    TapHandler { acceptedButtons: Qt.RightButton; onTapped: point => panel.openDeviceMenu(deviceRow.payload.device, deviceRow, point.position.x, point.position.y) }
+                    Keys.onMenuPressed: panel.openDeviceMenu(payload.device, deviceRow, width - 28, height)
                 }
             }
-        }
-    }
-    Component {
-        id: deviceComponent
-        Column {
-            objectName: "device"; spacing: 8
-            Row {
-                width: parent.width; height: 36
-                Tool { objectName: "pageBack"; icon: "caret-left"; description: "Volver"; onClicked: panel.back() }
-                UiText { width: parent.width - 28; height: 36; text: panel.selectedDevice ? panel.selectedDevice.friendlyName : "Dispositivo"; elide: Text.ElideRight }
-            }
-            UiText { width: parent.width; height: 36; text: panel.selectedDevice && panel.selectedDevice.connected ? "Conectado" : "Desconectado" }
-            ControlRow {
-                width: parent.width; height: 36; text: panel.selectedDevice && panel.selectedDevice.connected ? "Desconectar" : "Conectar"
-                onClicked: {
-                    const device = panel.selectedDevice;
-                    if (!device) return;
-                    const call = device.connected ? device.disconnectFromDevice() : device.connectToDevice();
-                    call.finished.connect(function(result) { if (result.error) panel.errorText = result.errorText; });
-                }
-            }
-            UiText { width: parent.width; height: 36; text: panel.errorText; color: "#ef9a9a"; elide: Text.ElideRight }
+            UiText { y: parent.height - 36; width: parent.width; height: 36; text: panel.errorText; color: "#ef9a9a"; Accessible.role: Accessible.AlertMessage }
         }
     }
 }

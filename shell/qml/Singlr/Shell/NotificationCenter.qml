@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as Controls
+import org.kde.kcmutils as KCMUtils
 import Singlr.Ui
 Item {
     id: center
@@ -34,6 +35,25 @@ Item {
             else if (existing !== row) popupRows.move(existing, row, 1);
         }
     }
+    property var contextEntry: ({})
+    function openContext(entry, anchor, px, py) {
+        contextEntry = entry;
+        const actions = [{label: "Descartar", icon: "x", shortcut: "Supr", action: "close"}];
+        if (backendObject && backendObject.canMute && backendObject.canMute(entry)) actions.push({label: "Silenciar esta app", icon: "bell-slash", action: "mute"});
+        actions.push({label: "Ajustes de notificaciones…", icon: "gear", separator: true, action: "settings"});
+        historyMenu.entries = actions;
+        historyMenu.showAt(anchor, px, py);
+    }
+    ContextMenu {
+        id: historyMenu; objectName: "notificationContextMenu"; parent: panel
+        onTriggered: action => {
+            if (action.action === "close") center.dispatch(center.contextEntry.id, "close");
+            else if (action.action === "mute") {
+                center.backendObject.muteApp(center.contextEntry);
+                center.popups = center.popups.filter(p => center.contextEntry.desktopEntry ? p.entry.desktopEntry !== center.contextEntry.desktopEntry : p.entry.notifyRcName !== center.contextEntry.notifyRcName);
+            } else KCMUtils.KCMLauncher.openSystemSettings("kcm_notifications");
+        }
+    }
     function toggle() { historyOpen = !historyOpen; }
     function setInhibited(value) { if (backendObject) backendObject.setInhibited(value); }
     function dispatch(id, action) {
@@ -54,7 +74,7 @@ Item {
             known[e.id] = stamp;
             next = next.filter(p => p.entry.id !== e.id);
             if (!historyOpen) unread = true;
-            if (!e.expired && !e.dismissed && !e.suppressed && (!inhibited || e.critical)) {
+            if (!e.expired && !e.dismissed && !e.suppressed && (!backendObject.popupAllowed || backendObject.popupAllowed(e)) && (!inhibited || e.critical)) {
                 next.push({entry: e, remaining: e.critical || e.timeout === 0 ? -1 : e.timeout > 0 ? e.timeout : 5000});
                 console.log("NOTIFICATION_POPUP " + e.app + ": " + e.title);
             }
@@ -64,7 +84,7 @@ Item {
     onEntriesChanged: ingest()
     onHistoryOpenChanged: {
         if (historyOpen) { unread = false; if (backendObject) backendObject.markRead(); Qt.callLater(function() { if (center.historyOpen) historyPages.forceActiveFocus(); }); }
-        else if (historyPages.depth > 1) historyPages.popToIndex(0, Controls.StackView.Immediate);
+        else { historyMenu.close(); if (historyPages.depth > 1) historyPages.popToIndex(0, Controls.StackView.Immediate); }
     }
     Loader {
         id: backend
@@ -161,7 +181,12 @@ Item {
                 model: center.grouped
                 add: null; remove: null; displaced: null; move: null; populate: null
                 delegate: ControlRow {
+                    id: historyRow
                     required property var modelData
+                    actionText: "…"
+                    onActionTriggered: center.openContext(modelData, historyRow, width - 28, height)
+                    TapHandler { acceptedButtons: Qt.RightButton; onTapped: point => center.openContext(historyRow.modelData, historyRow, point.position.x, point.position.y) }
+                    Keys.onMenuPressed: center.openContext(modelData, historyRow, width - 28, height)
                     width: history.width; height: 36; glyph: "bell"
                     text: modelData.app + " · " + modelData.title
                     onClicked: { historyPages.pushItem(notificationComponent, {entry: modelData}); historyPages.forceActiveFocus(); }

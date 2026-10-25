@@ -33,8 +33,8 @@ Rectangle {
     property var contextTask: null
     property var contextWindows: []
     property var menuEntries: []
-    property int menuIndex: 0
-    readonly property int menuHeight: 8 + menuEntries.length * 30 + (contextWindows.length ? 9 : 0) + 9
+    readonly property int menuIndex: dockMenu.currentIndex
+    readonly property int menuHeight: 8 + menuEntries.reduce((sum, entry) => sum + 28 + (entry.separator ? 9 : 0), 0)
     property var modelOverride: null
     readonly property var taskSource: modelOverride || tasks
     property alias tasksModel: tasks
@@ -106,22 +106,15 @@ Rectangle {
     }
     function closeMenu() { contextRow = -1; }
     function openContext(row, task) {
-        hideTooltip(); contextTask = task; contextRow = row;
+        hideTooltip(); contextTask = task;
         contextWindows = DockLogic.ordered(windows(row, task));
         menuEntries = contextWindows.map(w => ({label: w.title, id: w.id, action: "window", active: w.active, enabled: true})).concat([
-            {label: "Nueva ventana", action: "new", separator: contextWindows.length > 0, enabled: !!(task.IsLauncher || task.IsNewInstanceable)},
-            {label: task.IsLauncher || task.HasLauncher ? "Quitar del dock" : "Fijar en el dock", action: "pin", enabled: !!(task.LauncherUrlWithoutIcon || task.LauncherUrl)},
-            {label: "Salir", action: "close", separator: true, enabled: !!task.IsClosable && contextWindows.length > 0}
+            {label: "Nueva ventana", icon: "plus", shortcut: "⏎", action: "new", separator: contextWindows.length > 0, enabled: !!(task.IsLauncher || task.IsNewInstanceable)},
+            {label: task.IsLauncher || task.HasLauncher ? "Quitar del dock" : "Fijar en el dock", icon: "push-pin", action: "pin", enabled: !!(task.LauncherUrlWithoutIcon || task.LauncherUrl)},
+            {label: "Salir", icon: "x", action: "close", separator: true, enabled: !!task.IsClosable && contextWindows.length > 0}
         ]);
-        menuIndex = 0;
-        while (menuIndex < menuEntries.length - 1 && !menuEntries[menuIndex].enabled) ++menuIndex;
-        Qt.callLater(() => menuContent.forceActiveFocus());
-    }
-    function moveMenu(direction) {
-        for (let i = 0; i < menuEntries.length; ++i) {
-            menuIndex = (menuIndex + direction + menuEntries.length) % menuEntries.length;
-            if (menuEntries[menuIndex].enabled) return;
-        }
+        contextRow = row;
+        Qt.callLater(() => dockMenu.contentItem.forceActiveFocus());
     }
     function runMenu(index) {
         const entry = menuEntries[index];
@@ -318,52 +311,13 @@ Rectangle {
         contentItem: UiText { text: dock.tooltipText; font.pixelSize: 12 }
     }
     Keys.onEscapePressed: contextRow = -1
-    Controls.Popup {
+    ContextMenu {
+        id: dockMenu
         parent: dock.menuHost || dock
         visible: dock.menuOpen; x: 0; y: dock.menuHost ? 0 : -height-8
-        width: 260; height: dock.menuHeight; padding: 4; focus: true
-        popupType: Controls.Popup.Item
-        closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
+        margins: dock.menuHost ? 0 : 4
+        entries: dock.menuEntries
         onClosed: dock.closeMenu()
-        background: Rectangle { radius: 8; color: Theme.raised; border.color: Theme.border }
-        contentItem: Item {
-            id: menuContent
-            focus: true
-            Keys.onUpPressed: dock.moveMenu(-1)
-            Keys.onDownPressed: dock.moveMenu(1)
-            Keys.onReturnPressed: dock.runMenu(dock.menuIndex)
-            Keys.onEnterPressed: dock.runMenu(dock.menuIndex)
-            Keys.onEscapePressed: dock.closeMenu()
-            Column {
-                width: parent.width
-                Repeater {
-                    model: dock.menuEntries
-                    delegate: Column {
-                        id: menuRow
-                        required property var modelData
-                        required property int index
-                        width: menuContent.width
-                        Item {
-                            width: parent.width; height: menuRow.modelData.separator ? 9 : 0
-                            Rectangle { visible: parent.height > 0; anchors.centerIn: parent; width: parent.width - 12; height: 1; color: Theme.border }
-                        }
-                        Rectangle {
-                            width: parent.width; height: 30; radius: 4
-                            color: dock.menuIndex === menuRow.index && menuRow.modelData.enabled ? "#14ffffff" : "transparent"
-                            opacity: menuRow.modelData.enabled ? 1 : 0.4
-                            Accessible.role: Accessible.MenuItem
-                            Accessible.name: menuRow.modelData.label
-                            UiText { x: 8; anchors.verticalCenter: parent.verticalCenter; width: 18; text: menuRow.modelData.active ? "✓" : ""; font.pixelSize: 13 }
-                            UiText { x: 28; width: parent.width - 36; anchors.verticalCenter: parent.verticalCenter; text: menuRow.modelData.label; font.pixelSize: 13; elide: Text.ElideRight }
-                            MouseArea {
-                                anchors.fill: parent; hoverEnabled: true
-                                onEntered: if (menuRow.modelData.enabled) dock.menuIndex = menuRow.index
-                                onClicked: dock.runMenu(menuRow.index)
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        onTriggered: entry => dock.runMenu(dockMenu.currentIndex)
     }
 }
