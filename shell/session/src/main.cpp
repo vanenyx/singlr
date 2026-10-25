@@ -23,6 +23,9 @@
 #include <QCoreApplication>
 #include <QTimer>
 #include <QScopeGuard>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonDocument>
 #include <csignal>
 
 namespace
@@ -129,6 +132,9 @@ int main(int argc, char *argv[])
         }
     }
     // Antes de QGuiApplication; después se retira la variable para que las apps lanzadas usen xdg-shell.
+    const bool profile = qEnvironmentVariable("SINGLR_PROFILE") == QLatin1String("1");
+    if (profile)
+        qputenv("QSG_INFO", "1");
     LayerShellQt::Shell::useLayerShell();
     QGuiApplication app(argc, argv);
     qunsetenv("QT_WAYLAND_SHELL_INTEGRATION");
@@ -175,9 +181,32 @@ int main(int argc, char *argv[])
     if (engine.rootObjects().isEmpty())
         return 1;
     // Solo en modo sesión: el objeto raíz expone la sesión en su propiedad «surface».
+    const auto dumpProfile = [&engine] {
+        QJsonArray windows;
+        for (QWindow *window : QGuiApplication::allWindows()) {
+            if (auto *quick = qobject_cast<QQuickWindow *>(window)) {
+                windows.append(QJsonObject{{"class", QString::fromLatin1(quick->metaObject()->className())},
+                    {"name", quick->objectName()}, {"visible", quick->isVisible()},
+                    {"width", quick->width()}, {"height", quick->height()},
+                    {"dpr", quick->devicePixelRatio()}, {"sceneGraphInitialized", quick->isSceneGraphInitialized()}});
+            }
+        }
+        QJsonArray roots;
+        for (QObject *root : engine.rootObjects())
+            roots.append(QJsonObject{{"class", QString::fromLatin1(root->metaObject()->className())},
+                {"liveQObjectDescendants", root->findChildren<QObject *>().size()}});
+        const QJsonObject report{{"windows", windows}, {"roots", roots},
+            {"textureBytes", QJsonValue::Null}, {"qmlActiveTimers", QJsonValue::Null},
+            {"limitations", "Qt public API has no total texture bytes or QML timer registry; QSG_INFO logs backend diagnostics. QObject counts are live ownership descendants, not QML allocations."}};
+        qInfo().noquote() << "SINGLR_PROFILE" << QJsonDocument(report).toJson(QJsonDocument::Compact);
+    };
+    if (profile) {
+        QTimer::singleShot(0, &app, dumpProfile);
+        QTimer::singleShot(20000, &app, dumpProfile);
+    }
     QObject *session = engine.rootObjects().constFirst()->property("surface").value<QObject *>();
     if (session && session->metaObject()->indexOfMethod("toggleLauncher()") >= 0) {
-        auto *bridge = new LauncherBridge(session);
+        auto *bridge = new LauncherBridge(session, profile ? std::function<void()>(dumpProfile) : std::function<void()>());
         // Los nombres solo están libres si plasmashell y krunner no se ejecutan.
         if (ownsPlasma)
             bus.registerVirtualObject(QStringLiteral("/PlasmaShell"), bridge);

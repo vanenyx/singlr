@@ -68,6 +68,19 @@ Path(os.environ['RECORD']).write_text(json.dumps(dict(env=dict(os.environ), pid=
     def command(self):
         return [str(ROOT / 'tools/run-singlr.sh'), '--entry', str(self.entry), '--size', '800x600']
 
+    def test_plasma_client_uses_private_environment(self):
+        self.mocks()
+        self.executable('plasmashell', """import json,os,subprocess
+from pathlib import Path
+child=subprocess.Popen(['sleep','120'], start_new_session=True)
+Path(os.environ['RECORD']).write_text(json.dumps(dict(env=dict(os.environ), pid=child.pid)))
+""")
+        result = subprocess.run(self.command() + ['--client', 'plasma'], env=self.env,
+                                capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assert_cleanup(result)
+        self.assertFalse((self.base / 'build').exists(), 'Plasma no debe compilar Singlr')
+
     def test_missing_entry(self):
         result = subprocess.run([str(ROOT / 'tools/run-singlr.sh'), '--entry', str(self.base / 'missing.qml')],
                                 env=self.env, capture_output=True, text=True)
