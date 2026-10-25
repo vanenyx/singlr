@@ -46,6 +46,12 @@ Item {
             children = children.filter(w => w.id !== id);
         }
     }
+    QtObject {
+        id: bridge
+        property bool overviewAvailable: false
+        property string invoked: ""
+        function invokeShortcut(component, action) { invoked = component + ":" + action; }
+    }
     Dock { id: dock; x: 40; y: 500; modelOverride: doubleModel }
     DockItem { id: focusTile; x: 20; y: 400; task: ({AppName: "Terminal", IsLauncher: true}) }
     Component { id: persistentDock; Dock { visible: false; sessionMode: true } }
@@ -66,6 +72,16 @@ Item {
                 LauncherUrlWithoutIcon:"applications:browser.desktop", decoration:""});
         }
         function cleanup() { dock.closeMenu(); dock.hideTooltip(); }
+        function test_overviewBridge() {
+            dock.systemBridge = bridge;
+            const button = findChild(dock, "overviewButton");
+            verify(!button.visible);
+            bridge.overviewAvailable = true; verify(button.visible);
+            button.forceActiveFocus(Qt.TabFocusReason);
+            keyClick(Qt.Key_Return); compare(bridge.invoked, "kwin:Singlr Overview");
+            bridge.overviewAvailable = false; verify(!button.visible);
+            dock.systemBridge = null; verify(!button.visible);
+        }
         function test_fourWindowsReorderEveryActivation() {
             const size = [dock.width, dock.height, dock.visible];
             for (let i = 0; i < 3; ++i) {

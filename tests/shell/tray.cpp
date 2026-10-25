@@ -1,5 +1,7 @@
 // T222: pure tests and protocol fixtures. No KDE services or native QMenus.
 #include "tray.h"
+#include "system.h"
+#include <QTimer>
 #include "trayformat.h"
 #include <QCoreApplication>
 #include <QDBusMessage>
@@ -107,7 +109,7 @@ void model()
     model.update("a", active);
     model.update("a", active);
     CHECK(inserted == 1 && changed == 0 && model.rowCount() == 1);
-    CHECK(model.roleNames().size() == 11);
+    CHECK(model.roleNames().size() == 12);
     CHECK(model.rowCount(model.index(0)) == 0);
     CHECK(!model.data({}, Qt::UserRole + 1).isValid());
     model.update("a", {{"status", "NeedsAttention"}, {"title", "Two"}});
@@ -143,12 +145,25 @@ public:
     QVariantMap calls;
     QStringList order;
     QString host;
+    QString menuMode;
+    bool effectLoaded = true;
     QString introspect(const QString &) const override { return {}; }
     bool handleMessage(const QDBusMessage &m, const QDBusConnection &bus) override
     {
         const auto args = m.arguments();
         QVariantList reply;
-        if (m.path() == QLatin1String("/StatusNotifierWatcher")) {
+        if (m.member() == QLatin1String("isEffectLoaded")) {
+            CHECK(m.path() == "/Effects" && m.interface() == "org.kde.kwin.Effects");
+            CHECK(args == QVariantList({"singlr-overview"}));
+            reply = {effectLoaded};
+        } else if (m.member() == QLatin1String("EffectLoaded")) {
+            effectLoaded = args[0].toBool();
+        } else if (m.member() == QLatin1String("invokeShortcut")) {
+            CHECK(m.path() == "/component/kwin" && m.interface() == "org.kde.kglobalaccel.Component");
+            calls.insert(m.member(), args);
+        } else if (m.member() == QLatin1String("MenuMode")) {
+            menuMode = args[0].toString();
+        } else if (m.path() == QLatin1String("/StatusNotifierWatcher")) {
             if (m.member() == QLatin1String("RegisterStatusNotifierHost"))
                 host = args[0].toString();
             else if (m.member() == QLatin1String("Get"))
@@ -165,11 +180,20 @@ public:
         } else if (m.member() == QLatin1String("GetLayout")) {
             CHECK(args.size() == 3 && args[0].toInt() == 0 && args[1].toInt() == -1 && args[2].toStringList().isEmpty());
             order.append(m.member());
-            reply = {uint(7), layout()};
+            if (menuMode == "error") {
+                bus.send(m.createErrorReply("org.singlr.Error", "Fixture failure"));
+                return true;
+            }
+            reply = menuMode == "invalid" ? QVariantList{uint(7), QString("bad")} : QVariantList{uint(7), layout()};
+            if (menuMode == "delay") {
+                QTimer::singleShot(200, this, [bus, m, reply] { bus.send(m.createReply(reply)); });
+                return true;
+            }
         } else if (m.member() == QLatin1String("AboutToShow")) {
             CHECK(args[0].toInt() == 0);
             order.append(m.member());
-            reply = {false};
+            bus.send(m.createErrorReply("org.freedesktop.DBus.Error.UnknownMethod", "optional"));
+            return true;
         } else if (m.member() == QLatin1String("Wire")) {
             reply = {layout(), pixmapWire(), tooltip(), menuNode(0)};
         } else if (m.member() == QLatin1String("Dump")) {
@@ -283,8 +307,21 @@ void wire()
     CHECK(source.startsWith("image://singlrtray/"));
     std::unique_ptr<QQuickImageProvider> provider(tray.createImageProvider());
     CHECK(provider->requestImage(source.mid(19), nullptr, {}).size() == QSize(32, 32));
-    CHECK(tray.menu(service, "/Menu").size() == 4);
-    CHECK(tray.menu(service, "/wrong").isEmpty());
+    CHECK(value(model, "hasAttentionIcon").toBool());
+    QVariantList menuItems;
+    int ready = 0, failed = 0;
+    QObject::connect(&tray, &Tray::menuReady, &tray, [&](const QString &s, const QString &p, const QVariantList &items) {
+        CHECK(s == service && p == "/Menu"); menuItems = items; ++ready;
+    });
+    QObject::connect(&tray, &Tray::menuFailed, &tray, [&](const QString &, const QString &, const QString &error) {
+        CHECK(!error.isEmpty()); ++failed;
+    });
+    tray.requestMenu(service, "/Menu");
+    CHECK(ready == 0);
+    until([&] { return ready == 1; });
+    CHECK(menuItems.size() == 4);
+    tray.requestMenu(service, "/wrong");
+    CHECK(failed == 1);
     tray.activate(service, "/Active", 17, 18);
     tray.secondaryActivate(service, "/Active", 19, 20);
     tray.scroll(service, "/Active", -120, "vertical");
@@ -293,6 +330,31 @@ void wire()
     const auto dump = qdbus_cast<QVariantMap>(invoke("Dump").arguments()[0]);
     CHECK(dump.value("host").toString().startsWith("org.kde.StatusNotifierHost-"));
     CHECK(qdbus_cast<QStringList>(dump.value("order")) == QStringList({"AboutToShow", "GetLayout"}));
+    for (const auto &mode : {"error", "invalid"}) {
+        invoke("MenuMode", {QString::fromLatin1(mode)});
+        tray.requestMenu(service, "/Menu");
+        const int before = failed;
+        until([&] { return failed > before; });
+    }
+    invoke("MenuMode", {"delay"});
+    bool tick = false;
+    QTimer::singleShot(20, &tray, [&] { tick = true; });
+    tray.requestMenu(service, "/Menu");
+    until([&] { return tick; });
+    CHECK(ready == 1);
+    until([&] { return ready == 2; });
+    System system;
+    CHECK(!system.overviewAvailable());
+    until([&] { return system.overviewAvailable(); });
+    system.invokeShortcut("kwin", "Singlr Overview");
+    until([&] { return qdbus_cast<QVariantMap>(qdbus_cast<QVariantMap>(invoke("Dump").arguments()[0]).value("calls")).contains("invokeShortcut"); });
+    CHECK(qdbus_cast<QVariantList>(qdbus_cast<QVariantMap>(qdbus_cast<QVariantMap>(invoke("Dump").arguments()[0]).value("calls")).value("invokeShortcut")) == QVariantList({"Singlr Overview"}));
+    invoke("EffectLoaded", {false});
+    QElapsedTimer poll; poll.start();
+    while (system.overviewAvailable() && poll.elapsed() < 12000) {
+        QCoreApplication::processEvents(); QThread::msleep(5);
+    }
+    CHECK(!system.overviewAvailable());
     const auto calls = qdbus_cast<QVariantMap>(dump.value("calls"));
     CHECK(qdbus_cast<QVariantList>(calls.value("Activate")) == QVariantList({17, 18}));
     CHECK(qdbus_cast<QVariantList>(calls.value("SecondaryActivate")) == QVariantList({19, 20}));
@@ -347,6 +409,8 @@ int main(int argc, char **argv)
             Fixture fixture;
             CHECK(bus.registerService(service));
             CHECK(bus.registerService(watcher));
+            CHECK(bus.registerService("org.kde.KWin"));
+            CHECK(bus.registerService("org.kde.kglobalaccel"));
             CHECK(bus.registerVirtualObject("/", &fixture, QDBusConnection::SubPath));
             std::cout << "READY" << std::endl;
             return app.exec();

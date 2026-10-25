@@ -76,7 +76,7 @@ int TrayModel::rowCount(const QModelIndex &parent) const { return parent.isValid
 QHash<int, QByteArray> TrayModel::roleNames() const
 {
     static const QList<QByteArray> names = {"service", "path", "id", "title", "category", "status", "iconName",
-                                           "iconSource", "toolTipTitle", "itemIsMenu", "menuPath"};
+                                           "iconSource", "toolTipTitle", "itemIsMenu", "menuPath", "hasAttentionIcon"};
     QHash<int, QByteArray> roles;
     for (int i = 0; i < names.size(); ++i)
         roles.insert(Qt::UserRole + 1 + i, names[i]);
@@ -163,10 +163,11 @@ void TrayItem::apply(const QVariantMap &p)
     const QString status = p.value(QStringLiteral("Status"), QStringLiteral("Passive")).toString();
     QString iconName = p.value(QStringLiteral("IconName")).toString();
     QImage image = TrayFormat::image(p.value(QStringLiteral("IconPixmap")));
+    const QString attentionName = p.value(QStringLiteral("AttentionIconName")).toString();
+    const QImage attentionImage = TrayFormat::image(p.value(QStringLiteral("AttentionIconPixmap")));
+    const bool hasAttentionIcon = !attentionName.isEmpty() || !attentionImage.isNull();
     if (status == QLatin1String("NeedsAttention")) {
-        const QString attentionName = p.value(QStringLiteral("AttentionIconName")).toString();
-        const QImage attentionImage = TrayFormat::image(p.value(QStringLiteral("AttentionIconPixmap")));
-        if (!attentionName.isEmpty() || !attentionImage.isNull()) {
+        if (hasAttentionIcon) {
             iconName = attentionName;
             image = attentionImage;
         }
@@ -202,6 +203,7 @@ void TrayItem::apply(const QVariantMap &p)
         {QStringLiteral("category"), p.value(QStringLiteral("Category"), QString())},
         {QStringLiteral("status"), status}, {QStringLiteral("iconName"), iconName},
         {QStringLiteral("iconSource"), source},
+        {QStringLiteral("hasAttentionIcon"), hasAttentionIcon},
         {QStringLiteral("toolTipTitle"), TrayFormat::toolTipTitle(p.value(QStringLiteral("ToolTip")))},
         {QStringLiteral("itemIsMenu"), p.value(QStringLiteral("ItemIsMenu"), false)},
         {QStringLiteral("menuPath"), menuPath}});
@@ -323,6 +325,39 @@ bool Tray::knownMenu(const QString &service, const QString &path) const
         if (item->service == service && item->menuPath == path)
             return true;
     return false;
+}
+void Tray::requestMenu(const QString &service, const QString &menuPath)
+{
+    if (!knownMenu(service, menuPath)) {
+        Q_EMIT menuFailed(service, menuPath, QStringLiteral("Unknown menu"));
+        return;
+    }
+    const auto generation = m_generation;
+    auto *about = new QDBusPendingCallWatcher(m_bus.asyncCall(call(service, menuPath, menuInterface,
+        QStringLiteral("AboutToShow"), {0}), timeout), this);
+    connect(about, &QDBusPendingCallWatcher::finished, this, [this, about, service, menuPath, generation] {
+        about->deleteLater();
+        // AboutToShow is optional; always try GetLayout, even after an error.
+        if (generation != m_generation || !knownMenu(service, menuPath)) {
+            Q_EMIT menuFailed(service, menuPath, QStringLiteral("Menu no longer available"));
+            return;
+        }
+        auto *layout = new QDBusPendingCallWatcher(m_bus.asyncCall(call(service, menuPath, menuInterface,
+            QStringLiteral("GetLayout"), {0, -1, QStringList{}}), timeout), this);
+        connect(layout, &QDBusPendingCallWatcher::finished, this, [this, layout, service, menuPath, generation] {
+            const QDBusMessage reply = layout->reply();
+            layout->deleteLater();
+            if (generation != m_generation || !knownMenu(service, menuPath)) {
+                Q_EMIT menuFailed(service, menuPath, QStringLiteral("Menu no longer available"));
+            } else if (reply.type() != QDBusMessage::ReplyMessage) {
+                Q_EMIT menuFailed(service, menuPath, reply.errorName() + QStringLiteral(": ") + reply.errorMessage());
+            } else if (reply.signature() != QLatin1String("u(ia{sv}av)")) {
+                Q_EMIT menuFailed(service, menuPath, QStringLiteral("Invalid GetLayout signature"));
+            } else {
+                Q_EMIT menuReady(service, menuPath, TrayFormat::menu(reply.arguments()[1]));
+            }
+        });
+    });
 }
 QVariantList Tray::menu(const QString &service, const QString &menuPath)
 {

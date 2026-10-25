@@ -52,9 +52,13 @@ public:
     Q_INVOKABLE void activate(const QString &service, const QString &path, int x, int y);
     Q_INVOKABLE void secondaryActivate(const QString &service, const QString &path, int x, int y);
     Q_INVOKABLE void scroll(const QString &service, const QString &path, int delta, const QString &orientation);
+    Q_INVOKABLE void requestMenu(const QString &service, const QString &menuPath);
+    Q_DECL_DEPRECATED_X("Use requestMenu and menuReady/menuFailed")
     Q_INVOKABLE QVariantList menu(const QString &service, const QString &menuPath);
     Q_INVOKABLE void activateMenuItem(const QString &service, const QString &menuPath, int id);
 Q_SIGNALS:
+    void menuReady(const QString &service, const QString &menuPath, const QVariantList &items);
+    void menuFailed(const QString &service, const QString &menuPath, const QString &error);
     void menuChanged(const QString &service);
 private Q_SLOTS:
     void itemRegistered(const QString &address);

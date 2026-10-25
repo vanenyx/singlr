@@ -10,8 +10,7 @@ import Singlr.Ui
 Rectangle {
     id: dock
     property bool sessionMode: false
-    // T224: launcher contract pending. overviewAvailable must reflect the loaded
-    // effect, not just the presence of a registered KGlobalAccel shortcut.
+    // Available only when the session bridge confirms the loaded effect.
     // qmllint disable unqualified
     property var systemBridge: typeof SinglrSystem !== "undefined" ? SinglrSystem : null
     // qmllint enable unqualified

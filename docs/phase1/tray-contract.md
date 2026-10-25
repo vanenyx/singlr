@@ -1,7 +1,6 @@
-# T222 — contrato de la bandeja del sistema
+# T222 / T225 — bandeja del sistema y puente de atajos
 
-Implementación técnica derivada del encargo T222; no fija diseño visual. No cambia
-`shell/qml/**`. Qt local: **6.12.0**; KDE StatusNotifierItem **6.31.0**, Plasma
+Implementación técnica derivada del encargo T222; no fija diseño visual. T225 adapta las llamadas de SystemTray y Dock. Qt local: **6.12.0**; KDE StatusNotifierItem **6.31.0**, Plasma
 **6.8.1** (24-10-2026). Sin libdbusmenuqt ni QMenu.
 
 ## Disponibilidad y modelo
@@ -28,6 +27,7 @@ normales de inserción, retirada y `dataChanged`. Cada fila corresponde a
 | toolTipTitle | string: título del ToolTip, sin interpretar HTML |
 | itemIsMenu | bool: la acción primaria corresponde al menú |
 | menuPath | string: objeto DBusMenu; vacío o `/` significa sin menú exportado |
+| hasAttentionIcon | bool: el cliente tiene nombre o pixmap válido de atención, independientemente del estado actual |
 
 Preferir el nombre de tema cuando sea resoluble; `iconSource` ofrece el pixmap
 como alternativa. El proveedor `singlrtray` se instala en el mismo motor QML.
@@ -54,18 +54,20 @@ watcher de kded6.
 SinglrTray.activate(service, path, x, y)
 SinglrTray.secondaryActivate(service, path, x, y)
 SinglrTray.scroll(service, path, delta, orientation)
-const entries = SinglrTray.menu(service, menuPath)
+SinglrTray.requestMenu(service, menuPath)
+// Señales: menuReady(service, menuPath, items), menuFailed(service, menuPath, error)
 SinglrTray.activateMenuItem(service, menuPath, id)
 ```
 
-Las primeras tres acciones son asíncronas. `x`, `y` son coordenadas globales
+Las acciones y la petición de menú son asíncronas. `x`, `y` son coordenadas globales
 lógicas del gesto; `delta` conserva el signo y la unidad del evento de rueda
 (por ejemplo 120). `orientation` admite `"vertical"` o `"horizontal"`.
 Solo se envían acciones a ítems registrados. Para ItemIsMenu, QML debe abrir el
 menú de datos; no llamar a ContextMenu, que intentaría abrir un menú nativo.
 
-`menu()` llama AboutToShow(0) y después GetLayout(0, -1, []), incluso si el
-exportador no implementa AboutToShow. Devuelve los hijos de la raíz invisible:
+`requestMenu()` llama AboutToShow(0) y después GetLayout(0, -1, []), mediante
+QDBusPendingCallWatcher, incluso si AboutToShow falla o no está implementado.
+Emite menuReady con los hijos de la raíz invisible:
 
 ```js
 [{id: 42, label: "Abrir", enabled: true, visible: true,
@@ -79,12 +81,21 @@ exportador no implementa AboutToShow. Devuelve los hijos de la raíz invisible:
 - Valores omitidos: enabled/visible true, type standard, toggleState -1 y cadenas vacías.
 - Se conservan las entradas invisibles y deshabilitadas: QML debe ocultarlas o impedir su activación.
 - `children` conserva la jerarquía. El parser limita profundidad a 64 y nodos a 10000.
-- Un error de GetLayout, firma incorrecta o menú desconocido devuelve `[]`.
+- Un error de GetLayout, firma incorrecta o menú desconocido emite `menuFailed`
+  con una cadena de error; un layout válido vacío emite `menuReady` con `[]`.
+- Se comprueba que el menú siga anunciado y el watcher siga siendo el mismo
+  después de cada respuesta. Los watchers se destruyen con el backend.
 
-**Límite del contrato síncrono:** cada llamada D-Bus de `menu()` tiene timeout de
-1500 ms; una aplicación colgada puede detener el hilo GUI durante unos 3 s en
-total. No se procesa un bucle GUI anidado. No llamar desde un binding que se
-reevalúe continuamente: obtener el menú al abrirlo y al recibir invalidación.
+Cada llamada tiene timeout de 1500 ms sin bloquear el hilo GUI. No hay caché.
+`menu()` se conserva **obsoleto** para sondas y consumidores anteriores; esa
+ruta mantiene el comportamiento síncrono y puede bloquear hasta unos 3 s.
+SystemTray comprueba la existencia de requestMenu antes de usarla, y recurre a
+menu solo para el binario anterior hasta que Claude reinicie el modo en vivo.
+La superficie abre con una fila «…» deshabilitada; sustituye el contenido al
+recibir menuReady y muestra una fila de error deshabilitada con menuFailed.
+Se ignoran respuestas si la superficie está cerrada o service/menuPath no
+coinciden con la selección actual. No hay identificador por apertura: peticiones
+concurrentes del mismo par service/menuPath comparten esa identidad.
 
 `activateMenuItem` envía Event(id, "clicked", variant(int32(0)), timestamp uint32
 en milisegundos). La raíz 0 no es activable. Solo acepta objetos de menú
@@ -95,7 +106,47 @@ cambio de objeto Menu y desregistro. Puede invalidar varios ítems de un mismo
 servicio. La UI debe cerrar o actualizar el menú abierto y verificar que el ítem
 siga presente. No hay caché de layouts en C++.
 
-## Comprobaciones ejecutadas y comandos para Claude
+## SinglrSystem (T225)
+
+Propiedad de contexto registrada con la misma condición de modo sesión que
+SinglrTray; ausente en windowed o si otro shell posee org.kde.plasmashell.
+
+- `invokeShortcut(component, action)` envía asíncronamente `action` a
+  `org.kde.kglobalaccel /component/<component> org.kde.kglobalaccel.Component.invokeShortcut`.
+  Component admite letras ASCII, dígitos y `_`; se ignoran componentes inválidos
+  y acciones vacías. Errores D-Bus se registran sin bloquear la UI.
+- `overviewAvailable` empieza en false. Al arrancar y cada 10 s consulta
+  `org.kde.KWin /Effects org.kde.kwin.Effects.isEffectLoaded("singlr-overview")`.
+  Usa QDBusPendingCallWatcher y timeout 1500 ms, sin solapar consultas. Una respuesta
+  falsa o error deja false; overviewAvailableChanged se emite solo al cambiar.
+- Dock muestra Multitarea solo cuando el puente y el efecto están disponibles,
+  e invoca `invokeShortcut("kwin", "Singlr Overview")`.
+
+Firmas comprobadas en los XML locales
+`/usr/share/dbus-1/interfaces/org.kde.kwin.Effects.xml` y
+`kf6_org.kde.kglobalaccel.Component.xml`. Patrón de asincronía contrastado con
+[QDBusPendingCallWatcher, Qt 6.12](https://doc.qt.io/qt-6/qdbuspendingcallwatcher.html).
+No se reinicia ni se modifica la sesión KDE durante las verificaciones.
+
+## Verificación T225
+
+- `shell/session/build.sh`: correcto; único aviso previo de useLayerShell obsoleto.
+- `python3 -m unittest discover -s tests/shell -p 'test_*.py' -v`: **31 pruebas,
+  30 correctas y 1 omitida** (bus privado no disponible).
+- `qmltestrunner -import shell/qml -input shell/qml/tests`, offscreen/software:
+  **91 passed, 0 failed**. Incluye backend anterior, carga asíncrona, rechazo de
+  respuestas de otro menú/cerrado, errores y visibilidad/activación de Multitarea.
+- `qmllint` de los QML adaptados, sus pruebas y TrayProbe: correcto sin avisos.
+- `check_setup.py` y `git diff --check`: correctos.
+- El fixture C++ de bus privado añade AboutToShow no implementado, GetLayout
+  válido/erróneo/firma inválida/demorado con evento GUI intermedio, consulta inicial
+  de efecto, polling a false y firma de invokeShortcut. Su ejecución queda
+  pendiente fuera del sandbox, que deniega la creación del socket D-Bus.
+- La sonda windowed comprueba ausencia tanto de SinglrTray como de SinglrSystem.
+- No se ha reiniciado el modo en vivo: Claude debe reiniciarlo para cargar el
+  nuevo binario y verificar el efecto real y los menús de aplicaciones reales.
+
+## Comprobaciones T222 y comandos para Claude
 
 Desde este worktree, sin commit:
 
@@ -128,7 +179,7 @@ En el sandbox no se puede abrir el socket de ese bus y ese test se omite;
 Fuera del sandbox, exigir que el test de bus se ejecute (que no quede omitido):
 
 ```bash
-cd /home/sunw/Projects/singlr-worktrees/codex-2
+cd /home/sunw/Projects/singlr
 SINGLR_REQUIRE_TRAY_DBUS=1 python3 -m unittest discover -s tests/shell -p 'test_tray.py' -v
 ```
 

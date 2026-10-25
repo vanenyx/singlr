@@ -60,7 +60,7 @@ def main():
             binary, deps = Path(directory) / 'singlr-shell', Path(directory) / 'deps.d'
             generated = []
             includes = [flag for flag in command if flag.startswith(('-I', '-D'))]
-            for name in ('secretagent', 'tray'):
+            for name in ('secretagent', 'tray', 'system'):
                 output_moc = Path(directory) / f'moc_{name}.cpp'
                 subprocess.run([str(moc), *includes, str(HERE / f'src/{name}.h'), '-o', str(output_moc)],
                                check=True, stdout=sys.stderr)

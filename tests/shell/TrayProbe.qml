@@ -84,6 +84,7 @@ QtObject {
     Component.onCompleted: {
         if (Qt.application.arguments.includes("--windowed")) {
             console.log("TRAY_WINDOWED_UNDEFINED", !available);
+            console.log("SYSTEM_WINDOWED_UNDEFINED", typeof SinglrSystem === "undefined");
             Qt.callLater(() => Qt.exit(available ? 1 : 0));
         } else if (!available) {
             console.error("TRAY_PROBE_ERROR: launcher must own org.kde.plasmashell");

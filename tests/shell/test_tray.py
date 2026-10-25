@@ -25,11 +25,14 @@ class TrayTests(unittest.TestCase):
         moc = str(Path(cls.tmp.name) / 'moc_tray.cpp')
         subprocess.run([str(Path(libexec) / 'moc'), *[f for f in flags if f.startswith(('-I', '-D'))],
                         str(ROOT / 'shell/session/src/tray.h'), '-o', moc], check=True)
+        system_moc = str(Path(cls.tmp.name) / 'moc_system.cpp')
+        subprocess.run([str(Path(libexec) / 'moc'), str(ROOT / 'shell/session/src/system.h'), '-o', system_moc], check=True)
         result = subprocess.run(['g++', '-std=c++17', '-fPIC', '-Wall', '-Wextra',
                                  '-I' + str(ROOT / 'shell/session/src'),
                                  str(ROOT / 'tests/shell/tray.cpp'),
                                  str(ROOT / 'shell/session/src/tray.cpp'),
-                                 str(ROOT / 'shell/session/src/trayformat.cpp'), moc,
+                                 str(ROOT / 'shell/session/src/trayformat.cpp'),
+                                 str(ROOT / 'shell/session/src/system.cpp'), moc, system_moc,
                                  *flags, '-o', cls.binary], capture_output=True, text=True, timeout=60)
         if result.returncode:
             raise RuntimeError(result.stderr)
@@ -58,6 +61,7 @@ class TrayTests(unittest.TestCase):
                                                 'DBUS_SYSTEM_BUS_ADDRESS': 'unix:path=/nonexistent'})
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('TRAY_WINDOWED_UNDEFINED true', result.stdout + result.stderr)
+        self.assertIn('SYSTEM_WINDOWED_UNDEFINED true', result.stdout + result.stderr)
 
     def test_qdbusargument_parser_and_host_protocol_on_private_bus(self):
         if not shutil.which('dbus-run-session'):

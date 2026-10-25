@@ -51,7 +51,13 @@ Item {
         Qt.callLater(function() {
             if (!tray.opened || tray.revision !== ticket) return;
             let nodes = [];
-            try { nodes = tray.backend.menu(item.service, item.menuPath); }
+            try {
+                if (typeof tray.backend.requestMenu === "function") {
+                    tray.backend.requestMenu(item.service, item.menuPath);
+                    return;
+                }
+                nodes = tray.backend.menu(item.service, item.menuPath);
+            }
             catch (error) { console.warn("SystemTray menu:", error); }
             if (!tray.opened || tray.revision !== ticket) return;
             tray.pages = [];
@@ -62,9 +68,9 @@ Item {
         ++revision;
         selected = item;
         pages = [];
-        entries = [{label: "Cargando…", enabled: false}];
+        entries = [{label: "…", enabled: false}];
         present(anchor, x);
-        // Yield once for the layer surface to map before the synchronous backend call.
+        // Map the surface before requesting data; retain compatibility with the live binary.
         deferredLoad.restart();
     }
     Timer { id: deferredLoad; interval: 50; onTriggered: tray.loadMenu() }
@@ -107,6 +113,17 @@ Item {
     }
     Connections {
         target: tray.backend
+        ignoreUnknownSignals: true // Previous live binary has no async menu signals.
+        function onMenuReady(service, menuPath, items) {
+            if (!tray.opened || !tray.selected || tray.selected.service !== service || tray.selected.menuPath !== menuPath) return;
+            tray.pages = [];
+            tray.page(items || []);
+        }
+        function onMenuFailed(service, menuPath, error) {
+            if (!tray.opened || !tray.selected || tray.selected.service !== service || tray.selected.menuPath !== menuPath) return;
+            tray.pages = [];
+            tray.entries = [{label: "No se pudo cargar el menú", enabled: false}];
+        }
         function onMenuChanged(service) {
             if (tray.opened && tray.selected && tray.selected.service === service) deferredLoad.restart();
         }
@@ -143,8 +160,7 @@ Item {
                     visible: !!String(source) && status !== Image.Error
                 }
                 AppIcon { x: 0; y: 6; width: 16; height: 16; name: app.model.iconName || ""; visible: !String(pixmap.source) || pixmap.status === Image.Error }
-                // Backend currently exposes the selected icon, but not whether it is
-                // an attention override. Keep the fallback indicator until it does.
+                // Older live backends omit hasAttentionIcon and keep the fallback dot.
                 Rectangle { x: 6; y: 23; width: 4; height: 4; radius: 2; color: Theme.accent; visible: app.model.status === "NeedsAttention" && app.model.hasAttentionIcon !== true }
                 MouseArea {
                     id: pointer; anchors.fill: parent; hoverEnabled: true

@@ -17,6 +17,7 @@
 #include <QUrl>
 #include "secretagent.h"
 #include "tray.h"
+#include "system.h"
 
 namespace
 {
@@ -161,6 +162,7 @@ int main(int argc, char *argv[])
     const bool ownsPlasma = !app.arguments().contains(QStringLiteral("--windowed"))
         && bus.registerService(QStringLiteral("org.kde.plasmashell"));
     if (ownsPlasma) {
+        engine.rootContext()->setContextProperty(QStringLiteral("SinglrSystem"), new System(&engine));
         engine.rootContext()->setContextProperty(QStringLiteral("SinglrSecrets"), new SecretAgent(&engine));
         auto *tray = new Tray(&engine);
         engine.addImageProvider(QStringLiteral("singlrtray"), tray->createImageProvider());

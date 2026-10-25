@@ -20,6 +20,15 @@ Item {
         function scroll(service, path, delta, orientation) { action = orientation + ":" + delta; }
         function activateMenuItem(service, path, id) { action = "menu:" + id; }
     }
+    QtObject {
+        id: asyncBackend
+        property var items: fixture.trayItems
+        property int calls: 0
+        signal menuChanged(string service)
+        signal menuReady(string service, string menuPath, var items)
+        signal menuFailed(string service, string menuPath, string error)
+        function requestMenu(service, path) { ++calls; }
+    }
     property var trayItems: items
     Component { id: factory; SystemTray { backend: backend } }
     TestCase {
@@ -52,7 +61,7 @@ Item {
         function test_deferredMenuNavigationInvalidationAndRemoval() {
             const tray = createTemporaryObject(factory, fixture);
             mouseClick(findChild(tray, "trayIcon0"), 8, 14, Qt.RightButton);
-            verify(tray.opened); compare(backend.calls, 0); compare(tray.entries[0].label, "Cargando…");
+            verify(tray.opened); compare(backend.calls, 0); compare(tray.entries[0].label, "…");
             tryCompare(backend, "calls", 1); compare(tray.entries.length, 3);
             const popup = findChild(tray, "trayMenu"); compare(popup.height, 344);
             popup.activate(0); compare(backend.action, ""); verify(tray.opened);
@@ -65,6 +74,29 @@ Item {
             backend.nodes = []; backend.menuChanged(":1.0"); tryCompare(backend, "calls", 3);
             compare(tray.entries[0].label, "Sin opciones"); compare(popup.height, 344);
             items.remove(0); verify(!tray.opened);
+        }
+        function test_asyncLoadingLateRepliesAndErrors() {
+            asyncBackend.calls = 0;
+            const tray = createTemporaryObject(factory, fixture, {backend: asyncBackend});
+            tray.openMenu(items.get(0), tray, 0);
+            tryCompare(asyncBackend, "calls", 1);
+            compare(tray.entries[0].label, "…"); verify(tray.entries[0].enabled === false);
+            asyncBackend.menuReady(":1.0", "/Other", backend.nodes);
+            compare(tray.entries[0].label, "…");
+            tray.openMenu(items.get(1), tray, 0);
+            tryCompare(asyncBackend, "calls", 2);
+            asyncBackend.menuReady(":1.0", "/Menu", backend.nodes);
+            compare(tray.entries[0].label, "…");
+            asyncBackend.menuFailed(":1.0", "/Menu", "old failure");
+            compare(tray.entries[0].label, "…");
+            asyncBackend.menuReady(":1.1", "/Menu", backend.nodes);
+            compare(tray.entries.length, 3);
+            asyncBackend.menuFailed(":1.1", "/Menu", "failure");
+            compare(tray.entries[0].label, "No se pudo cargar el menú");
+            verify(tray.entries[0].enabled === false);
+            tray.close();
+            asyncBackend.menuReady(":1.1", "/Menu", backend.nodes);
+            verify(!tray.opened);
         }
         function test_closeCancelsDeferredQuery() {
             const tray = createTemporaryObject(factory, fixture);
