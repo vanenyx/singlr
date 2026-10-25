@@ -89,6 +89,8 @@ def main():
         # Distribución de teclado del sistema (locale1), como hace startplasma-wayland: sin esto KWin
         # arranca con la distribución por defecto (inglés) si kxkbrc no define otra.
         env.update(keyboard_environment())
+        # Cursor para apps X11/GTK, como hace startplasma-wayland (KWin lo lee de kcminputrc por su cuenta).
+        env.update(cursor_environment())
         keys = set(env) | {'DISPLAY', 'WAYLAND_DISPLAY', 'WAYLAND_SOCKET', 'XAUTHORITY'}
         stopping = False
         started = False
@@ -131,6 +133,14 @@ def main():
                 session_id = os.environ.get('XDG_SESSION_ID')
                 if started and session_id:
                     run('loginctl', 'terminate-session', session_id)
+
+
+def cursor_environment():
+    def read(key, default):
+        result = subprocess.run(['kreadconfig6', '--file', 'kcminputrc', '--group', 'Mouse', '--key', key,
+                                 '--default', default], text=True, capture_output=True)
+        return (result.stdout.strip() if result.returncode == 0 else '') or default
+    return {'XCURSOR_THEME': read('cursorTheme', 'breeze_cursors'), 'XCURSOR_SIZE': read('cursorSize', '24')}
 
 
 def keyboard_environment():
