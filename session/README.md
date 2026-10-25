@@ -52,8 +52,9 @@ necesita arrancar después de `graphical-session.target`.
 
 No se requiere `plasma-workspace*.target`, `plasma-core.target`, ksmserver,
 restauración de sesión ni `xdg-desktop-autostart.target`; no se disparan
-indiscriminadamente los autostarts del usuario. No se instalan masks, overrides,
-enlaces Wants ni cambios de enable/disable sobre unidades KDE.
+indiscriminadamente los autostarts del usuario. No se instalan masks, enlaces Wants ni cambios de enable/disable sobre unidades
+KDE. T234 añade el drop-in de recuperación previo a KWin descrito al final;
+no sustituye unidades KDE.
 
 En esta versión **no existe `plasma-kglobalaccel.service`**: KWin integra el
 administrador de atajos (`/usr/include/kwin/globalshortcuts.h`, miembro
@@ -168,3 +169,66 @@ No admite escritorios simultáneos bajo el mismo UID: systemd y los nombres KDE
 son compartidos. El supervisor rechaza displays heredados y unidades gráficas
 activas antes de mutar el entorno; no debe arrancarse con un compositor ajeno
 que no participe en ese grafo. Probar primero con un usuario dedicado.
+
+## Ajustes de KWin y recuperación — T234
+
+Solución técnica derivada del encargo: `singlr_kwin.py` comparte las preferencias
+entre el modo en vivo y el login instalado. El supervisor recupera una transacción
+pendiente y aplica decoración, scale/squash/maximize, overview y gestos **antes**
+de solicitar el target. Así KWin descubre los paquetes ya instalados en
+`/usr/share/kwin/{effects,scripts}` al arrancar, sin enlaces ni carga en caliente.
+El modo en vivo conserva sus enlaces de desarrollo y la recarga por D-Bus.
+
+Contrato contrastado con KWin local 6.8.1 y su
+[código oficial](https://github.com/KDE/kwin/blob/v6.8.1/src/main.cpp):
+`Application` abre `kwinrc` en el constructor. La unidad local
+`plasma-kwin_wayland.service` ejecuta `kwin_wayland_wrapper --xwayland`.
+Se reutiliza esta unidad; no se sustituye su ejecutable.
+
+El journal privado se escribe atómicamente y se sincroniza antes de tocar KWin en
+`$XDG_STATE_HOME/singlr/kwinrc-backup.json` (por defecto
+`~/.local/state/singlr/kwinrc-backup.json`), con bloqueo entre operaciones. Conserva
+valores vacíos y distingue claves ausentes, que se borran al restaurar. Repetir
+`apply` no reemplaza el backup original. Un nuevo arranque recupera primero el
+backup pendiente. Si falla una escritura de restauración, se conserva el journal
+para reintentar; no se reemplaza por un snapshot de preferencias Singlr.
+
+Al salir se detiene el grafo y se restaura antes de terminar la sesión PAM.
+Un `finally` no basta ante SIGKILL o un corte eléctrico: el paquete incluye
+`singlr-kwin-recover.service` y un drop-in de la unidad de KWin que requiere su
+éxito antes de arrancar Plasma Wayland. En Singlr se omite por
+`XDG_SESSION_DESKTOP=Singlr`, porque el supervisor ya recuperó y aplicó.
+No se habilita ningún servicio ni se modifica systemd en la sesión en uso durante
+la preparación. Al instalar el paquete, el drop-in actúa en el siguiente arranque
+de sesión con las unidades recargadas. Si el journal es inválido o no puede
+restaurarse, el arranque de KWin falla en lugar de heredar las preferencias.
+Esto cubre el arranque estándar de Plasma 6 Wayland con systemd; un KWin lanzado a mano
+sin esa unidad requiere recuperación manual. Se excluyen escritorios simultáneos
+bajo el mismo UID, igual que en el supervisor.
+
+Recuperación desde Plasma, con el mismo usuario y `XDG_CONFIG_HOME`/
+`XDG_STATE_HOME` de la sesión interrumpida:
+
+```sh
+/usr/lib/singlr/singlr-kwin --restore
+```
+
+Desde una TTY, antes de arrancar compositor: añadir `--offline`. No necesita root.
+La operación sin backup es inocua. No borrar el journal tras un error: corregir
+la causa y repetir. Antes de desinstalar tras un fallo, ejecutar la restauración
+para que no desaparezca el helper requerido. No se migra automáticamente un
+backup del antiguo modo en vivo guardado en `$XDG_RUNTIME_DIR/singlr-live/`;
+ese modo debe detenerse con su versión anterior antes de actualizar.
+
+CMake instala helper, módulo, unidad y drop-in. El PKGBUILD ya instala todo el
+payload de CMake y depende de Plasma/KWin, que requieren KConfig (proveedor de
+`kreadconfig6` y `kwriteconfig6`); no cambia el conjunto de dependencias.
+Pendiente de validación real: login/cierre desde greeter, SIGKILL del supervisor,
+reinicio y retorno directo a Plasma. Las pruebas unitarias y staging no acreditan
+esos recorridos en hardware.
+
+Comprobación T234: 8 pruebas del módulo (incluido roundtrip con KConfig real en
+XDG temporal), 9 del launcher, 10 de regresión del modo en vivo y 5 de empaquetado; `check_setup.py`
+y `tools/check-cmake.sh` correctos, con instalación DESTDIR de todos los archivos.
+`systemd-analyze --user verify` no pudo completar por restricciones de sockets
+(`Operation not permitted`) del sandbox; no se declara verificado el grafo vivo.
