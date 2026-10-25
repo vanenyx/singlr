@@ -86,3 +86,18 @@ Server = file:///home/sunw/Projects/singlr/.local/repo
 
 Después Singlr se actualiza con el sistema: `sudo pacman -Syu`. El repositorio es local y
 sin firma; publicarlo (remoto, firma, checksums fijos) sigue pendiente de autorización.
+
+## Aceptación y soporte — T247
+
+CMake instala también `/usr/bin/singlr-doctor` (Python, ya dependencia del paquete).
+No incorpora hooks, servicios residentes ni escrituras en HOME al instalar.
+`singlr-doctor --output informe-nuevo.json` prepara el informe filtrado para una
+incidencia; no adjuntar journal crudo ni el inventario privado del usuario.
+
+[Instalación limpia, inventario de HOME y retorno a Plasma](../tests/session/README.md#instalación-limpia--desinstalación--plasma):
+procedimiento para un usuario que creará el creador, con verificación tras cerrar
+Singlr, tras `pacman -R singlr-desktop` y tras entrar en Plasma. Restaurar cualquier
+transacción KWin pendiente **antes de desinstalar**. La desinstalación es global:
+no hacerla mientras otro usuario esté usando Singlr. Las preferencias explícitas
+de apariencia KDE son compartidas y persistentes; no se promete revertirlas con
+pacman. La [matriz](../docs/compatibility.md) distingue cobertura real y pendiente.

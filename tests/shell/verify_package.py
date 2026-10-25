@@ -7,7 +7,7 @@ import sys
 def verify(stage):
     root = Path(stage)
     required = [
-        'usr/lib/singlr/singlr-shell', 'usr/lib/singlr/startsinglr-wayland',
+        'usr/bin/singlr-doctor', 'usr/lib/singlr/singlr-shell', 'usr/lib/singlr/startsinglr-wayland',
         'usr/lib/singlr/singlr_kwin.py', 'usr/lib/singlr/singlr-kwin',
         'usr/lib/qt6/qml/Singlr/System/qmldir',
         'usr/lib/qt6/qml/Singlr/System/libsinglr-system.so',
@@ -38,7 +38,7 @@ def verify(stage):
     ]
     for relative in required:
         assert (root / relative).is_file(), f'Missing payload: {relative}'
-    for relative in required[:2] + ['usr/bin/singlr-settings', 'usr/lib/singlr/singlr-kwin']:
+    for relative in required[:3] + ['usr/bin/singlr-settings', 'usr/lib/singlr/singlr-kwin']:
         assert (root / relative).stat().st_mode & 0o111, f'Not executable: {relative}'
     import re
     theme = root / 'usr/lib/singlr/qml/Singlr/Ui/Theme.qml'

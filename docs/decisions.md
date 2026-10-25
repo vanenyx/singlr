@@ -34,4 +34,6 @@ La fuente de producto es [la recuperación original](../SINGLR_recuperacion_desd
 | T-009 | Técnica derivada | Vigente | Pantalla de inicio: el greeter de Plasma Login Manager 6.8.1 compila su QML y no admite temas; solo fondo. Un diseño propio requeriría otro gestor de inicio (decisión del creador). |
 | T-010 | Técnica derivada | En curso | Apariencia (T241): KDE es la fuente única de claro/oscuro y acento (incluido el cambio automático de `lookandfeelautoswitcher`/knighttime); el shell la sigue y los ajustes de Singlr escriben la de KDE. |
 
+| T-011 | Técnica derivada | Aplicada; aceptación real pendiente | T247: batería de sesión instalada y auditoría de reversión en usuario dedicado; `singlr-doctor` instalado, de solo lectura y sin mensajes libres del journal. El greeter propio emite un marcador constante de carga QML para verificar selección sin instrumentar autenticación. Las preferencias KDE explícitas se conservan; los ajustes transitorios KWin/atajos se deben restaurar. Ver [batería](../tests/session/README.md) y [matriz](compatibility.md). No cambia comportamiento estándar ni acredita pruebas reales todavía. |
+
 Para nuevas entradas: ID, clase, estado, motivo, evidencia/autor y consecuencias. Una decisión técnica no aprueba decisiones perceptibles de producto.
