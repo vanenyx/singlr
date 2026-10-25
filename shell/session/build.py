@@ -58,14 +58,17 @@ def main():
             pass
         with tempfile.TemporaryDirectory(prefix='.compile-', dir=build) as directory:
             binary, deps = Path(directory) / 'singlr-shell', Path(directory) / 'deps.d'
-            generated = Path(directory) / 'moc_secretagent.cpp'
+            generated = []
             includes = [flag for flag in command if flag.startswith(('-I', '-D'))]
-            subprocess.run([str(moc), *includes, str(HERE / 'src/secretagent.h'), '-o', str(generated)],
-                           check=True, stdout=sys.stderr)
+            for name in ('secretagent', 'tray'):
+                output_moc = Path(directory) / f'moc_{name}.cpp'
+                subprocess.run([str(moc), *includes, str(HERE / f'src/{name}.h'), '-o', str(output_moc)],
+                               check=True, stdout=sys.stderr)
+                generated.append(output_moc)
             # One translation unit preserves one atomic compiler invocation and one
             # complete dependency file, including the moc input and system headers.
             unity = Path(directory) / 'session.cpp'
-            unity.write_text(''.join(f'#include "{p}"\n' for p in [*sources, generated]))
+            unity.write_text(''.join(f'#include "{p}"\n' for p in [*sources, *generated]))
             # -MD includes system headers: a Qt/LayerShellQt update invalidates the cache.
             result = subprocess.run(command + [str(unity), '-MD', '-MF', str(deps), '-o', str(binary)],
                                     stdout=sys.stderr)

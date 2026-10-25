@@ -19,6 +19,12 @@ class LiveSecretsTests(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory(prefix='singlr-live-test-')
         self.addCleanup(tmp.cleanup)
         self.state = Path(tmp.name)
+        # These T214 tests exercise NM takeover only. KWin restoration added
+        # later must never read or remove the live session's backup/theme.
+        for name in ('apply_kwin', 'restore_kwin'):
+            patcher = patch.object(live, name)
+            patcher.start()
+            self.addCleanup(patcher.stop)
         for name, value in {'STATE': self.state, 'PLASMA_MARK': self.state / 'plasma-stopped',
                             'NETWORK_MARK': self.state / 'networkmanagement-unloaded',
                             'PIDFILE': self.state / 'supervisor.pid'}.items():
