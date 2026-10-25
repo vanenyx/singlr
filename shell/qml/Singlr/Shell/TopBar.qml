@@ -8,7 +8,9 @@ Rectangle {
     readonly property real menuWidth: 292
     property bool sessionMode: false
     property Item menuHost: null
-    function closeMenu() { menuOpen = false; systemTray.close(); }
+    function closeMenu() { menuOpen = false; systemTray.close(); indicators.keyboard.close(); }
+    property alias nightLightBackend: indicators.nightLightBackend
+    property alias keyboard: indicators.keyboard
     property alias tray: systemTray
     property Item trayMenuHost: null
     property bool notificationsUnread: false
@@ -17,6 +19,7 @@ Rectangle {
     signal launcherRequested()
     signal applicationsRequested()
     property string activeAppName: "Escritorio"
+    onMenuOpenChanged: if (menuOpen) { systemTray.close(); indicators.keyboard.close(); }
     property bool menuOpen: false
     property date now: new Date()
     implicitHeight: 28
@@ -34,15 +37,19 @@ Rectangle {
     }
     Row {
         id: trailing; anchors.right: parent.right; anchors.rightMargin: 16; height: 28; spacing: 14
-        SystemTray { id: systemTray; menuHost: bar.trayMenuHost; onOpenedChanged: if (opened) bar.menuOpen = false }
+        SystemTray { id: systemTray; menuHost: bar.trayMenuHost; onOpenedChanged: if (opened) { bar.menuOpen = false; indicators.keyboard.close(); } }
         Tool {
             y: 3; width: 24; height: 22; icon: "bell"; iconSize: 15; description: "Notificaciones"
             onClicked: bar.notificationsRequested()
             Rectangle { x: 18; y: 3; width: 4; height: 4; radius: 2; color: Theme.secondary; visible: bar.notificationsUnread }
         }
         Tool { y: 3; width: 24; height: 22; icon: "magnifying-glass"; iconSize: 15; description: "Buscar"; onClicked: bar.launcherRequested() }
-        StatusIndicators { anchors.verticalCenter: parent.verticalCenter; onControlCenterRequested: bar.controlCenterRequested() }
+        StatusIndicators { id: indicators; menuHost: bar.trayMenuHost; anchors.verticalCenter: parent.verticalCenter; onControlCenterRequested: bar.controlCenterRequested() }
         UiText { height: 28; text: bar.now.toLocaleString(Qt.locale("es_ES"), "ddd d MMM  HH:mm"); weight: 510; color: Theme.secondary }
+    }
+    Connections {
+        target: indicators.keyboard
+        function onOpenedChanged() { if (indicators.keyboard.opened) { bar.menuOpen = false; systemTray.close(); } }
     }
     DeferredLoader {
         onLoaded: if (bar.menuOpen) bar.menu.forceActiveFocus()

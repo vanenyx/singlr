@@ -9,6 +9,15 @@ Row {
     spacing: 14
     signal controlCenterRequested()
     property var sink: Volume.PreferredDevice.sink
+    property var nightLightBackend: NightLight
+    property alias keyboard: keyboardIndicator
+    property Item menuHost: null
+    KeyboardIndicator { id: keyboardIndicator; menuHost: status.menuHost }
+    Tool {
+        width: 24; height: 22; iconSize: 15; visible: status.nightLightBackend.indicatorVisible
+        icon: "moon"; description: "Luz nocturna · " + status.nightLightBackend.status
+        onClicked: status.controlCenterRequested()
+    }
     Battery.BatteryControlModel { id: battery }
     Network.NetworkStatus { id: network }
     Tool {

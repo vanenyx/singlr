@@ -25,3 +25,6 @@ ScreenSurfaces 1.0 ScreenSurfaces.qml
 ClipboardBackend 1.0 ClipboardBackend.qml
 ClipboardPanel 1.0 ClipboardPanel.qml
 NowPlaying 1.0 NowPlaying.qml
+singleton NightLight 1.0 NightLight.qml
+NightLightRow 1.0 NightLightRow.qml
+KeyboardIndicator 1.0 KeyboardIndicator.qml

@@ -76,9 +76,9 @@ Item {
         }
         function test_neutralControlsKeyboard() {
             const toggle = createTemporaryObject(toggleComponent, fixture);
-            compare(toggle.indicator.color, Qt.color("#1fffffff"));
+            compare(toggle.indicator.color, Theme.track);
             toggle.forceActiveFocus(); keyClick(Qt.Key_Space); verify(toggle.checked); tryCompare(toggle.indicator, "color", Theme.control);
-            toggle.checked = false; wait(150); compare(toggle.indicator.color, Qt.color("#1fffffff"));
+            toggle.checked = false; wait(150); compare(toggle.indicator.color, Theme.track);
             toggle.destroy();
             const slider = createTemporaryObject(sliderComponent, fixture);
             slider.forceActiveFocus(); keyClick(Qt.Key_Right); verify(slider.value > 50);

@@ -131,11 +131,11 @@ Item {
             const row = createTemporaryObject(mediaFactory, fixture);
             verify(row.hasMedia);
             // Chrome keeps its MPRIS player after the tab with music is closed.
-            fixture.player.track = ""; refreshPlayer();
+            fixture.player.track = ""; fixture.refreshPlayer();
             verify(!row.hasMedia);
-            fixture.player.track = "Tema"; fixture.player.playbackStatus = Mpris.PlaybackStatus.Stopped; refreshPlayer();
+            fixture.player.track = "Tema"; fixture.player.playbackStatus = Mpris.PlaybackStatus.Stopped; fixture.refreshPlayer();
             verify(!row.hasMedia);
-            fixture.player.playbackStatus = Mpris.PlaybackStatus.Paused; refreshPlayer();
+            fixture.player.playbackStatus = Mpris.PlaybackStatus.Paused; fixture.refreshPlayer();
             verify(row.hasMedia);
             compare(row.implicitHeight, 36); // the slot never changes size (P-011)
         }

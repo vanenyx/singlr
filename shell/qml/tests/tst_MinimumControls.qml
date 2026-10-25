@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtTest
 import org.kde.plasma.networkmanagement as Network
+import Singlr.Ui
 import Singlr.Shell
 
 Item {
@@ -63,14 +64,14 @@ Item {
             const percent = findChild(row, "batteryPercent");
             compare(percent.font.pixelSize, 13); compare(percent.font.weight, 590);
             const keys = ["power-saver", "balanced", "performance"];
-            const tints = ["#4ea7fc", "#f7f8f8", "#eb5757"];
+            const tints = [Qt.color("#4ea7fc"), Theme.control, Qt.color("#eb5757")];
             for (let i = 0; i < keys.length; ++i) {
                 const button = findChild(row, "profile-" + keys[i]);
                 const circle = findChild(button, "profileCircle");
                 compare(circle.width, 12); compare(circle.height, 12); compare(circle.border.width, 1.5);
-                compare(circle.border.color, Qt.color(tints[i]));
+                compare(circle.border.color, tints[i]);
                 button.forceActiveFocus(); keyClick(Qt.Key_Space);
-                compare(power.activeProfile, keys[i]); compare(circle.color, Qt.color(tints[i])); compare(row.height, 36);
+                compare(power.activeProfile, keys[i]); compare(circle.color, tints[i]); compare(row.height, 36);
                 for (let j = 0; j < keys.length; ++j) if (j !== i)
                     compare(findChild(findChild(row, "profile-" + keys[j]), "profileCircle").color, Qt.color("transparent"));
             }
