@@ -75,3 +75,13 @@ son compartidas; si el usuario activó alternativas `dev.singlr.light/dark`, deb
 seleccionar alternativas instaladas antes de quitar sus LookAndFeel. El auditor
 falla si siguen referenciadas tras desinstalar. No se añade un hook privilegiado
 que reescriba preferencias de todos los usuarios.
+
+## Ejecución real en la sesión del creador (25 oct, Claude, con su autorización)
+
+Sesión Singlr instalada, canal de desarrollo activo (`--allow-development`: no acredita el shell empaquetado).
+- `startup`: PASS (solo lectura).
+- `crash`: PASS — recuperación D-Bus en 0,39 s (SIGKILL al shell; KWin/ksmserver/target intactos).
+- `reexec`: PASS — `systemctl --user daemon-reexec` sin perder la sesión (el fallo que antes cerraba la sesión al instalar).
+- `singlr-doctor`: informe generado.
+Pendientes: `lock` (requiere al creador), `outputs` (requiere 2 salidas), `burst` (verificado solo en anidado),
+cierre/restauración e instalación durante sesión con el fixture, instalación limpia en usuario dedicado.
