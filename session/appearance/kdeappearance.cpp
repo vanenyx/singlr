@@ -46,7 +46,9 @@ KDEAppearance::KDEAppearance(QObject *parent) : QObject(parent),
             Q_EMIT changed();
         }
     });
-    m_materialConfig = KSharedConfig::openConfig(configPath(), KConfig::SimpleConfig);
+    // Open by name relative to the config dir: KConfigWatcher only delivers KConfig::Notify
+    // change signals for such configs ("Watching absolute paths is not supported").
+    m_materialConfig = KSharedConfig::openConfig(QStringLiteral("singlr/singlr.conf"), KConfig::SimpleConfig);
     m_materialWatcher = KConfigWatcher::create(m_materialConfig);
     connect(m_materialWatcher.data(), &KConfigWatcher::configChanged, this, [this] {
         refreshMaterials();

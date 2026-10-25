@@ -244,7 +244,8 @@ void registerActions(QObject *parent, QObject *session)
             // another action in System Settings > Shortcuts, Singlr's history panel
             // takes the key for this component only; Plasma's entry is untouched.
             const QString self = QCoreApplication::applicationName();
-            if (owners == QList<QStringList>{{self, QStringLiteral("show-on-mouse-pos")}}) {
+            const QStringList klipperPopup{self, QStringLiteral("show-on-mouse-pos")};
+            if (owners.contains(klipperPopup)) {
                 registerTypes();
                 QDBusInterface api("org.kde.kglobalaccel", "/kglobalaccel", "org.kde.KGlobalAccel");
                 api.setTimeout(1500);
@@ -252,8 +253,9 @@ void registerActions(QObject *parent, QObject *session)
                 QDBusReply<void> reply = api.call(QStringLiteral("setForeignShortcutKeys"), klipper,
                                                   QVariant::fromValue(QList<QKeySequence>{}));
                 if (reply.isValid()) {
-                    owners.clear();
-                    available = true;
+                    // Other owners (Plasma's own entry, third-party apps) are resolved as for any key.
+                    owners.removeAll(klipperPopup);
+                    available = owners.isEmpty();
                 } else {
                     qWarning() << "Singlr: no se pudo liberar Meta+V de Klipper" << reply.error();
                 }
