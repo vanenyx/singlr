@@ -4,7 +4,6 @@ import QtQuick.Window
 import QtQuick.Controls.Basic as Controls
 import QtQuick.Dialogs
 import QtCore
-import org.kde.plasma.plasma5support as PlasmaSupport
 import "../../shell/qml/Singlr/Ui" as Ui
 
 Window {
@@ -12,9 +11,7 @@ Window {
     width: 880; height: 600; minimumWidth: 880; minimumHeight: 600
     visible: true; title: "Ajustes de Singlr"; color: Ui.Theme.background
     property string page: Qt.application.arguments.indexOf("--wallpaper") >= 0 ? "wallpaper" : "appearance"
-    property string feedback: ""
-    property bool helperBusy: false
-    property bool helperPending: false
+    readonly property string feedback: Ui.Appearance.error
     readonly property var accents: [
         {label: "Índigo", color: "#5e6ad2"}, {label: "Azul", color: "#4ea7fc"},
         {label: "Verde", color: "#4cb782"}, {label: "Ámbar", color: "#f2c94c"},
@@ -24,26 +21,6 @@ Window {
         {label: "Neutro claro", key: "singlr:light"}, {label: "Grafito", key: "singlr:graphite"}]
     function save(key, value) {
         Ui.Appearance.save(key, value);
-        feedback = "";
-        helperPending = true;
-        notifyTimer.restart();
-    }
-    function quote(value) { return "'" + value.replace(/'/g, "'\\''") + "'"; }
-    function notifyShell() {
-        if (helperBusy || !helperPending) return;
-        helperPending = false; helperBusy = true;
-        const helper = decodeURIComponent(Qt.resolvedUrl("apply-settings.py").toString().replace(/^file:\/\//, ""));
-        process.connectSource("python3 " + quote(helper) + (Ui.Appearance.applyToApps ? " --apply-to-apps" : "") + (Ui.Theme.dark ? " --dark" : " --light"));
-    }
-    Timer { id: notifyTimer; interval: 60; onTriggered: window.notifyShell() }
-    PlasmaSupport.DataSource {
-        id: process; engine: "executable"; connectedSources: []
-        onNewData: (sourceName, data) => {
-            disconnectSource(sourceName);
-            window.helperBusy = false;
-            window.feedback = Number(data["exit code"]) === 0 ? "" : String(data["stdout"]).trim() || "Guardado. No se pudo avisar a la sesión.";
-            if (window.helperPending) notifyTimer.restart();
-        }
     }
     FileDialog {
         id: fileDialog; title: "Elegir fondo de escritorio"
@@ -96,6 +73,7 @@ Window {
                                     objectName: "mode-" + modelData.key
                                     width: 90; height: 30
                                     Accessible.name: modelData.label; Accessible.role: Accessible.RadioButton; Accessible.checked: Ui.Appearance.mode === modelData.key
+                                    enabled: !Ui.Appearance.busy
                                     onClicked: window.save("mode", modelData.key)
                                     background: Rectangle { radius: 5; color: Ui.Appearance.mode === mode.modelData.key ? Ui.Theme.raised : "transparent"; border.color: mode.visualFocus ? Ui.Theme.control : "transparent" }
                                     contentItem: Ui.UiText { text: mode.modelData.label; color: Ui.Appearance.mode === mode.modelData.key ? Ui.Theme.text : Ui.Theme.muted; horizontalAlignment: Text.AlignHCenter }
@@ -116,10 +94,11 @@ Window {
                                 id: swatch; required property var modelData
                                 objectName: "accent-" + modelData.label
                                 width: 28; height: 40
-                                Accessible.name: modelData.label; Accessible.role: Accessible.RadioButton; Accessible.checked: Ui.Appearance.accent === modelData.color
+                                Accessible.name: modelData.label; Accessible.role: Accessible.RadioButton; Accessible.checked: Ui.Appearance.selectedAccent === modelData.color
+                                enabled: !Ui.Appearance.busy
                                 onClicked: window.save("accent", modelData.color)
                                 background: Item {
-                                    Rectangle { anchors.centerIn: parent; width: 28; height: 28; radius: 14; color: "transparent"; border.width: 1; border.color: Ui.Appearance.accent === swatch.modelData.color || swatch.visualFocus ? Ui.Theme.control : "transparent" }
+                                    Rectangle { anchors.centerIn: parent; width: 28; height: 28; radius: 14; color: "transparent"; border.width: 1; border.color: Ui.Appearance.selectedAccent === swatch.modelData.color || swatch.visualFocus ? Ui.Theme.control : "transparent" }
                                     Rectangle { anchors.centerIn: parent; width: 20; height: 20; radius: 10; color: swatch.modelData.color }
                                 }
                             }
@@ -127,8 +106,7 @@ Window {
                     }
                 }
                 Rectangle { width: parent.width; height: 1; color: Ui.Theme.faintBorder }
-                Ui.Toggle { width: parent.width; height: 40; text: "Aplicar también a las apps de KDE"; checked: Ui.Appearance.applyToApps; onToggled: window.save("applyToApps", checked) }
-                Ui.UiText { width: parent.width; height: 36; text: Ui.Appearance.mode === "auto" ? "Claro de 7:00 a 19:00. Oscuro el resto del día." : ""; color: Ui.Theme.muted; font.pixelSize: 12 }
+                Ui.UiText { width: parent.width; height: 36; text: Ui.Appearance.mode === "auto" ? "Sigue el horario automático de KDE y Luz nocturna." : ""; color: Ui.Theme.muted; font.pixelSize: 12 }
             }
             Column {
                 y: 72; width: parent.width; spacing: 20; visible: window.page === "wallpaper"

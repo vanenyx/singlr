@@ -274,7 +274,7 @@ def launch(source, size, client_kind="singlr"):
                        XDG_DATA_DIRS=':'.join(filter(None, [os.environ.get('SINGLR_EXTRA_DATA_DIRS', ''), '/usr/local/share:/usr/share'])),
                        XDG_CONFIG_DIRS='/etc/xdg',
                        XDG_CURRENT_DESKTOP='KDE', XDG_SESSION_DESKTOP='Singlr', XDG_SESSION_TYPE='wayland',
-                       QT_QPA_PLATFORM='wayland', QT_QPA_PLATFORMTHEME='',
+                       QT_QPA_PLATFORM='wayland', QT_QPA_PLATFORMTHEME='kde',
                        KDE_FULL_SESSION='true', KDE_SESSION_VERSION='6',
                        _KDE_APPLICATIONS_AS_FORKING='1', QT_FORCE_STDERR_LOGGING='1')
             process = subprocess.Popen(['dbus-run-session', '--', 'bash', str(HERE / 'nested-session.sh'),

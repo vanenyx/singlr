@@ -13,6 +13,7 @@ BindsTo=plasma-ksmserver.service
 Wants=plasma-restoresession.service
 PartOf=graphical-session.target
 Wants=graphical-session-pre.target plasma-kded6.service
+Wants=plasma-knighttimed.service
 Wants=plasma-polkit-agent.service plasma-powerdevil.service
 Wants=plasma-xdg-desktop-portal-kde.service xdg-desktop-portal.service
 Wants=plasma-kactivitymanagerd.service

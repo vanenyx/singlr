@@ -1,0 +1,64 @@
+T241 — resultado de la corrección: KDE como fuente de apariencia
+Fecha: 2026-10-25; rama day2/codex2-gtk; sin commit.
+
+Configuración final
+- Sin singlr-appearance ni unidades propias service/path/timer.
+- Theme.qml sin reloj ni horario 07/19; paleta efectiva de Qt/KDE por eventos.
+- KConfigWatcher para preferencias KDE; autoswitcher + knighttime de KDE.
+- Preferencia de acento persistente; procesos de aplicación asíncronos.
+- Migración única compatible con schema 1 de T239, con lock y reintento.
+- Dependencias GTK mantenidas; paquetes LookAndFeel solo con esquema de color.
+
+Checks ejecutados (XDG temporal; no se accede al bus de la sesión activa)
+- cmake configure + build: PASS.
+- singlr-appearance-test: 8 passed, 0 failed (incluye init/cleanup).
+- unittest test_gtk_integration.py: 4 passed.
+  * Ejecuta los checks nativos.
+  * Plasma real: cambio de esquema conserva el acento persistido.
+  * Qt SVG: source=16/16, user missing=0/16, temporary user copy=16/16.
+  * plasma-apply-lookandfeel real: oscuro/claro; kwinrc Singlr intacto.
+- QML apps/settings/tests: 7 passed, 0 failed, plataforma offscreen genérica.
+  Advertencia esperada de imagen inexistente del test de fallback.
+- QML shell/qml/tests: 128 passed, 0 failed, fixture KDE BreezeDark en XDG
+  temporal, QT_QPA_PLATFORMTHEME=kde, QT_QUICK_BACKEND=software.
+  Dos tests previos presuponen controles oscuros; con paleta clara genérica
+  dan 126 passed / 2 failed por los colores fijos esperados. No se modifica
+  el producto ni esos tests para ocultar esa precondición.
+  Avisos de servicios DBus/rfkill ausentes esperados en esta suite offline.
+- qmllint con -I build/qml -I shell/qml -i shell/qml/Singlr/Ui/qmldir sobre
+  Appearance.qml, Theme.qml, Main.qml y tst_Settings.qml: PASS sin avisos.
+- tools/check-cmake.sh: PASS build + DESTDIR, módulo QML, bibliotecas, permisos,
+  temas LookAndFeel y payload completo. Staging eliminado.
+- test_session_entry.py: 13 passed.
+- test_session.py: 9 passed.
+- test_kwin.py: 8 passed.
+- test_packaging.py: 5 passed.
+- test_robustness.py (T239): 4 passed.
+- scripts/check_setup.py y scripts/doctor.py ejecutados.
+- git diff --check: PASS.
+
+Causa de los SVG GTK3 vacíos
+- Confirmada en el tag v6.8.1 de KDE/kde-gtk-config:
+  kded/kwin_bridge/auroraedecorationpainter.cpp
+  blob 4fafed1e8010439e45ed48a06a1eb8f39feff9e8.
+  Solo utiliza writableLocation(GenericDataLocation)/aurorae/themes.
+- decorationpainter.cpp, blob 469d295a343693b7c3f4cf72b24d0cd63c3d8810:
+  selector por prefijo del tema SVG; la biblioteca aurorae/aurorae.v2 no decide.
+- Instalación Singlr en /usr/share/aurorae/themes es válida para KWin, pero
+  ese renderizador GTK no la busca. No se parchea KDE ni se duplica el tema.
+- Perfil existente, leído sin modificar: 24 SVG GTK3, ninguno con geometría;
+  GTK4: cero SVG. La prueba Qt reproduce el fallo y su control positivo.
+
+Bloqueos reales
+- tools/run-singlr.sh --client none --duration 2 --size 900x650:
+  dbus-daemon: Failed to bind socket /tmp/dbus-...: Operation not permitted.
+  dbus-run-session: EOF reading address from bus daemon.
+  SINGLR_CLEANUP remaining=[]
+  SINGLR_HOST_CONFIG files_before=30 files_after=30 equal=True.
+- tools/measure-resources.sh --output /tmp/t241-resources-final:
+  FAIL, sesión exit=127 por el mismo bloqueo de sockets, antes de obtener PSS.
+- Sin capturas GTK anidadas, lectura/señales de portal en vivo ni validación
+  del cambio automático real. GTK4/libadwaita y las demos no están instalados.
+- No se declara el escritorio medido ni listo para integrar sin esos checks.
+
+Detalles, fuentes exactas y reproducción: session/GTK.md.

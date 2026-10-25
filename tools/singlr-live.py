@@ -179,7 +179,9 @@ def supervise(takeover):
                     log.write(f'--- {time.strftime("%H:%M:%S")} recarga\n')
                     log.flush()
                     shell = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT,
-                                             env={**os.environ, 'QT_FORCE_STDERR_LOGGING': '1'})
+                                             env={**os.environ, 'QT_FORCE_STDERR_LOGGING': '1',
+                                                  'QML_IMPORT_PATH': str(ROOT / 'build/qml') +
+                                                  (':' + os.environ['QML_IMPORT_PATH'] if os.environ.get('QML_IMPORT_PATH') else '')})
                 # Si el QML tiene un error, el shell muere: se espera al siguiente cambio.
                 time.sleep(1)
                 if shell.poll() is not None:

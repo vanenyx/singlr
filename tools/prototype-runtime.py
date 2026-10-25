@@ -38,6 +38,9 @@ def stop(process):
 def isolated_environment(base):
     """Keep system imports/applications, isolate every persistent XDG write."""
     env = os.environ.copy()
+    # Native Singlr.System QML module from the development CMake build.
+    module_path = str(HERE.parent / 'build/qml')
+    env['QML_IMPORT_PATH'] = module_path + (':' + env['QML_IMPORT_PATH'] if env.get('QML_IMPORT_PATH') else '')
     for key, subdir in [('XDG_CONFIG_HOME', 'config'), ('XDG_CACHE_HOME', 'cache'),
                         ('XDG_DATA_HOME', 'data'), ('XDG_STATE_HOME', 'state')]:
         path = base / subdir

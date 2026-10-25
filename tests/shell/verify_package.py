@@ -9,6 +9,11 @@ def verify(stage):
     required = [
         'usr/lib/singlr/singlr-shell', 'usr/lib/singlr/startsinglr-wayland',
         'usr/lib/singlr/singlr_kwin.py', 'usr/lib/singlr/singlr-kwin',
+        'usr/lib/qt6/qml/Singlr/System/qmldir',
+        'usr/lib/qt6/qml/Singlr/System/libsinglr-system.so',
+        'usr/lib/qt6/qml/Singlr/System/libsinglr-systemplugin.so',
+        'usr/share/plasma/look-and-feel/dev.singlr.light/contents/defaults',
+        'usr/share/plasma/look-and-feel/dev.singlr.dark/contents/defaults',
         'usr/lib/systemd/user/singlr-kwin-recover.service',
         'usr/lib/systemd/user/plasma-kwin_wayland.service.d/50-singlr-recovery.conf',
         'usr/lib/singlr/qml/Shell.qml', 'usr/lib/singlr/qml/Singlr/Ui/qmldir',
