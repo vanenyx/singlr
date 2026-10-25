@@ -228,3 +228,10 @@ la cartera (limitación conocida de KDE). La sesión Plasma siguió abierta hast
 por eso no se vio antes. Solución estándar: con la cartera abierta, cambiar su contraseña
 a la de inicio de sesión (`org.kde.KWallet.changePassword`; con la cartera abierta no pide
 la anterior). La realiza el creador: es una credencial suya.
+
+## Cierre (25 oct)
+
+El creador cambió la contraseña de la cartera (antigua → actual) por el diálogo estándar de
+KDE, instaló el paquete y entró desde el greeter: sin aviso de cartera, navegadores y
+cuentas correctos, logout/restauración como se esperaba. `plasma-ksmserver.service`
+activo y sin error -9 de PAM en el nuevo login.

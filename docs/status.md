@@ -2,6 +2,8 @@
 
 **Día 1 (24 oct 2026):** primer shell Singlr ejecutable sobre Plasma 6 en una sesión KWin anidada y aislada. Ver [handoffs/day1.md](handoffs/day1.md).
 
+**25 oct 2026:** sesión Singlr instalada y usada a diario por el creador. Gestión de sesión con ksmserver de KDE (P-017, T237): cierre ordenado, restauración de lo abierto al salir; teclado, cursor y cartera KDE correctos. Confirmado por el creador en login real. Ver [handoffs/T237-ksmserver.md](handoffs/T237-ksmserver.md).
+
 Fase 1 en desarrollo: objetivo de producto instalable el 31 oct 2026. La visión original permanece conservada en la raíz.
 
 ## Flujo vigente
