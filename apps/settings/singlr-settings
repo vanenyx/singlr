@@ -21,4 +21,7 @@ if [[ ! -f "$entry" ]]; then
 fi
 # Keep the settings window on xdg-shell even when invoked from the shell.
 unset QT_WAYLAND_SHELL_INTEGRATION
+if [[ -n "${root:-}" && -d "$root/build/qml" ]]; then
+    export QML_IMPORT_PATH="$root/build/qml${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}"
+fi
 exec qml6 -I "$qml" "$entry" "$@"

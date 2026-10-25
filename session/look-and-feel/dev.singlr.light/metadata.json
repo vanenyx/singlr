@@ -1,0 +1,10 @@
+{
+  "KPackageStructure": "Plasma/LookAndFeel",
+  "KPlugin": {
+    "Id": "dev.singlr.light",
+    "Name": "Singlr light",
+    "Description": "System color scheme for Singlr",
+    "Version": "0.1.0",
+    "License": "LicenseRef-Singlr-Pending"
+  }
+}

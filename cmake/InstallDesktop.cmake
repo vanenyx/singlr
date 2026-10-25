@@ -52,3 +52,6 @@ install(FILES "${PROJECT_BINARY_DIR}/singlr-kwin-recover.service"
     DESTINATION "${KDE_INSTALL_SYSTEMDUSERUNITDIR}")
 install(FILES session/systemd/plasma-kwin_wayland.service.d/50-singlr-recovery.conf
     DESTINATION "${KDE_INSTALL_SYSTEMDUSERUNITDIR}/plasma-kwin_wayland.service.d")
+
+add_subdirectory(session/appearance)
+install(DIRECTORY session/look-and-feel/ DESTINATION "${KDE_INSTALL_DATADIR}/plasma/look-and-feel")

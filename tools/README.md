@@ -47,3 +47,10 @@ completo requieren verificación externa al sandbox. No hay dependencias nuevas.
 La sesión Singlr con aplicaciones reales usa `tools/run-singlr.sh`,
 `tools/capture-session.sh` y `tools/check-shell.sh`. Contrato, evidencia y
 comandos externos: [shell/session/README.md](../shell/session/README.md).
+
+T241: Appearance.qml necesita el módulo nativo Singlr.System. Compilar primero
+con CMake (`cmake -S . -B build && cmake --build build`); las herramientas
+aisladas anteponen build/qml a QML_IMPORT_PATH. La sesión anidada usa el tema de
+plataforma KDE sobre su bus privado para seguir la paleta. Para una ejecución
+directa de shell/session/qml-shell fijar QML_IMPORT_PATH=$PWD/build/qml.
+Ver session/GTK.md para las pruebas y los límites de GTK/CSD.

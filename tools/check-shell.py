@@ -39,7 +39,7 @@ def main():
         for key in ('DISPLAY', 'WAYLAND_DISPLAY', 'WAYLAND_SOCKET', 'QT_WAYLAND_SHELL_INTEGRATION'):
             env.pop(key, None)
         files = sorted(imports.rglob('*.qml')) if source == imports / 'Shell.qml' else [source]
-        result = subprocess.run([lint, '-I', '/usr/lib/qt6/qml', '-I', str(imports), *map(str, files)], env=env)
+        result = subprocess.run([lint, '-I', '/usr/lib/qt6/qml', '-I', str(ROOT / 'build/qml'), '-I', str(imports), *map(str, files)], env=env)
         if result.returncode:
             return result.returncode
         output = args.output.resolve() if args.output else base / 'shell.png'

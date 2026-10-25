@@ -234,3 +234,8 @@ XDG temporal), 9 del launcher, 10 de regresión del modo en vivo y 5 de empaquet
 y `tools/check-cmake.sh` correctos, con instalación DESTDIR de todos los archivos.
 `systemd-analyze --user verify` no pudo completar por restricciones de sockets
 (`Operation not permitted`) del sandbox; no se declara verificado el grafo vivo.
+
+T241: [apariencia KDE, integración GTK/CSD y límites](GTK.md). El shell sigue la
+paleta de KDE por eventos y usa su autoswitcher/knighttime. No hay horario ni
+servicio de apariencia propios. Las capturas GTK y la medida de recursos siguen
+pendientes por las restricciones de sockets del sandbox.

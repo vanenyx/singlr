@@ -1,29 +1,31 @@
 pragma Singleton
 import QtQuick
 import QtCore
+import Singlr.System
 Item {
     id: appearance
     readonly property url location: StandardPaths.writableLocation(StandardPaths.ConfigLocation) + "/singlr/singlr.conf"
-    property string mode: "dark"
-    property string accent: "#5e6ad2"
+    readonly property string mode: KDEAppearance.mode
+    readonly property bool dark: KDEAppearance.dark
+    readonly property string accent: String(KDEAppearance.accent)
+    readonly property string selectedAccent: String(KDEAppearance.selectedAccent)
+    readonly property bool busy: KDEAppearance.busy
+    readonly property string error: KDEAppearance.error
     property string wallpaper: "singlr:linear"
-    property bool applyToApps: false
     Settings { id: settings; location: appearance.location; category: "Appearance" }
     function reload() {
         settings.sync();
-        const savedMode = String(settings.value("mode", "dark"));
-        mode = ["dark", "light", "auto"].indexOf(savedMode) >= 0 ? savedMode : "dark";
-        const savedAccent = String(settings.value("accent", "#5e6ad2"));
-        accent = /^#[0-9a-f]{6}$/i.test(savedAccent) ? savedAccent : "#5e6ad2";
         const savedWallpaper = String(settings.value("wallpaper", "singlr:linear"));
         wallpaper = savedWallpaper.indexOf("file:///") === 0 || ["singlr:linear", "singlr:glow", "singlr:light", "singlr:graphite"].indexOf(savedWallpaper) >= 0 ? savedWallpaper : "singlr:linear";
-        const savedApply = settings.value("applyToApps", false);
-        applyToApps = savedApply === true || savedApply === "true";
     }
     function save(key, value) {
+        if (key === "mode") { KDEAppearance.setMode(value); return; }
+        if (key === "accent") { KDEAppearance.setAccent(value); return; }
+        if (key !== "wallpaper") return;
         settings.setValue(key, value);
         settings.sync();
         reload();
+        KDEAppearance.reloadShell();
     }
     Component.onCompleted: reload()
 }
