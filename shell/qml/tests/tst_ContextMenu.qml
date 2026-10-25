@@ -93,9 +93,13 @@ Item {
             panel.openNetworkMenu(data, panel, 330, height - 10); wait(20); keyClick(Qt.Key_Return); compare(handler.operation, "disconnect:/known");
             panel.openNetworkMenu(Object.assign({}, data, {Uuid:""}), panel, 20, 40); wait(20); compare(menu.entries.length, 2);
             keyClick(Qt.Key_Escape); wait(20); compare(panel.page, "wifi"); compare(panel.height, height);
+            panel.networkSource = null;
+            const list = findChild(panel.navigation.currentItem, "wifiList");
+            list.stableModel.sync([{deviceKey: "ssid:test", rank: 70, active: false, payload: Object.assign({}, data, {Uuid:"", ConnectionState:Network.Enums.Deactivated})}]);
+            list.forceLayout();
             panel.openNetworkMenu(Object.assign({}, data, {Uuid:"", ConnectionState:Network.Enums.Deactivated}), panel, 20, 40); wait(20);
-            keyClick(Qt.Key_Return); wait(150); compare(panel.page, "network"); compare(panel.height, height);
-            verify(findChild(panel.navigation.currentItem, "wifiPassword").activeFocus);
+            keyClick(Qt.Key_Return); wait(150); compare(panel.page, "wifi"); compare(panel.navigation.depth, 2); compare(panel.height, height);
+            verify(findChild(list.passwordBar.contentItem, "wifiPassword").activeFocus);
         }
     }
 }

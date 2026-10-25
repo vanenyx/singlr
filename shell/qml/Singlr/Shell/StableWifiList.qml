@@ -8,7 +8,10 @@ ListView {
     property var sourceModel: null
     property bool pageActive: false
     readonly property alias stableModel: stable
-    signal passwordRequested(var data)
+    signal secretSubmitted(string requestId, string password)
+    signal passwordCancelled()
+    property var pendingPassword: null
+    readonly property alias passwordBar: passwordBar
     signal menuRequested(var data, var anchor, real px, real py)
     signal networkUpdated(string key, var data)
     signal settingsRequested()
@@ -17,8 +20,42 @@ ListView {
     currentIndex: -1
     model: stable.rows
     add: null; remove: null; displaced: null; move: null; populate: null
-    StableDeviceModel { id: stable }
+    StableDeviceModel { id: stable; promoteActive: false }
+    WifiPasswordBar {
+        id: passwordBar; handler: list.handler
+        onSecretSubmitted: (requestId, password) => list.secretSubmitted(requestId, password)
+        onCancelled: list.passwordCancelled()
+    }
+    function showPassword(data, requestId = "", retry = false) {
+        pendingPassword = {data: data, requestId: requestId, retry: retry};
+        resolvePassword();
+    }
+    function resolvePassword() {
+        if (!pendingPassword) return;
+        for (let i = 0; i < count; ++i) {
+            const data = stable.rows.get(i).payload;
+            if ((pendingPassword.data.Uuid && data.Uuid === pendingPassword.data.Uuid) || data.Ssid === pendingPassword.data.Ssid) {
+                positionViewAtIndex(i, ListView.Contain); forceLayout();
+                const target = itemAtIndex(i);
+                if (!target) { Qt.callLater(resolvePassword); return; }
+                const pending = pendingPassword; pendingPassword = null;
+                passwordBar.show(target, pending.requestId, pending.retry);
+                return;
+            }
+        }
+    }
+    function closePassword() { pendingPassword = null; passwordBar.close(); }
+
     function keyFor(data) {
+        // Saving a new connection assigns a UUID; keep its existing delegate and position.
+        for (let i = 0; i < stable.rows.count; ++i) {
+            const entry = stable.rows.get(i);
+            if (data.Uuid && entry.payload.Uuid === data.Uuid) return entry.deviceKey;
+        }
+        for (let i = 0; i < stable.rows.count; ++i) {
+            const entry = stable.rows.get(i); const previous = entry.payload;
+            if ((!previous.Uuid || !data.Uuid) && previous.Ssid === data.Ssid && previous.SecurityType === data.SecurityType) return entry.deviceKey;
+        }
         return data.Uuid ? "uuid:" + data.Uuid : "ssid:" + JSON.stringify([data.Ssid, data.SecurityType]);
     }
     // Also used by tests with an independently changing source model.
@@ -37,6 +74,7 @@ ListView {
         }
         stable.sync(snapshot);
         for (const entry of snapshot) networkUpdated(entry.deviceKey, entry.payload);
+        resolvePassword();
     }
     Connections {
         target: list.sourceModel
@@ -56,7 +94,7 @@ ListView {
         width: list.width
         networkData: payload
         handler: list.handler
-        onPasswordRequested: list.passwordRequested(networkData)
+        onPasswordRequested: list.showPassword(networkData)
         onMenuRequested: (anchor, px, py) => list.menuRequested(networkData, anchor, px, py)
         onSettingsRequested: list.settingsRequested()
     }

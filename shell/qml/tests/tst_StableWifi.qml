@@ -10,6 +10,8 @@ Item {
     QtObject {
         id: handlerStub
         signal connectionActivationFailed(string path, string message)
+        property string password: ""
+        function addAndActivateConnection(device, ap, value) { password = value; }
         function removeConnection(path) { fixture.removedPath = path; }
     }
     QtObject {
@@ -62,14 +64,11 @@ Item {
             list.stableModel.sync([entry("B", 80, "b")]);
             compare(list.height, height); compare(row.height, 36);
         }
-        function test_connectionChangesRestoreOpeningOrder() {
+        function test_connectionChangesPreservePositions() {
             const list = setupList();
+            const row = list.itemAtIndex(1); const y = row.y;
             list.stableModel.sync([entry("A", 1), entry("B", 10, "b", true), entry("C", 100)]);
-            compare(list.stableModel.rows.get(0).payload.Name, "B");
-            list.stableModel.sync([entry("A", 1), entry("B", 10, "b"), entry("C", 100, "", true)]);
-            compare(list.stableModel.rows.get(0).payload.Name, "C");
-            compare(list.stableModel.rows.get(1).payload.Name, "A");
-            compare(list.stableModel.rows.get(2).payload.Name, "B");
+            list.forceLayout(); compare(list.itemAtIndex(1), row); compare(row.y, y);
         }
         function test_panelHeightAndNavigation() {
             scanModel.entries = [entry("A", 90), entry("B", 50, "b")];
@@ -88,12 +87,45 @@ Item {
             const menu = findChild(panel, "controlContextMenu");
             verify(menu.opened); compare(panel.navigation.depth, 2); compare(panel.implicitHeight, height);
             keyClick(Qt.Key_Escape); wait(30); verify(!menu.visible); compare(panel.page, "wifi");
-            panel.openNetwork(data, true); wait(150); compare(panel.implicitHeight, height);
-            const field = findChild(panel.navigation.currentItem, "wifiPassword"); field.forceActiveFocus(); keyClick(Qt.Key_Escape); wait(150);
+            panel.openNetwork(data); wait(150); compare(panel.implicitHeight, height);
+            const field = findChild(list.passwordBar.contentItem, "wifiPassword"); field.forceActiveFocus(); keyClick(Qt.Key_Escape); wait(150);
             compare(panel.page, "wifi"); compare(panel.navigation.depth, 2);
             panel.forceActiveFocus(); keyClick(Qt.Key_Escape); wait(150); compare(panel.page, "main");
             panel.openPage("bluetooth"); wait(150); compare(panel.implicitHeight, height);
             panel.back(); wait(150); compare(panel.page, "main");
+        }
+        function test_passwordBarGeometryAndStates() {
+            scanModel.entries = [entry("A", 90), entry("B", 50), entry("C", 20)];
+            const panel = createTemporaryObject(panelFactory, fixture);
+            wait(80); panel.height = panel.implicitHeight;
+            panel.openPage("wifi"); wait(150);
+            const list = findChild(panel.navigation.currentItem, "wifiList"); list.forceLayout();
+            const rows = [list.itemAtIndex(0), list.itemAtIndex(1), list.itemAtIndex(2)];
+            const positions = rows.map(row => row.mapToItem(panel, 0, 0).y);
+            const panelHeight = panel.height; const listHeight = list.height;
+            function unchanged() {
+                compare(panel.height, panelHeight); compare(panel.implicitHeight, panelHeight);
+                compare(list.height, listHeight); compare(panel.navigation.depth, 2);
+                for (let i = 0; i < rows.length; ++i) {
+                    compare(rows[i].height, 36); compare(rows[i].mapToItem(panel, 0, 0).y, positions[i]);
+                }
+            }
+            mouseClick(findChild(rows[1], "networkRow"));
+            const bar = list.passwordBar; verify(bar.visible); unchanged();
+            compare(bar.height, 36); compare(bar.width, rows[1].width); compare(bar.parent, rows[1]); compare(bar.y, 0);
+            const field = findChild(bar.contentItem, "wifiPassword"); tryCompare(field, "activeFocus", true);
+            compare(field.placeholderText, "Contraseña de B"); field.text = "bad-password";
+            mouseClick(findChild(bar.contentItem, "showPassword")); compare(field.echoMode, TextInput.Normal);
+            keyClick(Qt.Key_Return); verify(field.readOnly); compare(handlerStub.password, "bad-password"); unchanged();
+            handlerStub.connectionActivationFailed("", "Invalid password");
+            verify(bar.failed); verify(!field.readOnly); compare(field.selectionStart, 0); compare(field.selectionEnd, field.length);
+            compare(field.placeholderText, "Contraseña incorrecta"); unchanged();
+            keyClick(Qt.Key_C); compare(field.text, "c"); field.text = "correct-password"; keyClick(Qt.Key_Return); unchanged();
+            scanModel.scan([entry("A", 90), entry("B", 50, "newly-saved-uuid", true), entry("C", 20)]); wait(50); list.forceLayout();
+            verify(!bar.visible); compare(findChild(rows[1], "networkRow").status, "Conectada"); unchanged();
+            panel.openNetwork(rows[0].networkData); verify(bar.visible); keyClick(Qt.Key_Escape); verify(!bar.visible); unchanged();
+            panel.openNetwork(rows[0].networkData); mouseClick(findChild(bar.contentItem, "cancelPassword")); verify(!bar.visible); unchanged();
+            panel.openNetwork(rows[0].networkData); mouseClick(panel, 150, 20); verify(!bar.visible); unchanged();
         }
         function test_orderFixedUntilNextOpening() {
             const list = setupList();

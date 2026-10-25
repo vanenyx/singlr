@@ -24,6 +24,7 @@ Controls.Control {
     readonly property alias navigation: pages
     property var networkSource: availableNetworks
     property var networkActions: networkHandler
+    property var wifiView: null
     property var selectedNetwork: ({})
     property string selectedKey: ""
     property var selectedDevice: null
@@ -31,12 +32,8 @@ Controls.Control {
         if (pages.busy) return;
         pages.pushItem(name === "wifi" ? wifiComponent : bluetoothComponent);
     }
-    function openNetwork(data, passwordPage) {
-        if (!passwordPage) return;
-        secretRetry = false;
-        selectedNetwork = data;
-        selectedKey = data.Uuid ? "uuid:" + data.Uuid : "ssid:" + JSON.stringify([data.Ssid, data.SecurityType]);
-        pages.pushItem(networkComponent, {passwordPage: passwordPage});
+    function openNetwork(data) {
+        if (panel.page === "wifi") panel.wifiView.showPassword(data);
     }
     function resetPages() { if (pages.depth > 1) pages.popToIndex(0, Controls.StackView.Immediate); }
     function openNetworkMenu(data, anchor, px, py) {
@@ -68,7 +65,7 @@ Controls.Control {
                 if (n.ConnectionState === Network.Enums.Activated) panel.networkActions.deactivateConnection(n.ConnectionPath, n.DevicePath);
                 else if (n.Uuid) panel.networkActions.activateConnection(n.ConnectionPath, n.DevicePath, n.SpecificPath);
                 else if (n.SecurityType === Network.Enums.NoneSecurity || n.SecurityType === Network.Enums.OWE) panel.networkActions.addAndActivateConnection(n.DevicePath, n.SpecificPath);
-                else if ([Network.Enums.StaticWep, Network.Enums.WpaPsk, Network.Enums.Wpa2Psk, Network.Enums.SAE].indexOf(n.SecurityType) >= 0) Qt.callLater(() => panel.openNetwork(n, true));
+                else if ([Network.Enums.StaticWep, Network.Enums.WpaPsk, Network.Enums.Wpa2Psk, Network.Enums.SAE].indexOf(n.SecurityType) >= 0) Qt.callLater(() => panel.openNetwork(n));
                 else KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement");
             } else {
                 const device = panel.selectedDevice;
@@ -95,6 +92,7 @@ Controls.Control {
         if (request && secrets) secrets.cancel(request);
     }
     function back() {
+        if (panel.page === "wifi") panel.wifiView.closePassword();
         if (pages.depth > 1) { cancelSecret(); pages.popCurrentItem(pages.busy ? Controls.StackView.Immediate : Controls.StackView.PopTransition); }
         else closed();
         forceActiveFocus();
@@ -102,15 +100,16 @@ Controls.Control {
     Connections {
         target: panel.secrets
         function onSecretRequested(requestId, ssid, connectionUuid, retry) {
-            panel.cancelSecret(); panel.openRequested(); panel.resetPages();
-            pages.pushItem(wifiComponent, {}, Controls.StackView.Immediate);
-            panel.selectedKey = "";
+            if (panel.secretId !== requestId) panel.cancelSecret();
+            panel.openRequested();
+            if (panel.page !== "wifi") {
+                panel.resetPages(); pages.pushItem(wifiComponent, {}, Controls.StackView.Immediate);
+            }
             panel.secretId = requestId; panel.secretRetry = retry;
-            panel.selectedNetwork = {Name: ssid, Ssid: ssid, Uuid: connectionUuid, Signal: 0, SecurityType: Network.Enums.Wpa2Psk, ConnectionState: Network.Enums.Deactivated};
-            pages.pushItem(networkComponent, {passwordPage: true});
+            panel.wifiView.showPassword({Ssid: ssid, Uuid: connectionUuid}, requestId, retry);
         }
         function onRequestCancelled(requestId) {
-            if (panel.secretId === requestId) { panel.secretId = ""; if (panel.page === "network") panel.back(); }
+            if (panel.secretId === requestId) { panel.secretId = ""; if (panel.page === "wifi") panel.wifiView.closePassword(); }
         }
     }
     property string errorText: ""
@@ -126,7 +125,7 @@ Controls.Control {
     palette.highlight: Theme.control
     onOpenedChanged: {
         if (opened) networkHandler.requestScan();
-        else { contextMenu.close(); cancelSecret(); errorText = ""; resetPages(); }
+        else { contextMenu.close(); if (panel.page === "wifi") panel.wifiView.closePassword(); cancelSecret(); errorText = ""; resetPages(); }
     }
     Component.onCompleted: if (opened) networkHandler.requestScan()
     Timer { interval: 15000; running: panel.opened; repeat: true; onTriggered: networkHandler.requestScan() }
@@ -316,34 +315,16 @@ Controls.Control {
             StableWifiList {
                 id: wifiList; objectName: "wifiList"; y: 44; width: parent.width; height: parent.height - 80
                 handler: panel.networkActions; sourceModel: panel.networkSource
+                Component.onCompleted: panel.wifiView = wifiList
+                Component.onDestruction: if (panel.wifiView === wifiList) panel.wifiView = null
                 pageActive: panel.opened && panel.page === "wifi"
                 onNetworkUpdated: (key, data) => { if (key === panel.selectedKey || (panel.secretId && data.Ssid === panel.selectedNetwork.Ssid)) panel.selectedNetwork = data; }
-                onPasswordRequested: data => panel.openNetwork(data, true)
+                onSecretSubmitted: (requestId, password) => { if (panel.secretId === requestId) panel.secretId = ""; if (panel.secrets) panel.secrets.provide(requestId, password); }
+                onPasswordCancelled: panel.cancelSecret()
                 onMenuRequested: (data, anchor, px, py) => panel.openNetworkMenu(data, anchor, px, py)
                 onSettingsRequested: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement")
             }
             ControlRow { y: parent.height - 36; width: parent.width; height: 36; text: "Más ajustes de red…"; glyph: "gear"; onClicked: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement") }
-        }
-    }
-    Component {
-        id: networkComponent
-        Controls.ScrollView {
-            // Sin barras visibles: se desplaza con rueda o gesto.
-            Controls.ScrollBar.vertical.policy: Controls.ScrollBar.AlwaysOff
-            Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
-            id: networkPage
-            objectName: "network"
-            property bool passwordPage: false
-            contentWidth: availableWidth; clip: true
-            WifiPage {
-                width: networkPage.availableWidth
-                networkData: panel.selectedNetwork; handler: panel.networkActions
-                passwordPage: networkPage.passwordPage; requestId: panel.secretId; retry: panel.secretRetry
-                onBackRequested: panel.back()
-                onPasswordRequested: data => panel.openNetwork(data, true)
-                onSecretSubmitted: password => { const id = panel.secretId; panel.secretId = ""; if (id && panel.secrets) panel.secrets.provide(id, password); }
-                onSettingsRequested: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement")
-            }
         }
     }
     Component {

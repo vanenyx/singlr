@@ -460,3 +460,29 @@ interacción física. Log vivo revisado tras recargas: sin errores QML nuevos;
 permanece el aviso previo de registro del portal para `singlr-shell`.
 Pendiente la comprobación física de conectividad, preferencias y devolución
 de foco entre ventanas layer-shell en KWin.
+
+### T219 — contraseña flotante (P-012 actualizado)
+
+Sustituye la página de contraseña de T216/T218 por `WifiPasswordBar`: Popup
+superpuesto sobre la propia fila, de su mismo ancho y 36 px, sin transición ni
+navegación adicional. Mantiene tipografía, superficies y botones existentes;
+candado de 14 px, campo flexible, ojo, retorno y cierre, con nombres accesibles.
+No se añaden tooltips (Tool no los ofrece). Enter envía; Esc, cierre o clic fuera
+cancelan. Al conectar conserva el texto en solo lectura y muestra puntos; el
+error selecciona todo y cambia ayuda, borde e icono. Cerrar borra la contraseña.
+`SinglrSecrets`, incluido retry, usa esta misma barra; si todavía no hay fila del
+SSID, espera su llegada desde el modelo en la página Wi-Fi.
+
+La lista Wi-Fi conserva orden y delegados al activarse una red y al recibir el
+UUID de una conexión recién guardada. La promoción de la red activa se conserva
+al abrir de nuevo la página; Bluetooth mantiene su comportamiento anterior.
+
+Contratos: Qt local 6.12.0; [Popup: parent, foco y closePolicy](https://doc.qt.io/qt-6/qml-qtquick-controls-popup.html),
+[TextInput: readOnly, accepted y selectAll](https://doc.qt.io/qt-6/qml-qtquick-textinput.html).
+Verificación: qmllint completo sin avisos; qmltestrunner offscreen/software
+**77 passed, 0 failed**. Incluye geometría del panel y de las filas al abrir,
+conectar, fallar, cerrar y recibir éxito con UUID nuevo; teclado, mostrar/ocultar,
+selección, envío, cancelación y retry de secretos con dobles. Preview renderizado
+de barra normal y error inspeccionado a 308 × 36 px. El registro en vivo recarga
+sin errores QML nuevos; conserva el aviso previo del portal por app ID
+`singlr-shell`. No se ha probado autenticación contra una red real.

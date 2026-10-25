@@ -5,6 +5,7 @@ import QtQuick
 Item {
     id: stable
     property var pending: []
+    property bool promoteActive: true
     property bool opening: true
     property string activeKey: ""
     property var sessionOrder: []
@@ -39,7 +40,7 @@ Item {
         }
         const active = snapshot.find(entry => entry.active);
         const nextActive = active ? active.deviceKey : "";
-        if (opening || nextActive !== activeKey) {
+        if (opening || (promoteActive && nextActive !== activeKey)) {
             const desired = sessionOrder.filter(key => key !== nextActive);
             if (nextActive) desired.unshift(nextActive);
             for (let i = 0; i < desired.length; ++i) {

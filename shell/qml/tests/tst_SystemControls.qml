@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtTest
+import org.kde.plasma.networkmanagement as Network
 import Singlr.Shell
 
 Item {
@@ -105,23 +106,37 @@ Item {
         function test_inlineSecretContract() {
             const panel = createTemporaryObject(panelComponent, fixture, {secrets: secretAgent});
             verify(panel !== null);
+            panel.networkSource = null;
+            panel.openPage("wifi"); wait(150);
+            const list = findChild(panel.navigation.currentItem, "wifiList");
+            list.stableModel.sync([{deviceKey: "uuid:saved-uuid", rank: 70, active: false, payload: {
+                Name: "Red protegida", Ssid: "Red protegida", Uuid: "saved-uuid", Signal: 70,
+                DevicePath: "/device", SpecificPath: "/ap", ConnectionPath: "/connection",
+                SecurityType: Network.Enums.Wpa2Psk, Type: Network.Enums.Wireless,
+                ConnectionState: Network.Enums.Deactivated
+            }}]);
+            list.forceLayout();
             secretAgent.operation = "";
             secretAgent.secretRequested("request-1", "Red protegida", "saved-uuid", true);
-            compare(panel.page, "network");
-            let field = findChild(panel.navigation.currentItem, "wifiPassword");
+            compare(panel.page, "wifi"); compare(panel.navigation.depth, 2);
+            let field = findChild(list.passwordBar.contentItem, "wifiPassword");
             tryCompare(field, "activeFocus", true);
-            compare(panel.secretRetry, true);
+            compare(panel.secretRetry, true); verify(list.passwordBar.failed);
+            compare(field.placeholderText, "Contraseña incorrecta");
             field.text = "test-password"; keyClick(Qt.Key_Return);
             compare(secretAgent.operation, "provide"); compare(secretAgent.request, "request-1");
-            compare(secretAgent.password, "test-password"); compare(field.text, "");
-            secretAgent.secretRequested("request-2", "Red protegida", "saved-uuid", false);
-            field = findChild(panel.navigation.currentItem, "wifiPassword");
+            compare(secretAgent.password, "test-password"); compare(field.text, "test-password"); verify(field.readOnly);
+            secretAgent.secretRequested("request-2", "Red protegida", "saved-uuid", true);
+            field = findChild(list.passwordBar.contentItem, "wifiPassword");
             tryCompare(field, "activeFocus", true);
+            verify(list.passwordBar.failed); verify(!field.readOnly);
+            compare(field.selectionStart, 0); compare(field.selectionEnd, field.length);
+            compare(field.text, "test-password");
             keyClick(Qt.Key_Escape); compare(panel.page, "wifi");
             wait(150);
             compare(secretAgent.operation, "cancel"); compare(secretAgent.request, "request-2");
             secretAgent.secretRequested("request-3", "Red protegida", "saved-uuid", false);
-            secretAgent.requestCancelled("request-3"); compare(panel.secretId, "");
+            secretAgent.requestCancelled("request-3"); compare(panel.secretId, ""); verify(!list.passwordBar.visible);
         }
         function test_controlCenterLoadAndEscape() {
             const panel = createTemporaryObject(panelComponent, parent);

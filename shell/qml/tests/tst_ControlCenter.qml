@@ -26,7 +26,6 @@ Item {
         }
     }
     Component { id: detailsSpy; SignalSpy { signalName: "menuRequested" } }
-    Component { id: passwordComponent; WifiPage { width: 308; handler: networkHandlerStub; passwordPage: true } }
     Component { id: toggleComponent; Toggle { text: "Wi-Fi"; width: 308 } }
     Component { id: sliderComponent; SliderControl { width: 308; from: 0; to: 100; value: 50 } }
     TestCase {
@@ -57,16 +56,6 @@ Item {
             known.destroy();
             const open = createRow({SecurityType: Network.Enums.NoneSecurity});
             mouseClick(findChild(open, "networkRow")); compare(networkHandlerStub.operation, "add"); compare(networkHandlerStub.args, ["/device/1", "/ap/1", ""]);
-        }
-        function test_passwordPageReservedErrorAndSubmission() {
-            const page = createTemporaryObject(passwordComponent, fixture, {networkData: networkFixture()});
-            const field = findChild(page, "wifiPassword");
-            const height = page.height;
-            const error = findChild(page, "wifiError"); compare(error.height, 36);
-            field.text = "example-password"; page.submit();
-            compare(networkHandlerStub.operation, "add"); compare(networkHandlerStub.args[2], "example-password"); compare(field.text, "");
-            networkHandlerStub.connectionActivationFailed("", "Contraseña incorrecta");
-            compare(page.failure, "Contraseña incorrecta"); compare(page.height, height); compare(error.height, 36);
         }
         function test_activationFailureAndSuccess() {
             const row = createRow({Uuid: "known", ConnectionPath: "/connection/1"});
