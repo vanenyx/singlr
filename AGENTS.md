@@ -1,7 +1,7 @@
 # Singlr: instrucciones compartidas
 
 ## Contexto y alcance
-Singlr es una experiencia de escritorio completa y distribuible para Linux, con primera base en KDE Plasma 6. Lee [README.md](README.md) y [la visión original](SINGLR_recuperacion_desde_mensajes_originales.md). Esa recuperación conserva decisiones y dudas; los borradores históricos y propuestas de agentes no constituyen aprobaciones.
+Singlr es una experiencia de escritorio completa y distribuible para Linux, con primera base en KDE Plasma 6. **La definición de producto vigente es [Singlr 1.0](docs/singlr-1.0.md): léela antes de trabajar y evalúa cada tarea contra sus siete sistemas y su criterio de «completo».** Lee [README.md](README.md) y [la visión original](SINGLR_recuperacion_desde_mensajes_originales.md). Esa recuperación conserva decisiones y dudas; los borradores históricos y propuestas de agentes no constituyen aprobaciones.
 
 **Fase actual: Fase 1, dirección visual y prototipo integrado** ([brief](docs/phase1/brief.md)). Se trabaja en un entorno aislado que no altera la sesión KDE habitual. La implementación definitiva y las decisiones visuales requieren aprobación del creador. Los roles no autorizan automáticamente el trabajo futuro.
 
