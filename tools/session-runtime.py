@@ -258,7 +258,9 @@ def launch(source, size):
             xdg_runtime.mkdir(mode=0o700)
             env.update(XDG_RUNTIME_DIR=str(xdg_runtime), WAYLAND_DISPLAY='singlr-wayland',
                        SINGLR_PARENT_WAYLAND=parent, SINGLR_SESSION_ID=base.name,
-                       XDG_DATA_DIRS='/usr/local/share:/usr/share', XDG_CONFIG_DIRS='/etc/xdg',
+                       # SINGLR_EXTRA_DATA_DIRS antepone rutas (efectos de KWin, temas) para probarlos aislados.
+                       XDG_DATA_DIRS=':'.join(filter(None, [os.environ.get('SINGLR_EXTRA_DATA_DIRS', ''), '/usr/local/share:/usr/share'])),
+                       XDG_CONFIG_DIRS='/etc/xdg',
                        XDG_CURRENT_DESKTOP='KDE', XDG_SESSION_DESKTOP='Singlr', XDG_SESSION_TYPE='wayland',
                        QT_QPA_PLATFORM='wayland', QT_QPA_PLATFORMTHEME='',
                        KDE_FULL_SESSION='true', KDE_SESSION_VERSION='6',

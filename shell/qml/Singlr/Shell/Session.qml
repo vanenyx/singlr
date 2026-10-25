@@ -5,6 +5,9 @@ import org.kde.layershell as LayerShell
 import Singlr.Ui
 // transientParent: null es imprescindible: si no, Qt ata cada Window a la ventana del
 // Item contenedor (inexistente) y KWin nunca recibe la superficie layer-shell.
+// LayerShell.Window.scope usa los nombres que KWin traduce a tipo de ventana (desktop, dock,
+// notification, on-screen-display, tooltip, utility). Con nombres propios KWin las trata como
+// ventanas normales: aparecen en la multitarea y en Alt+Tab.
 Item {
     id: session
     readonly property var notificationCenter: notifications
@@ -35,7 +38,7 @@ Item {
         LayerShell.Window.margins.bottom: dockWindow.height + 30
         LayerShell.Window.exclusionZone: 0
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
-        LayerShell.Window.scope: "singlr-osd"
+        LayerShell.Window.scope: "on-screen-display"
         OnScreenDisplay { id: osd; anchors.fill: parent }
     }
     Window {
@@ -51,7 +54,7 @@ Item {
         LayerShell.Window.exclusionZone: 0
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
         LayerShell.Window.activateOnShow: true
-        LayerShell.Window.scope: "singlr-control-center"
+        LayerShell.Window.scope: "utility"
         onActiveChanged: if (!active && visible) visible = false
         ControlCenter { id: controlPanel; anchors.fill: parent; audio: systemControls; opened: controlWindow.visible; notifications: session.notificationCenter; onClosed: controlWindow.visible = false
             onOpenRequested: {
@@ -69,7 +72,7 @@ Item {
         LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
         LayerShell.Window.exclusionZone: -1
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
-        LayerShell.Window.scope: "singlr-background"
+        LayerShell.Window.scope: "desktop"
         Background { anchors.fill: parent; TapHandler { onTapped: session.closeMenus() } }
     }
     Window {
@@ -78,7 +81,7 @@ Item {
         LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
         LayerShell.Window.exclusionZone: 28
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
-        LayerShell.Window.scope: "singlr-topbar"
+        LayerShell.Window.scope: "dock"
         TopBar { id: bar; notificationsUnread: notifications.unread; onControlCenterRequested: session.toggleControlCenter(); onNotificationsRequested: { controlWindow.visible = false; bar.closeMenu(); dock.closeMenu(); notifications.toggle(); } sessionMode: true; menuHost: barMenuHost; width: parent.width; height: 28; activeAppName: dock.activeAppName; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
     }
@@ -89,7 +92,7 @@ Item {
         LayerShell.Window.margins.bottom: 10
         LayerShell.Window.exclusionZone: 58
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone  // None: un clic en el dock o la barra no debe quitar la actividad a la app de delante
-        LayerShell.Window.scope: "singlr-dock"
+        LayerShell.Window.scope: "dock"
         Dock { id: dock; sessionMode: true; menuHost: dockMenuHost; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.openLauncher(true) }
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
     }
@@ -105,7 +108,7 @@ Item {
         LayerShell.Window.margins.right: 16
         LayerShell.Window.exclusionZone: 0
         LayerShell.Window.keyboardInteractivity: notifications.historyOpen ? LayerShell.Window.KeyboardInteractivityOnDemand : LayerShell.Window.KeyboardInteractivityNone
-        LayerShell.Window.scope: "singlr-notifications"
+        LayerShell.Window.scope: "notification"
         NotificationCenter {
             id: notifications; live: true; sessionMode: true
             onHistoryOpenChanged: if (historyOpen) Qt.callLater(function() { if (notifications.historyOpen) notificationsWindow.requestActivate(); })
@@ -120,7 +123,7 @@ Item {
         LayerShell.Window.margins.bottom: dockWindow.height + 18
         LayerShell.Window.exclusionZone: 0
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
-        LayerShell.Window.scope: "singlr-dock-menu"
+        LayerShell.Window.scope: "utility"
         LayerShell.Window.activateOnShow: true
         onVisibleChanged: if (visible) { bar.closeMenu(); requestActivate(); }
         onActiveChanged: if (!active && visible) dock.closeMenu()
@@ -137,7 +140,7 @@ Item {
         LayerShell.Window.margins.left: Math.round(Math.max(0, Math.min(screen.width - width, (screen.width - dock.width) / 2 + dock.tooltipCenter - width / 2)))
         LayerShell.Window.exclusionZone: 0
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
-        LayerShell.Window.scope: "singlr-dock-tooltip"
+        LayerShell.Window.scope: "tooltip"
         Rectangle { anchors.fill: parent; radius: 8; color: "#ef191a1b"; border.color: Theme.border }
         UiText { id: tooltipLabel; anchors.centerIn: parent; text: dock.tooltipText; font.pixelSize: 12 }
     }
@@ -151,7 +154,7 @@ Item {
         LayerShell.Window.margins.left: 16
         LayerShell.Window.exclusionZone: 0
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
-        LayerShell.Window.scope: "singlr-topbar-menu"
+        LayerShell.Window.scope: "utility"
         LayerShell.Window.activateOnShow: true
         onVisibleChanged: if (visible) { dock.closeMenu(); requestActivate(); }
         onActiveChanged: if (!active && visible) bar.closeMenu()
@@ -163,7 +166,7 @@ Item {
         LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
         LayerShell.Window.exclusionZone: -1
         LayerShell.Window.keyboardInteractivity: visible ? LayerShell.Window.KeyboardInteractivityExclusive : LayerShell.Window.KeyboardInteractivityNone
-        LayerShell.Window.scope: "singlr-launcher"
+        LayerShell.Window.scope: "utility"
         MouseArea { anchors.fill: parent; onClicked: launcher.close() }
         Launcher {
             id: launcher; visible: false; sessionMode: true; x: (parent.width-width)/2; y: Math.min(286,(parent.height-height)/2)

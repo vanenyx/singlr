@@ -1,0 +1,12 @@
+{
+    "KPackageStructure": "KWin/Effect",
+    "KPlugin": {
+        "Id": "singlr-overview",
+        "Name": "Singlr Overview",
+        "Description": "Multitarea de Singlr con ventanas y escritorios reales",
+        "Category": "Window Management",
+        "EnabledByDefault": false
+    },
+    "X-Plasma-API": "declarativescript",
+    "X-KDE-Ordering": 60
+}
