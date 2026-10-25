@@ -19,3 +19,4 @@ StableDeviceModel 1.0 StableDeviceModel.qml
 StableWifiList 1.0 StableWifiList.qml
 BatteryRow 1.0 BatteryRow.qml
 SystemTray 1.0 SystemTray.qml
+DeferredLoader 1.0 DeferredLoader.qml

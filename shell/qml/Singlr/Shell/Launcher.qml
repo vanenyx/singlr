@@ -31,9 +31,9 @@ FocusScope {
             }
         }
     }
-    Loader {
+    DeferredLoader {
         id: appsLoader
-        active: launcher.visible && launcher.applicationsMode && !launcher.modelOverride
+        opened: launcher.visible && launcher.applicationsMode && !launcher.modelOverride
         sourceComponent: Component { ApplicationsModel { query: launcher.query } }
     }
     function showApplications() { applicationsMode = true; query = ""; selectedIndex = 0; actionsOpen = false; input.forceActiveFocus(); }

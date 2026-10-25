@@ -1,10 +1,12 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls.Basic as Controls
 import Singlr.Ui
 
 Item {
     id: tray
+    readonly property var popup: popupLoader.item
     // Context property is deliberately absent in --windowed.
     // qmllint disable unqualified
     property var backend: typeof SinglrTray !== "undefined" ? SinglrTray : null
@@ -154,6 +156,7 @@ Item {
                 Keys.onSpacePressed: tray.click(model, Qt.LeftButton, app, 8, 14)
                 Keys.onMenuPressed: tray.openMenu(model, app, 8)
                 Image {
+                    sourceSize: Qt.size(Math.max(1, Math.ceil(width * Screen.devicePixelRatio)), Math.max(1, Math.ceil(height * Screen.devicePixelRatio)))
                     id: pixmap
                     x: 0; y: 6; width: 16; height: 16
                     source: app.model.iconSource || ""; fillMode: Image.PreserveAspectFit
@@ -177,28 +180,38 @@ Item {
         }
         Tool { visible: icons.count > 6; width: 16; height: 28; icon: "caret-right"; description: "Más aplicaciones"; onClicked: tray.overflow(this) }
     }
-    ContextMenu {
-        id: popup
-        objectName: "trayMenu"
-        parent: tray.menuHost || tray
-        visible: tray.opened
-        x: tray.menuHost ? 0 : Math.max(-tray.x, Math.min(0, tray.parent.width - tray.x - width))
-        y: tray.menuHost ? 0 : 32
-        margins: 0; fixedHeight: tray.menuHeight
-        entries: tray.entries
-        onTriggered: entry => tray.run(entry)
-        onAuxiliaryTriggered: (entry, button) => {
-            if (button === Qt.RightButton) tray.openMenu(entry.trayItem, tray, 0);
-            else {
-                tray.backend.secondaryActivate(entry.trayItem.service, entry.trayItem.path, popup.actionPosition.x, popup.actionPosition.y);
-                tray.close();
+    DeferredLoader {
+        id: popupLoader; objectName: "SystemTrayMenuLoader"; opened: tray.opened
+        sourceComponent: Component {
+            ContextMenu {
+                id: popup
+                objectName: "trayMenu"
+                parent: tray.menuHost || tray
+                visible: tray.opened
+                x: tray.menuHost ? 0 : Math.max(-tray.x, Math.min(0, tray.parent.width - tray.x - width))
+                y: tray.menuHost ? 0 : 32
+                margins: 0; fixedHeight: tray.menuHeight
+                entries: tray.entries
+                onTriggered: entry => tray.run(entry)
+                onAuxiliaryTriggered: (entry, button) => {
+                    if (button === Qt.RightButton) tray.openMenu(entry.trayItem, tray, 0);
+                    else {
+                        tray.backend.secondaryActivate(entry.trayItem.service, entry.trayItem.path, popup.actionPosition.x, popup.actionPosition.y);
+                        tray.close();
+                    }
+                }
+                onScrolled: (entry, delta, orientation) => tray.backend.scroll(entry.trayItem.service, entry.trayItem.path, delta, orientation)
+                onClosed: tray.close()
             }
         }
-        onScrolled: (entry, delta, orientation) => tray.backend.scroll(entry.trayItem.service, entry.trayItem.path, delta, orientation)
-        onClosed: tray.close()
     }
-    Controls.ToolTip {
-        visible: !tray.menuHost && !!tray.tooltipText && !tray.opened
-        text: tray.tooltipText; y: 32
+    DeferredLoader {
+        opened: !tray.menuHost && !!tray.tooltipText && !tray.opened
+        sourceComponent: Component {
+            Controls.ToolTip {
+                visible: !tray.menuHost && !!tray.tooltipText && !tray.opened
+                text: tray.tooltipText; y: 32
+            }
+        }
     }
 }

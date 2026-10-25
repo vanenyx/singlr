@@ -40,16 +40,23 @@ Item {
         else if (method === "showText" && args.length > 1) show("sliders-horizontal", -1, String(args[1]));
     }
     Timer { id: timeout; interval: 1500; onTriggered: osd.showing = false }
-    Rectangle { anchors.fill: parent; radius: 12; color: Theme.surface; border.color: Theme.focusBorder }
-    Icon { x: 16; anchors.verticalCenter: parent.verticalCenter; width: 20; height: 20; name: osd.icon }
-    Rectangle {
-        x: 50; anchors.verticalCenter: parent.verticalCenter; width: 174; height: 4; radius: 2
-        visible: osd.percent >= 0; color: Theme.hover
-        Rectangle { width: parent.width * Math.max(0, Math.min(100, osd.percent)) / 100; height: 4; radius: 2; color: Theme.control }
-    }
-    UiText {
-        x: 50; width: 174; height: parent.height; visible: osd.percent < 0
-        text: osd.message; font.pixelSize: 13; elide: Text.ElideRight
+    DeferredLoader {
+        objectName: "osdLoader"; anchors.fill: parent; opened: osd.surfaceVisible
+        sourceComponent: Component {
+            Item {
+                Rectangle { anchors.fill: parent; radius: 12; color: Theme.surface; border.color: Theme.focusBorder }
+                Icon { x: 16; anchors.verticalCenter: parent.verticalCenter; width: 20; height: 20; name: osd.icon }
+                Rectangle {
+                    x: 50; anchors.verticalCenter: parent.verticalCenter; width: 174; height: 4; radius: 2
+                    visible: osd.percent >= 0; color: Theme.hover
+                    Rectangle { width: parent.width * Math.max(0, Math.min(100, osd.percent)) / 100; height: 4; radius: 2; color: Theme.control }
+                }
+                UiText {
+                    x: 50; width: 174; height: parent.height; visible: osd.percent < 0
+                    text: osd.message; font.pixelSize: 13; elide: Text.ElideRight
+                }
+            }
+        }
     }
     Accessible.name: osd.percent >= 0 ? Math.round(osd.percent) + " %" : osd.message
 }

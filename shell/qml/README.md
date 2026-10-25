@@ -610,3 +610,61 @@ El supervisor recarga los cambios en vivo; se vigiló
 `/run/user/1000/singlr-live/shell.log`, sin errores QML nuevos. El acceso directo
 al bus real está denegado por el sandbox, por lo que no se acredita interacción
 manual con las siete apps ni revisión visual/captura de la sesión real.
+
+## T231 — recursos del shell (P-016)
+
+Solución técnica derivada, sin cambiar tipos layer-shell ni anclajes: ventanas
+independientes creadas por `Loader` solo mientras se usan. Compartir una ventana
+entre utility, notification y on-screen-display alteraría las reglas de foco,
+entrada y posicionamiento. Al cerrar se destruye la ventana inmediatamente;
+`DeferredLoader` conserva únicamente el contenido QML durante 2500 ms, fuera de
+la ventana, y después lo libera. En reposo con `--no-background` quedan la barra
+y el dock: desaparecen nueve ventanas temporales y la del fondo desactivado.
+El centro de control espera a que su página inicial calcule la altura existente
+antes de mostrar su ventana, para no introducir un cambio de tamaño al abrir.
+
+- Lanzador y centro de control se cargan por URL para diferir también sus imports.
+  Los modelos de red, Bluetooth, salidas de audio, brillo y batería detallada
+  viven con el centro de control. Sus callbacks de operaciones se desconectan al
+  liberarlo. Catálogo, menús, tooltips y vistas del OSD se liberan al cerrar.
+- El servidor/estado de notificaciones permanece activo; historial y tarjetas son
+  perezosos. No hay ticks de expiración con historial abierto ni cuando las tres
+  tarjetas visibles son persistentes. Permanecen los modelos mínimos necesarios
+  para indicadores, tareas, bandeja y atajos globales de volumen y reproducción.
+- Cristal: ningún ShaderEffectSource existe oculto. La sesión usa `singlrBlur`
+  de KWin; el árbol de desenfoque QML solo se crea en la vista previa visible.
+  Muestreo a 1/4 por dimensión y recorte a 1/2: 75 % menos píxeles por textura
+  respecto a sus tamaños anteriores. La capa de atención del dock solo se activa
+  mientras su indicador es visible.
+- Reloj alineado al minuto: aproximadamente 60 veces menos despertares. Apariencia
+  automática programada a las 07:00/19:00: dos comprobaciones diarias. Animador de
+  actividad condicionado a visibilidad. Temporizadores de captura, acciones,
+  escaneo y expiración funcionan solo durante su operación/superficie; el margen
+  de liberación es un temporizador de un solo disparo.
+- Todas las `Image` tienen `sourceSize` según tamaño visible y DPR, incluido el
+  fondo. `Kirigami.Icon` administra su rasterización al tamaño del componente.
+  Inter y Phosphor ya se cargaban una única vez en el singleton `Theme`.
+
+Evidencia local (Qt 6.12.0, 25 oct 2026):
+
+- `qmltestrunner -import shell/qml -input shell/qml/tests` con
+  `QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software`: 107 pasadas, 0 fallos; incluidos
+  apertura/cierre, caché breve, liberación y recreación de loaders y desconexión
+  de operaciones al destruir el panel. Sin errores QML de propiedades o bindings.
+- `python3 tools/check-shell.py --output /tmp/t231-desktop.png`: qmllint, carga y
+  captura offscreen correctos. Captura adicional con `--windowed --applications`
+  correcta en `/tmp/t231-apps.png`.
+- Comparación orientativa durante T231 contra `HEAD`, procesos nuevos de `qml`,
+  `Shell.qml --no-background`, XDG temporales, buses desactivados y software
+  offscreen. Tras 4 s, `/proc/PID/smaps_rollup`: PSS 35511 → 30189 KiB
+  (−5322 KiB, ≈15 %); anónimos 25416 → 20564 KiB. CPU: 0 ticks/3 s en ambos
+  procesos, reloj del sistema de 100 Hz. Es ahorro conjunto; no se ha medido PSS
+  por componente ni memoria GPU y no se extrapola a los 208 MB de la sesión real.
+- Últimas recargas de `/run/user/1000/singlr-live/shell.log` sin errores QML.
+  Siguen avisos preexistentes del portal, traducciones, buffer SVG y el terminal
+  `konsole` ausente al lanzar Htop. El objetivo real <120 MB y el comportamiento
+  con KWin quedan para la medición/revisión de Claude y Codex 2.
+
+Contratos contrastados con documentación oficial de Qt:
+[Loader](https://doc.qt.io/qt-6/qml-qtquick-loader.html) y
+[Image.sourceSize](https://doc.qt.io/qt-6/qml-qtquick-image.html#sourceSize-prop).

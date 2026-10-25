@@ -9,6 +9,7 @@ import org.kde.taskmanager as TaskManager
 import Singlr.Ui
 Rectangle {
     id: dock
+    readonly property var dockMenu: dockMenuLoader.item
     property bool sessionMode: false
     // Available only when the session bridge confirms the loaded effect.
     // qmllint disable unqualified
@@ -38,7 +39,7 @@ Rectangle {
     property var contextTask: null
     property var contextWindows: []
     property var menuEntries: []
-    readonly property int menuIndex: dockMenu.currentIndex
+    readonly property int menuIndex: dockMenu ? dockMenu.currentIndex : 0
     readonly property int menuHeight: 8 + menuEntries.reduce((sum, entry) => sum + 28 + (entry.separator ? 9 : 0), 0)
     property var modelOverride: null
     readonly property var taskSource: modelOverride || tasks
@@ -81,7 +82,7 @@ Rectangle {
         if (task.IsLauncher) return result;
         if (!task.IsGroupParent) {
             return [{id: DockLogic.identity(task.WinIdList), title: String(task.display || task.AppName || "Ventana"),
-                     active: !!task.IsActive, minimized: !!task.IsMinimized, lastActivated: Number(task.LastActivated) || 0}];
+                active: !!task.IsActive, minimized: !!task.IsMinimized, lastActivated: Number(task.LastActivated) || 0}];
         }
         const parentIndex = taskSource.index(row, 0);
         for (let i = 0; i < taskSource.rowCount(parentIndex); ++i) {
@@ -114,9 +115,9 @@ Rectangle {
         hideTooltip(); contextTask = task;
         contextWindows = DockLogic.ordered(windows(row, task));
         menuEntries = contextWindows.map(w => ({label: w.title, id: w.id, action: "window", active: w.active, enabled: true})).concat([
-            {label: "Nueva ventana", icon: "plus", shortcut: "⏎", action: "new", separator: contextWindows.length > 0, enabled: !!(task.IsLauncher || task.IsNewInstanceable)},
-            {label: task.IsLauncher || task.HasLauncher ? "Quitar del dock" : "Fijar en el dock", icon: "push-pin", action: "pin", enabled: !!(task.LauncherUrlWithoutIcon || task.LauncherUrl)},
-            {label: "Salir", icon: "x", action: "close", separator: true, enabled: !!task.IsClosable && contextWindows.length > 0}
+        {label: "Nueva ventana", icon: "plus", shortcut: "⏎", action: "new", separator: contextWindows.length > 0, enabled: !!(task.IsLauncher || task.IsNewInstanceable)},
+        {label: task.IsLauncher || task.HasLauncher ? "Quitar del dock" : "Fijar en el dock", icon: "push-pin", action: "pin", enabled: !!(task.LauncherUrlWithoutIcon || task.LauncherUrl)},
+        {label: "Salir", icon: "x", action: "close", separator: true, enabled: !!task.IsClosable && contextWindows.length > 0}
         ]);
         contextRow = row;
         Qt.callLater(() => dockMenu.contentItem.forceActiveFocus());
@@ -187,7 +188,7 @@ Rectangle {
             const list = windows(row, item.model);
             // Once acknowledged, subsequent external focus changes take precedence.
             if (!list.some(w => w.id === requested) || list.some(w => w.id === requested && w.active))
-                delete requestedWindows[key];
+            delete requestedWindows[key];
         }
     }
     Connections {
@@ -323,21 +324,31 @@ Rectangle {
             onContextRequested: dock.openContext(entry.index, entry.model)
         }
     }
-    Controls.Popup {
-        visible: !dock.sessionMode && !!dock.tooltipText && !dock.menuOpen
-        x: dock.tooltipCenter - dock.x - width / 2; y: -height - 8; padding: 8
-        popupType: Controls.Popup.Item; closePolicy: Controls.Popup.NoAutoClose
-        background: Rectangle { radius: 8; color: Theme.surface; border.color: Theme.border }
-        contentItem: UiText { text: dock.tooltipText; font.pixelSize: 12 }
+    DeferredLoader {
+        opened: !dock.sessionMode && !!dock.tooltipText && !dock.menuOpen
+        sourceComponent: Component {
+            Controls.Popup {
+                visible: !dock.sessionMode && !!dock.tooltipText && !dock.menuOpen
+                x: dock.tooltipCenter - dock.x - width / 2; y: -height - 8; padding: 8
+                popupType: Controls.Popup.Item; closePolicy: Controls.Popup.NoAutoClose
+                background: Rectangle { radius: 8; color: Theme.surface; border.color: Theme.border }
+                contentItem: UiText { text: dock.tooltipText; font.pixelSize: 12 }
+            }
+        }
     }
     Keys.onEscapePressed: contextRow = -1
-    ContextMenu {
-        id: dockMenu
-        parent: dock.menuHost || dock
-        visible: dock.menuOpen; x: 0; y: dock.menuHost ? 0 : -height-8
-        margins: dock.menuHost ? 0 : 4
-        entries: dock.menuEntries
-        onClosed: dock.closeMenu()
-        onTriggered: entry => dock.runMenu(dockMenu.currentIndex)
+    DeferredLoader {
+        id: dockMenuLoader; objectName: "DockMenuLoader"; opened: dock.menuOpen
+        sourceComponent: Component {
+            ContextMenu {
+                id: dockMenu
+                parent: dock.menuHost || dock
+                visible: dock.menuOpen; x: 0; y: dock.menuHost ? 0 : -height-8
+                margins: dock.menuHost ? 0 : 4
+                entries: dock.menuEntries
+                onClosed: dock.closeMenu()
+                onTriggered: entry => dock.runMenu(dockMenu.currentIndex)
+            }
+        }
     }
 }

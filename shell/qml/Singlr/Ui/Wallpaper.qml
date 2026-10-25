@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
 Rectangle {
     id: wallpaper
     property string source: Appearance.wallpaper
@@ -16,6 +17,7 @@ Rectangle {
         }
     }
     Image {
+        sourceSize: Qt.size(Math.max(1, Math.ceil(width * Screen.devicePixelRatio)), Math.max(1, Math.ceil(height * Screen.devicePixelRatio)))
         id: picture; anchors.fill: parent
         source: wallpaper.source.indexOf("file:///") === 0 ? wallpaper.source : ""
         fillMode: Image.PreserveAspectCrop

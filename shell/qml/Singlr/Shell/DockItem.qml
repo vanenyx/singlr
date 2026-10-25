@@ -29,7 +29,7 @@ Controls.Control {
         anchors.horizontalCenter: parent.horizontalCenter; y: 23; width: 30; height: 17; radius: 8
         color: Theme.accentText; opacity: 0.16
         visible: !!tile.task?.IsDemandingAttention && !tile.task?.IsActive
-        layer.enabled: true
+        layer.enabled: visible
         layer.effect: MultiEffect { blurEnabled: true; blurMax: 16; blur: 1 }
     }
     Item {

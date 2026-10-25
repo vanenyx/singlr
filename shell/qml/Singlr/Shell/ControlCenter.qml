@@ -14,6 +14,8 @@ import Singlr.Ui
 Controls.Control {
     id: panel
 
+    property bool contextMenuOpen: false
+    readonly property var contextMenu: contextMenuLoader.item
     required property SystemControls audio
     required property var notifications
     signal closed()
@@ -42,35 +44,42 @@ Controls.Control {
         const entries = [{label: data.ConnectionState === Network.Enums.Activated ? "Desconectar" : "Conectar", icon: "wifi-high", shortcut: "⏎", action: "wifi"}];
         if (data.Uuid) entries.push({label: "Olvidar red", icon: "trash", shortcut: "Supr", action: "forgetWifi", destructive: true, confirmation: "¿Olvidar red? Pulsa de nuevo"});
         entries.push({label: "Ajustes…", icon: "gear", separator: true, action: "wifiSettings"});
+        contextMenuOpen = true;
         contextMenu.entries = entries;
         contextMenu.showAt(anchor, px, py);
     }
     function openDeviceMenu(device, anchor, px, py) {
         selectedDevice = device; errorText = "";
+        contextMenuOpen = true;
         contextMenu.entries = [
-            {label: device.connected ? "Desconectar" : "Conectar", icon: "bluetooth", shortcut: "⏎", action: "bluetooth"},
-            {label: "Olvidar dispositivo", icon: "trash", destructive: true, confirmation: "¿Olvidar? Pulsa de nuevo", action: "forgetBluetooth"},
-            {label: "Ajustes…", icon: "gear", separator: true, action: "bluetoothSettings"}
+        {label: device.connected ? "Desconectar" : "Conectar", icon: "bluetooth", shortcut: "⏎", action: "bluetooth"},
+        {label: "Olvidar dispositivo", icon: "trash", destructive: true, confirmation: "¿Olvidar? Pulsa de nuevo", action: "forgetBluetooth"},
+        {label: "Ajustes…", icon: "gear", separator: true, action: "bluetoothSettings"}
         ];
         contextMenu.showAt(anchor, px, py);
     }
-    ContextMenu {
-        id: contextMenu; objectName: "controlContextMenu"; parent: panel
-        onTriggered: entry => {
-            const n = panel.selectedNetwork;
-            if (entry.action === "forgetWifi") panel.networkActions.removeConnection(n.ConnectionPath);
-            else if (entry.action === "wifiSettings") KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement");
-            else if (entry.action === "bluetoothSettings") KCMUtils.KCMLauncher.openSystemSettings("kcm_bluetooth");
-            else if (entry.action === "wifi") {
-                if (n.ConnectionState === Network.Enums.Activated) panel.networkActions.deactivateConnection(n.ConnectionPath, n.DevicePath);
-                else Qt.callLater(() => { if (panel.wifiView) panel.wifiView.connectNetwork(n); });
-            } else {
-                const device = panel.selectedDevice;
-                if (!device) return;
-                if (entry.action === "forgetBluetooth") {
-                    const call = device.adapter.removeDevice(device);
-                    call.finished.connect(function(result) { if (result.error) panel.errorText = result.errorText; });
-                } else panel.connectDevice(device);
+    DeferredLoader {
+        id: contextMenuLoader; objectName: "controlMenuLoader"; opened: panel.contextMenuOpen
+        sourceComponent: Component {
+            ContextMenu {
+                id: contextMenu; onClosed: panel.contextMenuOpen = false; objectName: "controlContextMenu"; parent: panel
+                onTriggered: entry => {
+                    const n = panel.selectedNetwork;
+                    if (entry.action === "forgetWifi") panel.networkActions.removeConnection(n.ConnectionPath);
+                    else if (entry.action === "wifiSettings") KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement");
+                    else if (entry.action === "bluetoothSettings") KCMUtils.KCMLauncher.openSystemSettings("kcm_bluetooth");
+                    else if (entry.action === "wifi") {
+                        if (n.ConnectionState === Network.Enums.Activated) panel.networkActions.deactivateConnection(n.ConnectionPath, n.DevicePath);
+                        else Qt.callLater(() => { if (panel.wifiView) panel.wifiView.connectNetwork(n); });
+                    } else {
+                        const device = panel.selectedDevice;
+                        if (!device) return;
+                        if (entry.action === "forgetBluetooth") {
+                            const call = device.adapter.removeDevice(device);
+                            panel.watchOperation(call, function(result) { if (result.error) panel.errorText = result.errorText; });
+                        } else panel.connectDevice(device);
+                    }
+                }
             }
         }
     }
@@ -115,6 +124,20 @@ Controls.Control {
     property var bluetoothDevices: Bluetooth.Manager.devices
     property var deviceOperations: ({})
     property var deviceBusy: ({})
+    // Operation signals must disconnect when the cached panel is released.
+    Component {
+        id: operationWatcher
+        Connections {
+            required property var operation
+            target: operation
+            signal completed(var result)
+            function onFinished(result) { completed(result); destroy(); }
+        }
+    }
+    function watchOperation(call, callback) {
+        const watcher = operationWatcher.createObject(panel, {operation: call});
+        watcher.completed.connect(callback);
+    }
     function connectDevice(device) {
         const key = device.address || device.friendlyName || "device";
         if (deviceBusy[key]) return;
@@ -122,7 +145,7 @@ Controls.Control {
         deviceOperations = Object.assign({}, deviceOperations, {[key]: device.paired === false ? "Emparejando…" : device.connected ? "Desconectando…" : "Conectando…"});
         const pairing = device.paired === false;
         const call = pairing ? device.pair() : device.connected ? device.disconnectFromDevice() : device.connectToDevice();
-        call.finished.connect(function(result) {
+        panel.watchOperation(call, function(result) {
             const busy = Object.assign({}, panel.deviceBusy); delete busy[key]; panel.deviceBusy = busy;
             const next = Object.assign({}, panel.deviceOperations); delete next[key];
             if (result.error) next[key] = result.errorText;
@@ -143,7 +166,7 @@ Controls.Control {
     palette.highlight: Theme.control
     onOpenedChanged: {
         if (opened) networkHandler.requestScan();
-        else { contextMenu.close(); if (panel.page === "wifi") panel.wifiView.closePassword(); cancelSecret(); errorText = ""; resetPages(); }
+        else { if (contextMenu) contextMenu.close(); if (panel.page === "wifi") panel.wifiView.closePassword(); cancelSecret(); errorText = ""; resetPages(); }
     }
     Component.onCompleted: if (opened) networkHandler.requestScan()
     Timer { interval: 15000; running: panel.opened; repeat: true; onTriggered: networkHandler.requestScan() }
@@ -331,7 +354,7 @@ Controls.Control {
                 function refresh() {
                     bluetoothStable.sync(panel.bluetoothDevices.map(device => ({deviceKey: device.address, payload: {name: device.friendlyName, connected: device.connected, device: device}, rank: 0, active: device.connected})));
                 }
-                Timer { interval: 100; running: panel.opened; repeat: true; triggeredOnStart: true; onTriggered: bluetoothList.refresh() }
+                Timer { interval: 100; running: panel.opened && bluetoothList.visible; repeat: true; triggeredOnStart: true; onTriggered: bluetoothList.refresh() }
                 delegate: ControlRow {
                     required property var payload
                     width: bluetoothList.width; height: 36; glyph: "bluetooth"; text: payload.name; status: panel.deviceOperations[payload.device.address || payload.device.friendlyName || "device"] || (payload.connected ? "Conectado" : "")

@@ -32,9 +32,20 @@ Item {
         mode = Qt.binding(() => Appearance.mode);
         accent = Qt.binding(() => Appearance.accent);
         dark = Qt.binding(() => mode === "dark" || (mode === "auto" && (hour < 7 || hour >= 19)));
-        hour = new Date().getHours();
+        scheduleAppearance();
     }
-    Timer { interval: 60000; running: theme.mode === "auto"; repeat: true; onTriggered: theme.hour = new Date().getHours() }
+    function scheduleAppearance() {
+        hour = new Date().getHours();
+        const next = new Date();
+        if (hour < 7) next.setHours(7, 0, 0, 0);
+        else if (hour < 19) next.setHours(19, 0, 0, 0);
+        else { next.setDate(next.getDate() + 1); next.setHours(7, 0, 0, 0); }
+        appearanceClock.interval = Math.max(1, next.getTime() - Date.now());
+        if (mode === "auto") appearanceClock.restart(); else appearanceClock.stop();
+    }
+    onModeChanged: scheduleAppearance()
+    Component.onCompleted: scheduleAppearance()
+    Timer { id: appearanceClock; onTriggered: theme.scheduleAppearance() }
     property real contrast: 1.0
     readonly property color background: Palette.level(base,0,contrast)
     readonly property color panel: Palette.level(base,dark?2.1:-1.5,contrast)

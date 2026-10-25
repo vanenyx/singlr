@@ -21,9 +21,10 @@ Item {
         }
         function cleanup() { session.closeMenus(); }
         function test_applicationsAlwaysOpensAndResetsSearch() {
-            const launcher = findChild(session, "sessionLauncher");
-            verify(launcher);
+            verify(!findChild(session, "sessionLauncher"));
             session.showApplications();
+            const launcher = session.launcher;
+            verify(launcher);
             verify(launcher.visible); verify(launcher.applicationsMode); compare(launcher.query, "");
             launcher.query = "terminal";
             session.showApplications();
@@ -31,16 +32,35 @@ Item {
             session.toggleLauncher(); verify(!launcher.visible);
         }
         function test_exclusivePanelToggles() {
-            const control = findChild(session, "controlCenterWindow");
-            const launcher = findChild(session, "sessionLauncher");
             session.toggleNotifications(); verify(session.notificationCenter.historyOpen);
             session.toggleNotifications(); verify(!session.notificationCenter.historyOpen);
-            session.showApplications(); session.toggleNotifications();
+            session.showApplications(); const launcher = session.launcher;
+            session.toggleNotifications();
             verify(session.notificationCenter.historyOpen); verify(!launcher.visible);
-            session.toggleControlCenter(); verify(control.visible); verify(!session.notificationCenter.historyOpen);
-            session.toggleControlCenter(); verify(!control.visible);
+            session.toggleControlCenter(); tryVerify(() => session.controlWindow !== null); verify(session.controlWindow.visible); verify(!session.notificationCenter.historyOpen);
+            session.toggleControlCenter(); verify(!session.controlOpen); compare(session.controlWindow, null);
             session.toggleControlCenter(); session.showApplications();
-            verify(!control.visible); verify(launcher.applicationsMode); verify(launcher.visible);
+            compare(session.controlWindow, null); verify(launcher.applicationsMode); verify(launcher.visible);
+        }
+        function test_lazyContentReleasedAndRecreated() {
+            const launcherLoader = findChild(session, "launcherLoader");
+            const controlLoader = findChild(session, "controlLoader");
+            verify(!launcherLoader.active); verify(!controlLoader.active);
+            session.showApplications(); verify(launcherLoader.active); verify(session.overlay);
+            const launcher = session.launcher;
+            session.toggleLauncher(); compare(session.overlay, null);
+            verify(launcherLoader.active); // short reopen cache, without a native Window
+            wait(100);
+            session.showApplications(); compare(session.launcher, launcher);
+            session.toggleLauncher();
+            tryCompare(launcherLoader, "active", false, 3200); compare(launcherLoader.item, null);
+            session.showApplications(); verify(launcherLoader.active); verify(session.launcher);
+            session.toggleControlCenter(); verify(controlLoader.active); tryVerify(() => session.controlWindow !== null);
+            compare(session.controlWindow.height, Math.min(session.controlWindow.screen.height - 64, session.controlPanel.implicitHeight));
+            session.toggleControlCenter(); compare(session.controlWindow, null);
+            tryCompare(controlLoader, "active", false, 3200); compare(controlLoader.item, null);
+            session.toggleControlCenter(); verify(controlLoader.active); tryVerify(() => session.controlWindow !== null);
+            compare(session.controlWindow.height, Math.min(session.controlWindow.screen.height - 64, session.controlPanel.implicitHeight));
         }
         function test_numberedEntryDelegatesToDock() {
             const dock = findChild(session, "sessionDock");

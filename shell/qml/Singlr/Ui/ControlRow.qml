@@ -17,7 +17,7 @@ Controls.AbstractButton {
     background: Rectangle { radius: 6; color: row.hovered || row.visualFocus ? Theme.hover : "transparent"; border.color: row.visualFocus ? Theme.focusBorder : "transparent" }
     contentItem: Item {
         Icon { x: 0; anchors.verticalCenter: parent.verticalCenter; width: 16; height: 16; font.pixelSize: 16; name: row.busy ? "circle-dashed" : row.glyph
-            RotationAnimator on rotation { from: 0; to: 360; duration: 1500; loops: Animation.Infinite; running: row.busy }
+            RotationAnimator on rotation { from: 0; to: 360; duration: 1500; loops: Animation.Infinite; running: row.busy && row.visible }
         }
         UiText { x: 26; height: parent.height; width: Math.max(0, trailing.x - x - 8); text: row.text; horizontalAlignment: Text.AlignLeft; font.pixelSize: 13 }
         Row {

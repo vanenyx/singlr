@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls.Basic as Controls
 
 Controls.Popup {
@@ -106,7 +107,8 @@ Controls.Popup {
                     opacity: row.modelData.enabled === false ? 0.4 : 1
                     Accessible.role: Accessible.MenuItem
                     Accessible.name: caption.text
-                    Image { x: 6; anchors.verticalCenter: parent.verticalCenter; width: 14; height: 14; source: row.modelData.imageSource || ""; visible: !!String(source); fillMode: Image.PreserveAspectFit }
+                    Image {
+        sourceSize: Qt.size(Math.max(1, Math.ceil(width * Screen.devicePixelRatio)), Math.max(1, Math.ceil(height * Screen.devicePixelRatio))); x: 6; anchors.verticalCenter: parent.verticalCenter; width: 14; height: 14; source: row.modelData.imageSource || ""; visible: !!String(source); fillMode: Image.PreserveAspectFit }
                     AppIcon { x: 6; anchors.verticalCenter: parent.verticalCenter; width: 14; height: 14; name: row.modelData.iconName || ""; visible: !!row.modelData.iconName && !row.modelData.imageSource && !row.modelData.toggleType }
                     Rectangle {
                         x: 7; anchors.verticalCenter: parent.verticalCenter; width: 12; height: 12

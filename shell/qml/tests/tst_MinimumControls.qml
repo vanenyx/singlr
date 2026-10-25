@@ -7,6 +7,7 @@ import Singlr.Shell
 Item {
     id: fixture
     width: 360; height: 760
+    property int completedOperations: 0
     QtObject {
         id: battery
         property int percent: 78
@@ -47,6 +48,15 @@ Item {
         function init() {
             power.activeProfile = "balanced"; power.profiles = ["power-saver", "balanced", "performance"];
             handler.calls = 0; handler.operation = ""; device.paired = true; device.connected = false;
+        }
+        function test_operationDisconnectsWithReleasedPanel() {
+            fixture.completedOperations = 0;
+            const panel = panelFactory.createObject(fixture);
+            verify(panel);
+            panel.watchOperation(pending, () => fixture.completedOperations++);
+            panel.destroy(); wait(0);
+            pending.finished({error: false});
+            compare(fixture.completedOperations, 0);
         }
         function test_batteryProfilesGeometryAndKeyboard() {
             const row = createTemporaryObject(batteryFactory, fixture);
