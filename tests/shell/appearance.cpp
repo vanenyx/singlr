@@ -6,6 +6,7 @@
 #include <QTemporaryDir>
 #include <QFile>
 #include <QDir>
+#include <QScopeGuard>
 #include <QtTest>
 
 class AppearanceTest : public QObject {
@@ -16,6 +17,7 @@ private Q_SLOTS:
     void initTestCase() {
         QVERIFY(m_temp.isValid());
         qputenv("XDG_CONFIG_HOME", m_temp.path().toUtf8());
+        qputenv("XDG_STATE_HOME", m_temp.filePath("state").toUtf8());
         m_log = m_temp.filePath("calls");
         const auto tools = m_temp.filePath("bin");
         QVERIFY(QDir().mkpath(tools));
@@ -101,6 +103,40 @@ private Q_SLOTS:
         settings.sync();
         QVERIFY(settings.contains("Appearance/mode"));
         QVERIFY(!settings.value("Config/kdeAppearanceMigrated").toBool());
+    }
+    void materialsPersistClampAndPreserveKDE() {
+        QFile kwin(m_temp.filePath("kwinrc"));
+        QVERIFY(kwin.open(QIODevice::WriteOnly)); kwin.write("[Plugins]\nblurEnabled=true\n"); kwin.close();
+        KDEAppearance appearance;
+        QCOMPARE(appearance.material(), QString("glass")); QCOMPARE(appearance.intensity(), 65);
+        appearance.setMaterial("liquid"); appearance.setIntensity(140); appearance.setReduceTransparency(true);
+        QCOMPARE(appearance.material(), QString("liquid")); QCOMPARE(appearance.intensity(), 100);
+        QVERIFY(appearance.reduceTransparency());
+        appearance.setMaterial("invalid"); QCOMPARE(appearance.material(), QString("liquid"));
+        appearance.setIntensity(-1); QCOMPARE(appearance.intensity(), 0);
+        KDEAppearance second;
+        QCOMPARE(second.material(), QString("liquid")); QVERIFY(second.reduceTransparency());
+        QVERIFY(kwin.open(QIODevice::ReadOnly)); QCOMPARE(kwin.readAll(), QByteArray("[Plugins]\nblurEnabled=true\n"));
+        kwin.close(); QFile::remove(kwin.fileName());
+    }
+    void sessionJournalAllowsOnlyMaterialConfigWrites() {
+        const auto previous = qgetenv("XDG_SESSION_DESKTOP");
+        const auto restore = qScopeGuard([previous] { qputenv("XDG_SESSION_DESKTOP", previous); });
+        qputenv("XDG_SESSION_DESKTOP", "Singlr");
+        const auto journalPath = m_temp.filePath("state/singlr/kwinrc-backup.json");
+        QVERIFY(QDir().mkpath(QFileInfo(journalPath).path()));
+        QFile journal(journalPath); QVERIFY(journal.open(QIODevice::WriteOnly)); journal.write("[]"); journal.close();
+        const auto removeJournal = qScopeGuard([journalPath] { QFile::remove(journalPath); });
+        KDEAppearance appearance;
+        appearance.setMaterial("liquid"); appearance.setIntensity(42);
+        auto config = KSharedConfig::openConfig("kwinrc"); config->reparseConfiguration();
+        auto group = config->group("Effect-singlrliquidglass");
+        QVERIFY(group.readEntry("Enabled", false)); QCOMPARE(group.readEntry("Intensity", -1), 42);
+        appearance.setReduceTransparency(true); config->reparseConfiguration();
+        QVERIFY(!group.readEntry("Enabled", true));
+        // Persistent settings cannot opt a Plasma session into the effect.
+        qputenv("XDG_SESSION_DESKTOP", "plasma"); appearance.setReduceTransparency(false);
+        config->reparseConfiguration(); QVERIFY(!group.readEntry("Enabled", true));
     }
     void ignoresNewerSchemasAndInvalidInput() {
         QSettings settings(m_temp.filePath("singlr/singlr.conf"), QSettings::IniFormat);

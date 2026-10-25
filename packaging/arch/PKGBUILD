@@ -8,12 +8,12 @@ arch=('x86_64')
 license=('LicenseRef-Singlr-Pending')
 depends=('bash' 'python' 'qt6-base' 'qt6-declarative' 'qt6-svg'
          'kservice' 'kio' 'kwindowsystem' 'kglobalaccel' 'networkmanager-qt' 'kwallet' 'layer-shell-qt'
-         'libnm' 'networkmanager' 'plasma-workspace' 'plasma-desktop' 'kwin'
+         'libnm' 'networkmanager' 'plasma-workspace' 'plasma-desktop' 'kwin=6.8.1'
          'plasma-nm' 'plasma-pa' 'bluez-qt' 'bluedevil' 'kitemmodels' 'kcmutils' 'milou'
          'breeze-icons' 'breeze-gtk' 'kde-gtk-config' 'xsettingsd'
          'powerdevil' 'polkit-kde-agent' 'xdg-desktop-portal-kde'
          'pipewire' 'pipewire-pulse' 'wireplumber' 'systemd' 'kdialog')
-makedepends=('cmake' 'ninja' 'extra-cmake-modules' 'pkgconf')
+makedepends=('cmake' 'ninja' 'extra-cmake-modules' 'pkgconf' 'vulkan-headers')
 source=("singlr-$pkgver.tar.gz")
 sha256sums=('SKIP') # Local development snapshot; pin a checksum before distributing.
 

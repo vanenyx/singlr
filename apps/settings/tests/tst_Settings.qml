@@ -18,6 +18,18 @@ Item {
             Ui.Appearance.save("wallpaper", "singlr:linear");
             Ui.Theme.reloadSettings();
         }
+        function test_materialControlsKeepGeometry() {
+            const app = createTemporaryObject(appFactory, fixture); verify(app);
+            mouseClick(findChild(app.contentItem, "material-liquid")); compare(Ui.Appearance.material, "liquid");
+            const slider = findChild(app.contentItem, "materialIntensity"); verify(slider.enabled);
+            mouseClick(slider, slider.width * 0.8, slider.height / 2);
+            tryVerify(() => Ui.Appearance.intensity > 65);
+            mouseClick(findChild(app.contentItem, "reduceTransparency")); verify(Ui.Appearance.reduceTransparency);
+            verify(!slider.enabled); compare(Ui.Appearance.effectiveMaterial, "solid");
+            compare(app.width, 880); compare(app.height, 600);
+            Ui.Appearance.save("reduceTransparency", false); Ui.Appearance.save("material", "glass");
+            Ui.Appearance.save("intensity", 65); app.close();
+        }
         function test_externalWallpaperAndLegacyPreferences() {
             const dark = Ui.Appearance.dark;
             const accent = Ui.Appearance.accent;

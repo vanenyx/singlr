@@ -67,7 +67,7 @@ Controls.Popup {
         returnFocus = null;
     }
     background: Rectangle {
-        radius: 8; color: Theme.raised; border.color: Theme.border
+        radius: 8; color: Theme.surface; border.color: Theme.border
         // Small layered shadow also works with the software renderer.
         Repeater {
             model: 4

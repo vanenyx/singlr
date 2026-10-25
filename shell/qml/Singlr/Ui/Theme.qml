@@ -18,9 +18,13 @@ Item {
     readonly property color error: dark ? "#ef9a9a" : "#8f2727"
     readonly property color powerSaver: "#4ea7fc"
     readonly property color powerPerformance: "#eb5757"
-    readonly property color surface: Palette.alpha(raised, dark ? .93 : .97)
-    readonly property color barSurface: Palette.alpha(panel, dark ? .90 : .96)
-    readonly property color dockSurface: Palette.alpha(panel, dark ? .80 : .94)
+    readonly property bool softwareRendering: Appearance.softwareRendering
+    readonly property bool translucent: Appearance.effectiveMaterial !== "solid" && !softwareRendering
+    readonly property real materialStrength: translucent ? Appearance.intensity / 100 : 0
+    readonly property real blurRadius: materialStrength * 64
+    readonly property color surface: Palette.alpha(raised, 1 - materialStrength * (dark ? .108 : .046))
+    readonly property color barSurface: Palette.alpha(panel, 1 - materialStrength * (dark ? .154 : .062))
+    readonly property color dockSurface: Palette.alpha(panel, 1 - materialStrength * (dark ? .308 : .092))
     readonly property color sheen: Palette.alpha(text, .04)
     readonly property color wallpaperDefault: "#08090a"
     readonly property color wallpaperGlow: "#17191d"

@@ -11,4 +11,8 @@ stage="$(mktemp -d "${TMPDIR:-/tmp}/singlr-cmake.XXXXXX")"
 trap 'rm -rf -- "$stage"' EXIT
 DESTDIR="$stage" cmake --install "$root/build"
 python3 "$root/tests/shell/verify_package.py" "$stage"
+if [[ $(< "$root/build/CMakeCache.txt") == *"SINGLR_BUILD_LIQUIDGLASS:BOOL=ON"* ]]; then
+    test -s "$stage/usr/lib/qt6/plugins/kwin/effects/plugins/libsinglr-liquidglass.so"
+    echo 'CMake: plugin externo Liquid Glass incluido en staging.'
+fi
 echo 'CMake: compilación e instalación DESTDIR verificadas (staging temporal eliminado).'
