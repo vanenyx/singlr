@@ -4,9 +4,15 @@ import org.kde.taskmanager as TaskManager
 import Singlr.Shell
 
 Item {
+    id: fixture
     width: 600; height: 600
     ListModel {
         id: doubleModel
+        property var launcherList: []
+        function requestAddLauncher(url) { launcherList = launcherList.concat([url]); }
+        function requestRemoveLauncher(url) { launcherList = launcherList.filter(u => u !== url); }
+        function syncLaunchers() { calls.push("sync"); }
+        function requestOpenUrls(idx, urls) { calls.push("files:" + idx.row + ":" + urls.join(",")); }
         property var children: []
         property var calls: []
         property bool delayActive: false
@@ -50,6 +56,7 @@ Item {
         id: bridge
         property bool overviewAvailable: false
         property string invoked: ""
+        function acceptsUrls(url, urls) { return url === "applications:browser.desktop" && urls.every(u => u.endsWith(".txt")); }
         function invokeShortcut(component, action) { invoked = component + ":" + action; }
     }
     Dock { id: dock; x: 40; y: 500; modelOverride: doubleModel }
@@ -60,7 +67,7 @@ Item {
         function task() { return doubleModel.get(0); }
         function init() {
             dock.closeMenu(); dock.hideTooltip(); dock.requestedWindows = ({}); dock.launching = ({});
-            doubleModel.delayActive = false; doubleModel.clear(); doubleModel.calls = []; doubleModel.activatedId = "";
+            doubleModel.delayActive = false; doubleModel.clear(); doubleModel.calls = []; doubleModel.launcherList = []; doubleModel.activatedId = "";
             doubleModel.children = [
                 {id:"40", active:false, minimized:false, time:4},
                 {id:"20", active:true, minimized:false, time:8},
@@ -89,11 +96,64 @@ Item {
         }
         function test_numberedPresentationOrderAndBounds() {
             doubleModel.append({AppName:"Pinned", AppId:"pinned", IsLauncher:true, HasLauncher:true});
-            // The pinned app is model row 1, but visible entry 1.
-            verify(dock.activateEntry(1)); compare(doubleModel.calls, ["new"]);
-            verify(dock.activateEntry(2)); compare(doubleModel.calls, ["new", "activate:30"]);
+            // Shortcuts follow the common manual order of running and pinned apps.
+            verify(dock.activateEntry(1)); compare(doubleModel.calls, ["activate:30"]);
+            verify(dock.activateEntry(2)); compare(doubleModel.calls, ["activate:30", "new"]);
             for (const n of [0, -1, 3, 9, 10, 1.5, NaN, "1"]) verify(!dock.activateEntry(n));
-            compare(doubleModel.calls, ["new", "activate:30"]);
+            compare(doubleModel.calls, ["activate:30", "new"]);
+        }
+        function test_fileDropUsesAppAndRejectsMixedTypes() {
+            dock.systemBridge = bridge;
+            verify(dock.acceptsFiles(task(), ["file:///tmp/a.txt"]));
+            verify(dock.openFiles(0, task(), ["file:///tmp/a.txt", "file:///tmp/b.txt"]));
+            compare(doubleModel.calls, ["files:0:file:///tmp/a.txt,file:///tmp/b.txt"]);
+            verify(!dock.openFiles(0, task(), ["file:///tmp/a.txt", "file:///tmp/b.png"]));
+            compare(doubleModel.calls.length, 1);
+        }
+        function test_pinUsesInjectedTasksModel() {
+            dock.setPinned("applications:browser.desktop", true);
+            verify(dock.isPinned("applications:browser.desktop"));
+            compare(dock.pinUrls, ["applications:browser.desktop"]);
+            dock.openContext(0, {LauncherUrlWithoutIcon:"applications:browser.desktop", HasLauncher:true});
+            dock.togglePin(); compare(doubleModel.launcherList, []);
+        }
+        function test_pointerReorderAndOutsideNeverRemoves() {
+            const panel = createTemporaryObject(persistentDock, fixture, {visible:true, x:100, y:300,
+                settingsLocation:"file:///tmp/singlr-t242-drag-" + Date.now() + ".ini"}) as Dock;
+            tryCompare(panel, "pinsLoaded", true);
+            panel.tasksModel.launcherList = ["applications:org.kde.dolphin.desktop", "applications:systemsettings.desktop"];
+            panel.persistPins();
+            tryVerify(() => findChild(panel, "dockTask1") !== null);
+            tryVerify(() => panel.width > 90);
+            waitForRendering(panel);
+            const first = findChild(panel, "dockTask0");
+            mousePress(first, 16, 20, Qt.LeftButton);
+            mouseMove(first, 28, 20, 30);
+            mouseMove(panel, 62, 20, 30);
+            mouseRelease(panel, 62, 20, Qt.LeftButton);
+            tryCompare(panel.tasksModel, "launcherList", ["applications:systemsettings.desktop", "applications:org.kde.dolphin.desktop"]);
+            const moved = findChild(panel, "dockTask0");
+            mousePress(moved, 16, 20, Qt.LeftButton);
+            mouseMove(moved, 16, -70, 30);
+            mouseRelease(moved, 16, -70, Qt.LeftButton);
+            compare(Array.from(panel.tasksModel.launcherList, String), ["applications:systemsettings.desktop", "applications:org.kde.dolphin.desktop"]);
+        }
+        function test_nativeManualOrderPersists() {
+            const path = "file:///tmp/singlr-t242-order-" + Date.now() + ".ini";
+            const first = persistentDock.createObject(fixture, {settingsLocation:path}) as Dock;
+            tryCompare(first, "pinsLoaded", true);
+            first.tasksModel.launcherList = ["applications:org.kde.dolphin.desktop", "applications:systemsettings.desktop"];
+            first.persistPins();
+            tryVerify(() => first.width > 90, 1000, "dock width=" + first.width + " launchers=" + first.tasksModel.launcherList);
+            verify(first.moveEntry(0, 1));
+            compare(Array.from(first.tasksModel.launcherList, String), ["applications:systemsettings.desktop", "applications:org.kde.dolphin.desktop"]);
+            const order = first.appOrder.slice();
+            first.destroy(); wait(1);
+            const second = persistentDock.createObject(null, {settingsLocation:path}) as Dock;
+            tryCompare(second, "pinsLoaded", true);
+            compare(second.appOrder, order);
+            compare(Array.from(second.tasksModel.launcherList, String), order);
+            second.destroy();
         }
         function test_fourWindowsReorderEveryActivation() {
             const size = [dock.width, dock.height, dock.visible];
@@ -223,7 +283,7 @@ Item {
         }
         function test_pinsPersistAndRemoveWithoutKdeConfiguration() {
             const path = "file:///tmp/singlr-t208-pins-" + Date.now() + ".json";
-            const first = persistentDock.createObject(null, {settingsLocation:path}) as Dock;
+            const first = persistentDock.createObject(fixture, {settingsLocation:path}) as Dock;
             verify(first !== null); tryCompare(first,"pinsLoaded",true);
             const app = {AppName:"Archivos", LauncherUrlWithoutIcon:"applications:org.kde.dolphin.desktop", IsLauncher:false, HasLauncher:false};
             first.openContext(0,app); first.togglePin();

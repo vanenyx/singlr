@@ -1,5 +1,6 @@
 #pragma once
 #include <QObject>
+#include <QUrl>
 #include <QDBusConnection>
 #include <QTimer>
 #include <QDBusMessage>
@@ -25,6 +26,9 @@ public:
     QString userName() const { return m_userName; }
     QString userIcon() const { return m_userIcon; }
     bool sessionActionPending() const { return m_sessionActionPending; }
+    Q_INVOKABLE QUrl launcherUrl(const QUrl &url) const;
+    Q_INVOKABLE bool acceptsUrls(const QUrl &launcher, const QList<QUrl> &urls) const;
+    Q_INVOKABLE void showInFolder(const QList<QUrl> &urls);
     Q_INVOKABLE void lockScreen();
     Q_INVOKABLE void suspend();
     Q_INVOKABLE void hibernate();

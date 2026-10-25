@@ -1,6 +1,7 @@
 #include "system.h"
 #include <QCoreApplication>
 #include <QDBusVirtualObject>
+#include <QDBusArgument>
 #include <QDBusObjectPath>
 #include <QElapsedTimer>
 #include <QFile>
@@ -46,7 +47,12 @@ public:
         QDebug(&description) << m;
         received << description;
         QVariantList args;
-        if (m.member() == "isShuttingDown") {
+        if (m.member() == "ShowItems") {
+            CHECK(m.path() == "/org/freedesktop/FileManager1");
+            CHECK(m.interface() == "org.freedesktop.FileManager1");
+            CHECK(m.arguments().size() == 2);
+            CHECK(qdbus_cast<QStringList>(m.arguments()[0]).size() == 1);
+        } else if (m.member() == "isShuttingDown") {
             CHECK(m.path() == "/KSMServer");
             CHECK(m.interface() == "org.kde.KSMServerInterface");
             // Qt does not expose NO_AUTO_START on received messages; System sets it explicitly.
@@ -111,6 +117,26 @@ int main(int argc, char **argv)
         }
         if (app.arguments().contains("--offline")) {
             System system(QDBusConnection("missing-session"), QDBusConnection("missing-system"));
+            QTemporaryDir files;
+            CHECK(files.isValid());
+            const auto write = [&](const QString &name, const QByteArray &contents) {
+                QFile file(files.filePath(name)); CHECK(file.open(QIODevice::WriteOnly));
+                CHECK(file.write(contents) == contents.size());
+                return QUrl::fromLocalFile(file.fileName());
+            };
+            const auto editor = write("editor.desktop", "[Desktop Entry]\nType=Application\nName=Editor\nExec=/bin/true %U\nMimeType=text/plain;\n");
+            const auto folders = write("folders.desktop", "[Desktop Entry]\nType=Application\nName=Files\nExec=/bin/true %U\nMimeType=inode/directory;\n");
+            const auto text = write("sample.txt", "plain text\n");
+            const auto python = write("sample.py", "#!/usr/bin/python3\nprint(42)\n");
+            const auto image = write("sample.png", QByteArray::fromHex("89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"));
+            CHECK(system.acceptsUrls(editor, {text, python})); // inherited text/x-python
+            CHECK(!system.acceptsUrls(editor, {text, image})); // all URLs must match
+            CHECK(!system.acceptsUrls(editor, {}));
+            CHECK(!system.acceptsUrls(QUrl("applications:singlr-nonexistent.desktop"), {text}));
+            CHECK(!system.acceptsUrls(editor, {QUrl("https://example.org/file.txt")}));
+            CHECK(!system.acceptsUrls(editor, {QUrl::fromLocalFile(files.filePath("missing.txt"))}));
+            CHECK(system.acceptsUrls(folders, {QUrl::fromLocalFile(files.path())}));
+            CHECK(!system.acceptsUrls(folders, {text}));
             int failures = 0;
             QObject::connect(&system, &System::sessionActionFailed, &app,
                 [&](const QString &, const QString &) { ++failures; });
@@ -148,9 +174,11 @@ int main(int argc, char **argv)
         CHECK(face.open(QIODevice::WriteOnly)); face.write("fixture"); face.close();
         fixture.icon = face.fileName();
         CHECK(server.registerVirtualObject("/", &fixture, QDBusConnection::SubPath));
-        for (const auto &name : {"org.freedesktop.login1", "org.freedesktop.Accounts", "org.freedesktop.ScreenSaver", "org.freedesktop.systemd1", "org.kde.KWin"})
+        for (const auto &name : {"org.freedesktop.login1", "org.freedesktop.Accounts", "org.freedesktop.ScreenSaver", "org.freedesktop.systemd1", "org.kde.KWin", "org.freedesktop.FileManager1"})
             CHECK(server.registerService(name));
         System system(client, client);
+        system.showInFolder({QUrl::fromLocalFile(face.fileName())});
+        until([&] { return fixture.calls.contains("ShowItems"); }, "standard FileManager1 ShowItems");
         int failures = 0, cancellations = 0;
         QObject::connect(&system, &System::sessionActionCancelled, &app,
             [&](const QString &action) { CHECK(!action.isEmpty()); ++cancellations; });

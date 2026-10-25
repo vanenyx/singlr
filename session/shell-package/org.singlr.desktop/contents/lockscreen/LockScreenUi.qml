@@ -410,8 +410,10 @@ Item {
                 id: virtualKeyboardButton
 
                 focusPolicy: Qt.TabFocus
-                text: i18ndc("plasma_shell_org.kde.plasma.desktop", "Button to show/hide virtual keyboard", "Virtual Keyboard")
-                icon.name: Keyboards.KWinVirtualKeyboard.visible ? "input-keyboard-virtual-on" : "input-keyboard-virtual-off"
+                Accessible.name: i18ndc("plasma_shell_org.kde.plasma.desktop", "Button to show/hide virtual keyboard", "Virtual Keyboard")
+                display: AbstractButton.IconOnly
+                implicitWidth: 32
+                contentItem: Icon { name: "keyboard"; color: Keyboards.KWinVirtualKeyboard.visible ? Theme.text : Theme.muted }
                 onClicked: {
                     if (Keyboards.KWinVirtualKeyboard.visible) {
                         Keyboards.KWinVirtualKeyboard.active = false;
@@ -437,7 +439,8 @@ Item {
 
                 focusPolicy: Qt.TabFocus
                 Accessible.description: i18ndc("plasma_shell_org.kde.plasma.desktop", "Button to change keyboard layout", "Switch layout")
-                icon.name: "input-keyboard"
+                icon.name: ""
+                Accessible.name: keyboardLayoutSwitcher.layoutNames.longName
 
                 PW.KeyboardLayoutSwitcher {
                     id: keyboardLayoutSwitcher
