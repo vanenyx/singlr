@@ -6,7 +6,7 @@ pkgdesc='Singlr desktop session for KDE Plasma 6 (phase 1 prototype)'
 arch=('x86_64')
 # Distribution license remains pending; this local package is not a release.
 license=('LicenseRef-Singlr-Pending')
-depends=('bash' 'python' 'qt6-base' 'qt6-declarative' 'qt6-wayland' 'qt6-svg'
+depends=('bash' 'python' 'qt6-base' 'qt6-declarative' 'qt6-svg'
          'kwindowsystem' 'kglobalaccel' 'networkmanager-qt' 'kwallet' 'layer-shell-qt'
          'libnm' 'networkmanager' 'plasma-workspace' 'plasma-desktop' 'kwin'
          'plasma-nm' 'plasma-pa' 'bluez-qt' 'bluedevil' 'kitemmodels' 'kcmutils' 'milou'

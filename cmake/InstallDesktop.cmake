@@ -38,5 +38,6 @@ foreach(kind effects scripts)
         set(package singlr-gestures)
     endif()
     install(DIRECTORY "kwin/${kind}/${package}" DESTINATION "${KDE_INSTALL_DATADIR}/kwin/${kind}"
-        FILES_MATCHING PATTERN "*.qml" PATTERN "*.js" PATTERN "*.json" PATTERN "qmldir")
+        FILES_MATCHING PATTERN "*.qml" PATTERN "*.js" PATTERN "*.json" PATTERN "qmldir"
+        PATTERN "tools" EXCLUDE)  # utilidades de desarrollo, no se instalan
 endforeach()
