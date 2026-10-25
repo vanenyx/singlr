@@ -207,3 +207,24 @@ registrar ambos al validar el login real.
 - Pendientes: prueba D-Bus con fixture, ciclo real anidado, login/retorno al
   greeter, cancelación real, reboot/poweroff y medida P-016. No se ha instalado,
   parado ni cambiado la sesión KDE/Singlr activa.
+
+## Validación de Claude (25 oct)
+
+- `SINGLR_REQUIRE_SESSION_DBUS=1` test_session*: 24 OK (se retiró una comprobación
+  inválida: Qt no expone NO_AUTO_START en mensajes recibidos). Python completo 65 OK,
+  QML 124 OK, `systemd-analyze --user verify` correcto.
+- KWin anidado + ksmserver, cuatro entradas: (1) Dolphin abierto → logout: Dolphin se
+  cierra, ksmserver y KWin terminan, el estado guarda Dolphin; (2) Dolphin se reabre solo;
+  (3) se cierra Dolphin → logout; (4) no se restaura nada. Sin plasmashell, KRunner ni
+  bloqueador en el bus de prueba.
+- Pendiente: login real desde el greeter (retorno al greeter, cancelación con Kate).
+
+## Cartera KDE (diagnóstico, no es fallo de Singlr)
+
+`ksecretd: error -9` = el descifrado Blowfish con la clave derivada del login da
+basura (`backendpersisthandler.cpp`). La cartera se creó por PAM el 22 oct 23:13; la
+contraseña de la cuenta se cambió con `passwd` el 23 oct 00:09, y `passwd` no actualiza
+la cartera (limitación conocida de KDE). La sesión Plasma siguió abierta hasta el 25,
+por eso no se vio antes. Solución estándar: con la cartera abierta, cambiar su contraseña
+a la de inicio de sesión (`org.kde.KWallet.changePassword`; con la cartera abierta no pide
+la anterior). La realiza el creador: es una credencial suya.
