@@ -170,7 +170,7 @@ def capture(output, descriptor=None):
     print(f'SINGLR_SESSION_CAPTURE {output}', flush=True)
 
 
-def inside(base, source, width, height):
+def inside(base, source, width, height, client_kind="singlr"):
     # PR_SET_CHILD_SUBREAPER, Linux: adopt and clean daemonized launchers/apps.
     if ctypes.CDLL(None, use_errno=True).prctl(36, 1, 0, 0, 0) != 0:
         raise OSError(ctypes.get_errno(), 'PR_SET_CHILD_SUBREAPER')
@@ -204,7 +204,9 @@ def inside(base, source, width, height):
         client_env = env.copy()
         if env.get('SINGLR_WAYLAND_DEBUG'):
             client_env['WAYLAND_DEBUG'] = '1'
-        client = subprocess.Popen([str(ROOT / 'shell/session/qml-shell'), str(source)], env=client_env)
+        command = (['plasmashell'] if client_kind == 'plasma' else
+                   [str(ROOT / 'shell/session/qml-shell'), str(source)])
+        client = subprocess.Popen(command, env=client_env)
         save_descriptor(descriptor, env, client.pid)
         print(f'SINGLR_SESSION_FILE={descriptor}', flush=True)
         duration = int(env.get('SINGLR_DURATION_MS', '0')) / 1000
@@ -232,8 +234,9 @@ def inside(base, source, width, height):
     return result
 
 
-def launch(source, size):
-    for command in ('qml6', 'kwin_wayland', 'dbus-run-session', 'dbus-update-activation-environment'):
+def launch(source, size, client_kind="singlr"):
+    for command in (('plasmashell' if client_kind == 'plasma' else 'qml6'),
+                    'kwin_wayland', 'dbus-run-session', 'dbus-update-activation-environment'):
         if not shutil.which(command):
             raise RuntimeError(f'Falta herramienta requerida: {command}')
     parent = os.environ.get('WAYLAND_DISPLAY')
@@ -267,7 +270,8 @@ def launch(source, size):
                        _KDE_APPLICATIONS_AS_FORKING='1', QT_FORCE_STDERR_LOGGING='1')
             process = subprocess.Popen(['dbus-run-session', '--', 'bash', str(HERE / 'nested-session.sh'),
                                         str(base / 'bus-address'), '--command', sys.executable, str(Path(__file__).resolve()),
-                                        '--inside', str(base), '--entry', str(source), '--size', size],
+                                        '--inside', str(base), '--entry', str(source), '--size', size,
+                                        '--client', client_kind],
                                        env=env, start_new_session=True)
             try:
                 code = process.wait()
@@ -288,6 +292,8 @@ def launch(source, size):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--size', default='2048x1280')
+    parser.add_argument('--client', choices=('singlr', 'plasma'), default='singlr',
+                        help='Cliente del compositor privado; Plasma usa configuración temporal limpia')
     parser.add_argument('--entry', type=Path, default=ROOT / 'shell/qml/Shell.qml')
     parser.add_argument('--duration', type=float, help='Duración en segundos; sin opción, hasta cerrar KWin o Ctrl+C')
     parser.add_argument('--inside', type=Path, help=argparse.SUPPRESS)
@@ -300,14 +306,14 @@ def main():
     if args.capture_session:
         capture(args.capture_session)
         return 0
-    if not args.entry.is_file():
+    if args.client == 'singlr' and not args.entry.is_file():
         parser.error(f'No existe el punto de entrada QML: {args.entry}; integra shell/qml/Shell.qml o usa --entry archivo.qml')
     match = re.fullmatch(r'([1-9][0-9]*)[xX]([1-9][0-9]*)', args.size)
     if not match:
         parser.error('--size debe ser WxH con enteros positivos')
     if args.inside:
-        return inside(args.inside, args.entry.resolve(), *map(int, match.groups()))
-    return launch(args.entry.resolve(), args.size.lower())
+        return inside(args.inside, args.entry.resolve(), *map(int, match.groups()), args.client)
+    return launch(args.entry.resolve(), args.size.lower(), args.client)
 
 
 if __name__ == '__main__':
