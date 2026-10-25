@@ -1,0 +1,177 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Window
+import QtQuick.Controls.Basic as Controls
+import QtQuick.Dialogs
+import QtCore
+import org.kde.plasma.plasma5support as PlasmaSupport
+import "../../shell/qml/Singlr/Ui" as Ui
+
+Window {
+    id: window
+    width: 880; height: 600; minimumWidth: 880; minimumHeight: 600
+    visible: true; title: "Ajustes de Singlr"; color: Ui.Theme.background
+    property string page: Qt.application.arguments.indexOf("--wallpaper") >= 0 ? "wallpaper" : "appearance"
+    property string feedback: ""
+    property bool helperBusy: false
+    property bool helperPending: false
+    readonly property var accents: [
+        {label: "Índigo", color: "#5e6ad2"}, {label: "Azul", color: "#4ea7fc"},
+        {label: "Verde", color: "#4cb782"}, {label: "Ámbar", color: "#f2c94c"},
+        {label: "Naranja", color: "#f2994a"}, {label: "Rosa", color: "#eb5ea9"}, {label: "Gris", color: "#8a8f98"}]
+    readonly property var presets: [
+        {label: "Linear", key: "singlr:linear"}, {label: "Brillo tenue", key: "singlr:glow"},
+        {label: "Neutro claro", key: "singlr:light"}, {label: "Grafito", key: "singlr:graphite"}]
+    function save(key, value) {
+        Ui.Appearance.save(key, value);
+        feedback = "";
+        helperPending = true;
+        notifyTimer.restart();
+    }
+    function quote(value) { return "'" + value.replace(/'/g, "'\\''") + "'"; }
+    function notifyShell() {
+        if (helperBusy || !helperPending) return;
+        helperPending = false; helperBusy = true;
+        const helper = decodeURIComponent(Qt.resolvedUrl("apply-settings.py").toString().replace(/^file:\/\//, ""));
+        process.connectSource("python3 " + quote(helper) + (Ui.Appearance.applyToApps ? " --apply-to-apps" : "") + (Ui.Theme.dark ? " --dark" : " --light"));
+    }
+    Timer { id: notifyTimer; interval: 60; onTriggered: window.notifyShell() }
+    PlasmaSupport.DataSource {
+        id: process; engine: "executable"; connectedSources: []
+        onNewData: (sourceName, data) => {
+            disconnectSource(sourceName);
+            window.helperBusy = false;
+            window.feedback = Number(data["exit code"]) === 0 ? "" : String(data["stdout"]).trim() || "Guardado. No se pudo avisar a la sesión.";
+            if (window.helperPending) notifyTimer.restart();
+        }
+    }
+    FileDialog {
+        id: fileDialog; title: "Elegir fondo de escritorio"
+        currentFolder: StandardPaths.standardLocations(StandardPaths.PicturesLocation)[0]
+        nameFilters: ["Imágenes (*.png *.jpg *.jpeg *.webp *.avif *.bmp)"]
+        onAccepted: window.save("wallpaper", selectedFile.toString())
+    }
+    Rectangle {
+        id: canvas; anchors.fill: parent; color: Ui.Theme.background
+        Rectangle {
+            width: 200; height: parent.height; color: Ui.Theme.panel
+            Rectangle { anchors.right: parent.right; height: parent.height; width: 1; color: Ui.Theme.faintBorder }
+            Ui.UiText { x: 24; y: 28; height: 28; text: "Singlr"; weight: 650; font.pixelSize: 15 }
+            Column {
+                x: 12; y: 88; width: 176; spacing: 4
+                Repeater {
+                    model: [{label: "Apariencia", icon: "sun", key: "appearance"}, {label: "Fondo", icon: "image", key: "wallpaper"}]
+                    delegate: Controls.AbstractButton {
+                        id: nav; required property var modelData
+                        width: 176; height: 36
+                        objectName: "nav-" + modelData.key
+                        Accessible.name: modelData.label
+                        onClicked: window.page = modelData.key
+                        background: Rectangle { radius: 6; color: window.page === nav.modelData.key ? Ui.Theme.hover : nav.hovered ? Ui.Theme.content : "transparent"; border.color: nav.visualFocus ? Ui.Theme.control : "transparent" }
+                        contentItem: Row {
+                            leftPadding: 12; spacing: 10
+                            Ui.Icon { name: nav.modelData.icon; width: 16; height: 36; font.pixelSize: 16 }
+                            Ui.UiText { text: nav.modelData.label; height: 36; color: window.page === nav.modelData.key ? Ui.Theme.text : Ui.Theme.secondary }
+                        }
+                    }
+                }
+            }
+        }
+        Item {
+            x: 240; y: 32; width: parent.width - 280; height: parent.height - 64
+            Ui.UiText { height: 32; text: window.page === "appearance" ? "Apariencia" : "Fondo"; font.pixelSize: 20; weight: 620 }
+            Column {
+                y: 72; width: parent.width; spacing: 20; visible: window.page === "appearance"
+                Item {
+                    width: parent.width; height: 40
+                    Ui.UiText { height: 40; text: "Modo"; color: Ui.Theme.secondary }
+                    Rectangle {
+                        anchors.right: parent.right; width: 276; height: 36; y: 2; radius: 7; color: Ui.Theme.panel; border.color: Ui.Theme.border
+                        Row {
+                            x: 3; y: 3
+                            Repeater {
+                                model: [{label: "Claro", key: "light"}, {label: "Oscuro", key: "dark"}, {label: "Automático", key: "auto"}]
+                                delegate: Controls.AbstractButton {
+                                    id: mode; required property var modelData
+                                    objectName: "mode-" + modelData.key
+                                    width: 90; height: 30
+                                    Accessible.name: modelData.label; Accessible.role: Accessible.RadioButton; Accessible.checked: Ui.Appearance.mode === modelData.key
+                                    onClicked: window.save("mode", modelData.key)
+                                    background: Rectangle { radius: 5; color: Ui.Appearance.mode === mode.modelData.key ? Ui.Theme.raised : "transparent"; border.color: mode.visualFocus ? Ui.Theme.control : "transparent" }
+                                    contentItem: Ui.UiText { text: mode.modelData.label; color: Ui.Appearance.mode === mode.modelData.key ? Ui.Theme.text : Ui.Theme.muted; horizontalAlignment: Text.AlignHCenter }
+                                }
+                            }
+                        }
+                    }
+                }
+                Rectangle { width: parent.width; height: 1; color: Ui.Theme.faintBorder }
+                Item {
+                    width: parent.width; height: 40
+                    Ui.UiText { height: 40; text: "Color de acento"; color: Ui.Theme.secondary }
+                    Row {
+                        anchors.right: parent.right; height: 40; spacing: 10
+                        Repeater {
+                            model: window.accents
+                            delegate: Controls.AbstractButton {
+                                id: swatch; required property var modelData
+                                objectName: "accent-" + modelData.label
+                                width: 28; height: 40
+                                Accessible.name: modelData.label; Accessible.role: Accessible.RadioButton; Accessible.checked: Ui.Appearance.accent === modelData.color
+                                onClicked: window.save("accent", modelData.color)
+                                background: Item {
+                                    Rectangle { anchors.centerIn: parent; width: 28; height: 28; radius: 14; color: "transparent"; border.width: 1; border.color: Ui.Appearance.accent === swatch.modelData.color || swatch.visualFocus ? Ui.Theme.control : "transparent" }
+                                    Rectangle { anchors.centerIn: parent; width: 20; height: 20; radius: 10; color: swatch.modelData.color }
+                                }
+                            }
+                        }
+                    }
+                }
+                Rectangle { width: parent.width; height: 1; color: Ui.Theme.faintBorder }
+                Ui.Toggle { width: parent.width; height: 40; text: "Aplicar también a las apps de KDE"; checked: Ui.Appearance.applyToApps; onToggled: window.save("applyToApps", checked) }
+                Ui.UiText { width: parent.width; height: 36; text: Ui.Appearance.mode === "auto" ? "Claro de 7:00 a 19:00. Oscuro el resto del día." : ""; color: Ui.Theme.muted; font.pixelSize: 12 }
+            }
+            Column {
+                y: 72; width: parent.width; spacing: 20; visible: window.page === "wallpaper"
+                Row {
+                    spacing: 12
+                    Repeater {
+                        model: window.presets
+                        delegate: Controls.AbstractButton {
+                            id: preset; required property var modelData
+                            objectName: modelData.key
+                            width: (window.width - 316) / 4; height: 106
+                            Accessible.name: modelData.label; Accessible.role: Accessible.RadioButton; Accessible.checked: Ui.Appearance.wallpaper === modelData.key
+                            onClicked: window.save("wallpaper", modelData.key)
+                            background: Item {
+                                Rectangle { width: parent.width; height: 80; radius: 6; color: "transparent"; border.width: 2; border.color: Ui.Appearance.wallpaper === preset.modelData.key || preset.visualFocus ? Ui.Theme.control : Ui.Theme.border }
+                                Ui.Wallpaper { x: 4; y: 4; width: parent.width - 8; height: 72; radius: 3; source: preset.modelData.key }
+                                Ui.UiText { y: 84; height: 22; text: preset.modelData.label; font.pixelSize: 12; color: Ui.Theme.secondary }
+                            }
+                        }
+                    }
+                }
+                Item {
+                    width: parent.width; height: 36
+                    Ui.UiText { height: 36; text: "Imagen personalizada"; color: Ui.Theme.secondary }
+                    Ui.Button { anchors.right: parent.right; height: 36; width: 142; icon: "image"; label: "Elegir imagen…"; onClicked: fileDialog.open() }
+                }
+                Ui.Wallpaper { id: preview; width: parent.width; height: 228; radius: 6 }
+                Ui.UiText { width: parent.width; height: 24; text: preview.imageFailed ? "Imagen no disponible. Se muestra el fondo predeterminado." : "Vista previa"; color: preview.imageFailed ? Ui.Theme.error : Ui.Theme.muted; font.pixelSize: 12 }
+            }
+            Ui.UiText { anchors.bottom: parent.bottom; width: parent.width; height: 36; text: window.feedback; color: Ui.Theme.error; wrapMode: Text.WordWrap; font.pixelSize: 12; Accessible.role: Accessible.AlertMessage }
+        }
+    }
+    Component.onCompleted: Ui.Theme.reloadSettings()
+    // Captura explícita para revisión: no modifica preferencias.
+    Timer {
+        interval: 1200; running: Qt.application.arguments.some(arg => arg.indexOf("--capture=") === 0)
+        onTriggered: {
+            const arg = Qt.application.arguments.find(value => value.indexOf("--capture=") === 0);
+            canvas.grabToImage(result => {
+                const path = arg.slice(10);
+                if (!result.saveToFile(path)) { Qt.exit(1); return; }
+                console.log("CAPTURE_OK " + path); Qt.quit();
+            });
+        }
+    }
+}

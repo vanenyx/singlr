@@ -109,7 +109,7 @@ Item {
         Icon {
             x: 8; anchors.verticalCenter: parent.verticalCenter; width: 16; height: 16; font.pixelSize: 16
             name: wifi.failed ? "warning" : row.glyph
-            color: wifi.failed ? "#ef9a9a" : Theme.secondary
+            color: wifi.failed ? Theme.error : Theme.secondary
             opacity: wifi.requested ? 0.4 : 1
             Accessible.name: wifi.failed ? "Contraseña incorrecta" : wifi.requested ? "Conectando" : "Wi-Fi"
         }

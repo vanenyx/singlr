@@ -9,7 +9,7 @@ Rectangle {
     signal dismissed()
     signal invoked(string action)
     width: 360; height: content.height + 24; radius: 10
-    color: sessionMode ? "#e6191a1b" : Theme.raised; border.color: Theme.border
+    color: sessionMode ? Theme.surface : Theme.raised; border.color: Theme.border
     HoverHandler { id: hover }
     Accessible.role: Accessible.Button
     Accessible.name: entry.app + ": " + entry.title + ". " + entry.body

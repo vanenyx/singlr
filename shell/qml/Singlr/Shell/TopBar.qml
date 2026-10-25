@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as Controls
 import Singlr.Ui
+import org.kde.plasma.private.kicker as Kicker
 Rectangle {
     id: bar
     property bool sessionMode: false
@@ -18,8 +19,8 @@ Rectangle {
     readonly property bool menuOpen: menu.visible
     property date now: new Date()
     implicitHeight: 28
-    color: "#b3161718"
-    Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: "#0fffffff" }
+    color: Theme.barSurface
+    Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.border }
     Timer { interval: 1000; running: true; repeat: true; onTriggered: bar.now = new Date() }
     Row { x: 16; height: 28; spacing: 8
         Tool { y: 3; width: 24; height: 22; icon: "circle"; iconSize: 14; description: "Menú Singlr"; onClicked: menu.visible ? menu.close() : menu.open() }
@@ -37,13 +38,15 @@ Rectangle {
         StatusIndicators { anchors.verticalCenter: parent.verticalCenter; onControlCenterRequested: bar.controlCenterRequested() }
         UiText { height: 28; text: bar.now.toLocaleString(Qt.locale("es_ES"), "ddd d MMM  HH:mm"); weight: 510; color: Theme.secondary }
     }
+    Kicker.SimpleFavoritesModel { id: singlrSettings; favorites: ["singlr-settings.desktop"] }
     Controls.Popup {
-        id: menu; onAboutToShow: systemTray.close(); parent: bar.menuHost || bar; x: bar.menuHost ? 0 : 16; y: bar.menuHost ? 0 : 32; width: 220; height: 80; padding: 4; focus: true
+        id: menu; onAboutToShow: systemTray.close(); parent: bar.menuHost || bar; x: bar.menuHost ? 0 : 16; y: bar.menuHost ? 0 : 32; width: 220; height: 116; padding: 4; focus: true
         popupType: Controls.Popup.Item
         closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
         background: Rectangle { radius: 8; color: Theme.raised; border.color: Theme.border }
         contentItem: Column {
             Tool { width: parent.width; height: 36; icon: "squares-four"; label: "Todas las aplicaciones"; onClicked: { menu.close(); bar.applicationsRequested(); } }
+            Tool { width: parent.width; height: 36; icon: "gear"; label: "Ajustes de Singlr"; onClicked: { if (singlrSettings.count > 0 && singlrSettings.trigger(0, "", null)) menu.close(); } }
             Tool { width: parent.width; height: 36; icon: "power"; label: "Salir de Singlr"; onClicked: Qt.quit() }
         }
     }

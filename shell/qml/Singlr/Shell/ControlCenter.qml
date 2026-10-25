@@ -139,7 +139,7 @@ Controls.Control {
     palette.buttonText: Theme.text
     palette.base: Theme.panel
     palette.accent: Theme.control
-    palette.highlightedText: "#16171a"
+    palette.highlightedText: Theme.onControl
     palette.highlight: Theme.control
     onOpenedChanged: {
         if (opened) networkHandler.requestScan();
@@ -147,12 +147,17 @@ Controls.Control {
     }
     Component.onCompleted: if (opened) networkHandler.requestScan()
     Timer { interval: 15000; running: panel.opened; repeat: true; onTriggered: networkHandler.requestScan() }
+    function openSinglrSettings() {
+        if (singlrSettingsApp.count > 0 && singlrSettingsApp.trigger(0, "", null)) panel.closed();
+        else panel.errorText = "Ajustes de Singlr no encontrados en el catálogo.";
+    }
+    Kicker.SimpleFavoritesModel { id: singlrSettingsApp; favorites: ["singlr-settings.desktop"] }
     function openSettings() {
         if (settingsApp.count > 0 && settingsApp.trigger(0, "", null)) panel.closed();
         else panel.errorText = "Configuración no encontrada en el catálogo.";
     }
     Keys.onEscapePressed: back()
-    Rectangle { anchors.fill: parent; radius: 12; color: "#ed191a1b"; border.color: Theme.focusBorder }
+    Rectangle { anchors.fill: parent; radius: 12; color: Theme.surface; border.color: Theme.focusBorder }
     Kicker.SimpleFavoritesModel { id: settingsApp; favorites: ["systemsettings.desktop"] }
     Battery.BatteryControlModel { id: batteryModel }
     Power.PowerProfilesControl { id: powerProfiles }
@@ -251,6 +256,7 @@ Controls.Control {
                 Toggle { width: 34; checked: panel.notifications.inhibited; Accessible.name: "No molestar"; onToggled: panel.notifications.setInhibited(checked) }
             }
             Rectangle { width: parent.width; height: 1; color: Theme.border }
+            ControlRow { width: parent.width; glyph: "gear"; text: "Ajustes de Singlr"; onClicked: panel.openSinglrSettings() }
             ControlRow { width: parent.width; glyph: "gear"; text: "Configuración del sistema"; onClicked: panel.openSettings() }
             UiText { width: parent.width; height: visible ? implicitHeight : 0; visible: !!panel.errorText; text: panel.errorText; wrapMode: Text.Wrap; color: Theme.secondary }
             BatteryRow {
@@ -339,7 +345,7 @@ Controls.Control {
                     Keys.onMenuPressed: panel.openDeviceMenu(payload.device, deviceRow, width - 28, height)
                 }
             }
-            UiText { y: parent.height - 36; width: parent.width; height: 36; text: panel.errorText; color: "#ef9a9a"; Accessible.role: Accessible.AlertMessage }
+            UiText { y: parent.height - 36; width: parent.width; height: 36; text: panel.errorText; color: Theme.error; Accessible.role: Accessible.AlertMessage }
         }
     }
 }

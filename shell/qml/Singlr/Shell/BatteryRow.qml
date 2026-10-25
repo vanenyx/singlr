@@ -18,7 +18,7 @@ Item {
     Row {
         id: profiles; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
         Repeater {
-            model: [{key: "power-saver", title: "Ahorro", tint: "#4ea7fc"}, {key: "balanced", title: "Equilibrado", tint: "#f7f8f8"}, {key: "performance", title: "Rendimiento", tint: "#eb5757"}]
+            model: [{key: "power-saver", title: "Ahorro", tint: Theme.powerSaver}, {key: "balanced", title: "Equilibrado", tint: Theme.control}, {key: "performance", title: "Rendimiento", tint: Theme.powerPerformance}]
             delegate: Controls.AbstractButton {
                 id: profile
                 required property var modelData

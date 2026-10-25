@@ -11,6 +11,7 @@ import Singlr.Ui
 Item {
     id: session
     readonly property var notificationCenter: notifications
+    function reloadSettings() { Theme.reloadSettings(); }
     function closeMenus() { bar.closeMenu(); dock.closeMenu(); notifications.historyOpen = false; controlWindow.visible = false; }
     // Invocado desde C++ (tecla Meta, Alt+Espacio) a través de D-Bus.
     function showApplications() { openLauncher(true); }
@@ -149,12 +150,12 @@ Item {
         LayerShell.Window.exclusionZone: 0
         LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
         LayerShell.Window.scope: "tooltip"
-        Rectangle { anchors.fill: parent; radius: 8; color: "#ef191a1b"; border.color: Theme.border }
+        Rectangle { anchors.fill: parent; radius: 8; color: Theme.surface; border.color: Theme.border }
         UiText { id: tooltipLabel; anchors.centerIn: parent; text: dock.tooltipText; font.pixelSize: 12 }
     }
     Window {
         id: barMenuWindow
-        transientParent: null; visible: bar.menuOpen; width: 220; height: 80; color: "transparent"
+        transientParent: null; visible: bar.menuOpen; width: 220; height: 116; color: "transparent"
         LayerShell.Window.layer: LayerShell.Window.LayerTop
         LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorLeft
         // KWin already positions this surface below the topbar's exclusive zone.

@@ -66,7 +66,7 @@ FocusScope {
     }
     onQueryChanged: { selectedIndex = 0; actionsOpen = false; }
     Glass { anchors.fill: parent; backdrop: launcher.backdrop; visible: !launcher.sessionMode }
-    Rectangle { anchors.fill: parent; visible: launcher.sessionMode; radius: 12; color: "#f018181b"; border.color: Theme.focusBorder }
+    Rectangle { anchors.fill: parent; visible: launcher.sessionMode; radius: 12; color: Theme.surface; border.color: Theme.focusBorder }
     MouseArea { anchors.fill: parent; acceptedButtons: Qt.LeftButton | Qt.RightButton; onPressed: launcher.focusInput() }
     Icon { x: 24; y: 25; width: 20; height: 20; font.pixelSize: 20; name: "magnifying-glass" }
     TextInput {

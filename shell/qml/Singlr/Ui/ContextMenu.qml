@@ -68,7 +68,7 @@ Controls.Popup {
                 required property int index
                 z: -1; x: -index - 1; y: -index + 1
                 width: parent.width + 2 * (index + 1); height: parent.height + 2 * (index + 1)
-                radius: 9 + index; color: "transparent"; border.color: "#10000000"; border.width: 2
+                radius: 9 + index; color: "transparent"; border.color: Theme.softShadow; border.width: 2
             }
         }
     }
@@ -120,7 +120,7 @@ Controls.Popup {
                         id: caption; x: 28; height: 28; width: parent.width - x - hint.width - 10
                         font.pixelSize: 13
                         text: menu.confirmingIndex === row.index ? (row.modelData.confirmation || "¿Confirmar? Pulsa de nuevo") : (row.modelData.label || "")
-                        color: menu.confirmingIndex === row.index ? (Theme.dark ? "#ef9a9a" : "#ae3535") : Theme.text
+                        color: menu.confirmingIndex === row.index ? Theme.error : Theme.text
                         elide: Text.ElideRight
                     }
                     UiText { id: hint; anchors.right: parent.right; anchors.rightMargin: 6; height: 28; text: menu.confirmingIndex === row.index ? "" : row.modelData.shortcut || ""; font.pixelSize: 13; color: Theme.muted }

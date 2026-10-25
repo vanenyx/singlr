@@ -40,7 +40,7 @@ Item {
         else if (method === "showText" && args.length > 1) show("sliders-horizontal", -1, String(args[1]));
     }
     Timer { id: timeout; interval: 1500; onTriggered: osd.showing = false }
-    Rectangle { anchors.fill: parent; radius: 12; color: "#e6191a1b"; border.color: Theme.focusBorder }
+    Rectangle { anchors.fill: parent; radius: 12; color: Theme.surface; border.color: Theme.focusBorder }
     Icon { x: 16; anchors.verticalCenter: parent.verticalCenter; width: 20; height: 20; name: osd.icon }
     Rectangle {
         x: 50; anchors.verticalCenter: parent.verticalCenter; width: 174; height: 4; radius: 2

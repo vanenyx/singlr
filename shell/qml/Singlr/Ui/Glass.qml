@@ -41,5 +41,5 @@ Item {
         color: glass.canBlur ? Qt.rgba(Theme.raised.r,Theme.raised.g,Theme.raised.b,Theme.dark?.78:.85) : Theme.raised
         border.width: 1; border.color: Theme.focusBorder
     }
-    Rectangle { x:12; y:1; width:parent.width-24; height:1; color:Theme.dark?"#0cffffff":"#80ffffff" }
+    Rectangle { x:12; y:1; width:parent.width-24; height:1; color:Theme.sheen }
 }

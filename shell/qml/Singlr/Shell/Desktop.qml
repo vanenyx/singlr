@@ -18,7 +18,7 @@ Window {
         Background { id: background; anchors.fill: parent }
         TopBar { notificationsUnread: notifications.unread; onNotificationsRequested: notifications.toggle(); anchors.top: parent.top; width: parent.width; z: 2; activeAppName: dock.activeAppName; onLauncherRequested: searchPanel.open(); onApplicationsRequested: searchPanel.open(true) }
         Dock { id: dock; anchors.bottom: parent.bottom; anchors.bottomMargin: 10; anchors.horizontalCenter: parent.horizontalCenter; onLauncherRequested: searchPanel.open(); onApplicationsRequested: searchPanel.open(true) }
-        Rectangle { anchors.fill: parent; visible: searchPanel.visible; color: "#38000000"; z: 3
+        Rectangle { anchors.fill: parent; visible: searchPanel.visible; color: Theme.scrim; z: 3
             MouseArea { anchors.fill: parent; onClicked: searchPanel.close() }
         }
         Launcher { id: searchPanel; visible: false; z: 4; x: (parent.width-width)/2; y: Math.min(286, (parent.height-height)/2); backdrop: background }

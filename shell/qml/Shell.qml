@@ -22,7 +22,8 @@ QtObject {
     }
     property Component session: Component { Session {} }
     Component.onCompleted: {
-        Theme.dark = argument("mode", "dark") !== "light";
+        Theme.reloadSettings();
+        if (argument("mode", "")) Theme.mode = argument("mode", "dark");
         if (!windowed && (argument("capture", "") || Qt.application.arguments.indexOf("--capture") >= 0)) { console.error("--capture requiere --windowed"); Qt.exit(2); }
     }
 }

@@ -270,16 +270,16 @@ Rectangle {
         return count;
     }
     width: contents.width+16; height: 48; radius: 14
-    color: Qt.rgba(22/255,23/255,24/255,0.55); border.color: "#14ffffff"
-    RectangularShadow { anchors.fill: parent; z: -1; radius: 14; blur: 24; offset: Qt.vector2d(0, 8); color: "#59000000"; visible: GraphicsInfo.api !== GraphicsInfo.Software }
-    Rectangle { x: 14; y: 1; width: parent.width-28; height: 1; color: "#0affffff" }
+    color: Theme.dockSurface; border.color: Theme.border
+    RectangularShadow { anchors.fill: parent; z: -1; radius: 14; blur: 24; offset: Qt.vector2d(0, 8); color: Theme.shadow; visible: GraphicsInfo.api !== GraphicsInfo.Software }
+    Rectangle { x: 14; y: 1; width: parent.width-28; height: 1; color: Theme.sheen }
     Row { id: contents; x: 8; height: 48; spacing: 6
         Repeater {
             id: pinned
             model: dock.taskSource
             delegate: TaskEntry {}
         }
-        Rectangle { visible: unpinned.width > 0 && dock.pinnedCount > 0; width: 1; height: 20; y: 14; color: "#14ffffff" }
+        Rectangle { visible: unpinned.width > 0 && dock.pinnedCount > 0; width: 1; height: 20; y: 14; color: Theme.border }
         Row {
             id: unpinned; height: 48; spacing: 6
             Repeater {
@@ -299,7 +299,7 @@ Rectangle {
                 }
             }
         }
-        Rectangle { visible: pinned.count > 0; width: 1; height: 20; y: 14; color: "#14ffffff" }
+        Rectangle { visible: pinned.count > 0; width: 1; height: 20; y: 14; color: Theme.border }
         DockItem { sessionMode: dock.sessionMode; onTooltipRequested: (text, center) => dock.showTooltip(text, center); task: ({AppName: "Todas las aplicaciones", singlrGrid: true, decoration: ""}); onActivated: dock.applicationsRequested() }
         Tool { objectName: "overviewButton"; visible: dock.overviewAvailable; width: 32; height: 48; icon: "cards-three"; iconSize: 20; description: "Multitarea"; onClicked: dock.systemBridge.invokeShortcut("kwin", "Singlr Overview") }
     }
@@ -327,7 +327,7 @@ Rectangle {
         visible: !dock.sessionMode && !!dock.tooltipText && !dock.menuOpen
         x: dock.tooltipCenter - dock.x - width / 2; y: -height - 8; padding: 8
         popupType: Controls.Popup.Item; closePolicy: Controls.Popup.NoAutoClose
-        background: Rectangle { radius: 8; color: "#ef191a1b"; border.color: Theme.border }
+        background: Rectangle { radius: 8; color: Theme.surface; border.color: Theme.border }
         contentItem: UiText { text: dock.tooltipText; font.pixelSize: 12 }
     }
     Keys.onEscapePressed: contextRow = -1

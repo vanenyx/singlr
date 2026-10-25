@@ -12,3 +12,5 @@ Toggle 1.0 Toggle.qml
 SliderControl 1.0 SliderControl.qml
 ControlRow 1.0 ControlRow.qml
 ContextMenu 1.0 ContextMenu.qml
+singleton Appearance 1.0 Appearance.qml
+Wallpaper 1.0 Wallpaper.qml

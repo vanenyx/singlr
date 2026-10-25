@@ -16,12 +16,12 @@ Controls.Switch {
     indicator: Rectangle {
         implicitWidth: 34; implicitHeight: 20; radius: 10
         x: sw.width - width; y: (sw.height - height) / 2
-        color: sw.checked ? Theme.control : "#1fffffff"
+        color: sw.checked ? Theme.control : Theme.track
         border.color: sw.visualFocus ? Theme.control : "transparent"
         Rectangle {
             width: 16; height: 16; radius: 8; y: 2
             x: sw.checked ? parent.width - width - 2 : 2
-            color: sw.checked ? "#16171a" : "#d0d6e0"
+            color: sw.checked ? Theme.onControl : Theme.secondary
         }
     }
     background: Item { }

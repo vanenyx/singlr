@@ -11,8 +11,8 @@ Rectangle {
     width: label ? caption.implicitWidth+42 : 28; height: 28; radius: 6
     // Foco visible solo al navegar con teclado (Tab); un clic nunca deja marco ni fondo.
     property bool keyboardFocus: false
-    onActiveFocusChanged: keyboardFocus = activeFocus && (focusReason === Qt.TabFocusReason || focusReason === Qt.BacktabFocusReason)
-    color: pointer.containsMouse || keyboardFocus ? "#0dffffff" : "transparent"
+    onActiveFocusChanged: keyboardFocus = activeFocus
+    color: pointer.containsMouse || keyboardFocus ? Theme.toolHover : "transparent"
     border.color: keyboardFocus ? Theme.accentText : "transparent"
     activeFocusOnTab: true
     Controls.ToolTip.visible: pointer.containsMouse && !!description
