@@ -58,7 +58,7 @@ def verify(stage):
     switcher = root / 'usr/share/kwin/tabbox/singlr'
     assert json.loads((switcher / 'metadata.json').read_text())['KPackageStructure'] == 'KWin/WindowSwitcher'
     for qml in (switcher / 'contents/ui/SwitcherView.qml', root / 'usr/share/kwin/effects/singlr-overview/contents/ui/main.qml'):
-        assert 'import "/usr/lib/singlr/qml/Singlr/Ui" as Ui' in qml.read_text(), qml
+        assert 'import "file:///usr/lib/singlr/qml/Singlr/Ui" as Ui' in qml.read_text(), qml
         assert 'shell/qml/Singlr/Ui' not in qml.read_text(), qml
     print('PASS staged payload, executable modes, fonts and session paths')
 

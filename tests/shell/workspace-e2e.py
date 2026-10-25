@@ -32,7 +32,7 @@ def stage_packages(data):
         for qml in target.rglob('*.qml'):
             text = qml.read_text()
             for relative in ('../../../../../shell/qml/Singlr/Ui', '../../../../../../shell/qml/Singlr/Ui'):
-                text = text.replace('"' + relative + '"', '"' + (ROOT / 'shell/qml/Singlr/Ui').as_posix() + '"')
+                text = text.replace('"' + relative + '"', '"' + (ROOT / 'shell/qml/Singlr/Ui').as_uri() + '"')
             qml.write_text(text)
 
 
@@ -74,8 +74,17 @@ def main():
                         call('org.kde.KWin', '/Scripting', 'org.kde.kwin.Scripting.unloadScript', marker)
                 # Same transaction as login, but with the private XDG config/state and bus.
                 subprocess.run([str(ROOT / 'session/singlr-kwin'), '--apply'], env=private, check=True, timeout=25)
-                if call('org.kde.KWin', '/Effects', 'org.kde.kwin.Effects.isEffectLoaded', 'singlr-overview') != 'true':
-                    raise RuntimeError('Overview did not load; inspect private KWin log')
+                # KWin loads the reconfigured effect asynchronously after --apply.
+                def overview_loaded():
+                    try:
+                        return call('org.kde.KWin', '/Effects', 'org.kde.kwin.Effects.isEffectLoaded', 'singlr-overview') == 'true'
+                    except subprocess.CalledProcessError:
+                        return False
+                deadline = time.monotonic() + 15
+                while not overview_loaded():
+                    if time.monotonic() > deadline:
+                        raise RuntimeError('Overview did not load; inspect private KWin log')
+                    time.sleep(.5)
                 for folder in ('/usr', '/etc', '/tmp'):
                     subprocess.Popen(['dolphin', '--new-window', folder], env=private, stdout=log, stderr=log)
                     time.sleep(1)

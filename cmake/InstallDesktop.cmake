@@ -78,7 +78,7 @@ foreach(workspace_package overview switcher switcher-view)
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/${source}")
     file(READ "${PROJECT_SOURCE_DIR}/${source}" workspace_qml)
     string(REGEX REPLACE "import \"[. /]*shell/qml/Singlr/Ui\" as Ui"
-        "import \"${SINGLR_ROOT}/qml/Singlr/Ui\" as Ui" workspace_qml "${workspace_qml}")
+        "import \"file://${SINGLR_ROOT}/qml/Singlr/Ui\" as Ui" workspace_qml "${workspace_qml}")
     file(WRITE "${PROJECT_BINARY_DIR}/workspace-${workspace_package}.qml" "${workspace_qml}")
     if(workspace_package STREQUAL "switcher-view")
         set(workspace_filename SwitcherView.qml)
