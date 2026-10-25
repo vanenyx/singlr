@@ -121,7 +121,26 @@ def restore_kwin():
                    capture_output=True)
 
 
+def restore_shortcuts():
+    backup = STATE / 'shortcuts-backup.json'
+    if not backup.exists():
+        return True
+    try:
+        binary = subprocess.run([str(ROOT / 'shell/session/build.sh')], check=True,
+                                capture_output=True, text=True).stdout.strip().splitlines()[-1]
+        result = subprocess.run([binary, '--restore-shortcuts'], capture_output=True, text=True,
+                                timeout=30)
+        if result.returncode == 0 and not backup.exists():
+            return True
+        print('No se pudieron restaurar los atajos: ' + result.stderr.strip(), file=sys.stderr)
+    except (OSError, subprocess.SubprocessError, IndexError) as error:
+        print(f'No se pudieron restaurar los atajos: {error}', file=sys.stderr)
+    print('Backup conservado; reintente tools/singlr-live.sh stop', file=sys.stderr)
+    return False
+
+
 def restore_plasma():
+    shortcuts_restored = restore_shortcuts()
     restore_kwin()
     if NETWORK_MARK.exists():
         try:
@@ -138,6 +157,7 @@ def restore_plasma():
         plasma('reset-failed')
         plasma('start')
         PLASMA_MARK.unlink(missing_ok=True)
+    return shortcuts_restored
 
 
 def supervise(takeover):
@@ -145,7 +165,7 @@ def supervise(takeover):
                             capture_output=True, text=True).stdout.strip().splitlines()[-1]
     command = [binary, str(QML), str(QML / 'Shell.qml')]
     if not takeover:
-        command += ['--', '--no-background']
+        command += ['--', '--no-background', '--no-takeover']
     stop = False
 
     def finish(*_):
@@ -232,16 +252,20 @@ def main():
     if action == 'stop':
         pid = running()
         if not pid:
-            restore_plasma()
+            restored = restore_plasma()
             print('Singlr en vivo no está activo')
-            return 0
+            return 0 if restored else 1
         os.kill(pid, signal.SIGTERM)
         for _ in range(50):
             if not running():
                 break
             time.sleep(0.1)
+        if running():
+            print('Singlr aún se está deteniendo; reintente stop', file=sys.stderr)
+            return 1
+        restored = restore_shortcuts()
         print('Singlr en vivo detenido')
-        return 0
+        return 0 if restored else 1
     print('activo' if running() else 'inactivo')
     return 0
 

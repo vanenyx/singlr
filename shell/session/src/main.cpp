@@ -18,9 +18,16 @@
 #include "secretagent.h"
 #include "tray.h"
 #include "system.h"
+#include "shortcuts.h"
+#include <QCoreApplication>
+#include <QTimer>
+#include <QScopeGuard>
+#include <csignal>
 
 namespace
 {
+volatile std::sig_atomic_t quitRequested = 0;
+void requestQuit(int) { quitRequested = 1; }
 // Región con esquinas redondeadas para que el desenfoque no asome fuera del radio.
 QRegion roundedRegion(const QSize &size, int radius)
 {
@@ -55,7 +62,14 @@ public:
         if (message.type() != QDBusMessage::MethodCallMessage || message.interface() == QLatin1String("org.freedesktop.DBus.Introspectable")
             || message.interface() == QLatin1String("org.freedesktop.DBus.Properties"))
             return false;
-        QMetaObject::invokeMethod(m_target, "toggleLauncher", Qt::QueuedConnection);
+        const char *method = message.path() == QLatin1String("/PlasmaShell")
+                && message.member() == QLatin1String("singlrShowApplications") ? "showApplications" : "toggleLauncher";
+        const QByteArray signature = QByteArray(method) + "()";
+        if (m_target->metaObject()->indexOfMethod(signature.constData()) < 0) {
+            connection.send(message.createErrorReply(QStringLiteral("org.kde.plasmashell.MissingMethod"), QString::fromLatin1(signature)));
+            return true;
+        }
+        QMetaObject::invokeMethod(m_target, method, Qt::QueuedConnection);
         connection.send(message.createReply());
         return true;
     }
@@ -141,10 +155,21 @@ void trackBlur(QQuickWindow *window)
 
 int main(int argc, char *argv[])
 {
+    for (int i = 1; i < argc; ++i) {
+        if (QByteArray(argv[i]) == "--restore-shortcuts") {
+            QCoreApplication app(argc, argv);
+            return SinglrShortcuts::restoreKWin() ? 0 : 1;
+        }
+    }
     // Antes de QGuiApplication; después se retira la variable para que las apps lanzadas usen xdg-shell.
     LayerShellQt::Shell::useLayerShell();
     QGuiApplication app(argc, argv);
     qunsetenv("QT_WAYLAND_SHELL_INTEGRATION");
+    std::signal(SIGTERM, requestQuit);
+    std::signal(SIGINT, requestQuit);
+    QTimer signalTimer;
+    QObject::connect(&signalTimer, &QTimer::timeout, &app, [&app] { if (quitRequested) app.quit(); });
+    signalTimer.start(100);
     app.setApplicationName(QStringLiteral("singlr-shell"));
     app.setDesktopFileName(QStringLiteral("singlr-shell"));
     // Logotipos originales de las apps: hicolor contiene los iconos que instala cada
@@ -160,7 +185,18 @@ int main(int argc, char *argv[])
     engine.addImportPath(QString::fromLocal8Bit(argv[1]));
     auto bus = QDBusConnection::sessionBus();
     const bool ownsPlasma = !app.arguments().contains(QStringLiteral("--windowed"))
+        && !app.arguments().contains(QStringLiteral("--no-takeover"))
         && bus.registerService(QStringLiteral("org.kde.plasmashell"));
+    bool shortcutsCleanupDone = false;
+    const auto cleanupShortcuts = [ownsPlasma, &shortcutsCleanupDone] {
+        if (!ownsPlasma || shortcutsCleanupDone)
+            return;
+        shortcutsCleanupDone = true;
+        if (!SinglrShortcuts::restoreKWin())
+            qWarning("Singlr: backup de atajos pendiente; reintente --restore-shortcuts");
+    };
+    const auto restoreShortcuts = qScopeGuard(cleanupShortcuts);
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, &app, cleanupShortcuts);
     if (ownsPlasma) {
         engine.rootContext()->setContextProperty(QStringLiteral("SinglrSystem"), new System(&engine));
         engine.rootContext()->setContextProperty(QStringLiteral("SinglrSecrets"), new SecretAgent(&engine));
@@ -188,6 +224,7 @@ int main(int argc, char *argv[])
             KGlobalAccel::self()->setShortcut(action, {QKeySequence(Qt::META), QKeySequence(Qt::ALT | Qt::Key_F1)}, KGlobalAccel::Autoloading);
             QObject::connect(action, &QAction::triggered, session, [session] { QMetaObject::invokeMethod(session, "toggleLauncher"); });
             registerGlobalActions(&app, session);
+            SinglrShortcuts::registerActions(&app, session);
         }
         if (session->metaObject()->indexOfMethod("osdRequest(QVariant,QVariant)") >= 0 && bus.registerService(QStringLiteral("org.kde.osdService")))
             bus.registerVirtualObject(QStringLiteral("/org/kde/osdService"), new OsdBridge(session));
@@ -195,6 +232,10 @@ int main(int argc, char *argv[])
             bus.registerVirtualObject(QStringLiteral("/App"), bridge);
             bus.registerVirtualObject(QStringLiteral("/org/kde/krunner"), bridge);
         }
+    }
+    if (ownsPlasma) {
+        if (!SinglrShortcuts::applyKWin())
+            qWarning("Singlr: no se pudieron aplicar los atajos KWin; se restaurará el backup al salir");
     }
     for (QWindow *window : QGuiApplication::allWindows())
         if (auto *quick = qobject_cast<QQuickWindow *>(window))
