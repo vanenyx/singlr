@@ -23,6 +23,13 @@ def verify(stage):
         'usr/share/kwin/effects/singlr-overview/contents/ui/main.qml',
         'usr/share/kwin/scripts/singlr-gestures/metadata.json',
         'usr/share/kwin/scripts/singlr-gestures/contents/ui/main.qml',
+        'usr/share/plasma/shells/org.singlr.desktop/metadata.json',
+        'usr/share/plasma/shells/org.singlr.desktop/contents/lockscreen/LockScreen.qml',
+        'usr/share/plasma/shells/org.singlr.desktop/contents/lockscreen/LockScreenUi.qml',
+        'usr/share/plasma/shells/org.singlr.desktop/contents/lockscreen/MainBlock.qml',
+        'usr/share/plasma/shells/org.singlr.desktop/contents/lockscreen/config.xml',
+        'usr/share/plasma/shells/org.singlr.desktop/contents/fonts/InterVariable.ttf',
+        'usr/share/plasma/shells/org.singlr.desktop/contents/fonts/Phosphor.ttf',
     ]
     for relative in required:
         assert (root / relative).is_file(), f'Missing payload: {relative}'
@@ -32,6 +39,9 @@ def verify(stage):
     theme = root / 'usr/lib/singlr/qml/Singlr/Ui/Theme.qml'
     for font in re.findall(r'source:\s*"([^"]+\.ttf)"', theme.read_text()):
         assert (theme.parent / font).is_file(), f'Missing font: {font}'
+    lockscreen = root / 'usr/share/plasma/shells/org.singlr.desktop/contents/lockscreen'
+    for font in re.findall(r'source:\s*"([^"]+\.ttf)"', (lockscreen / 'Theme.qml').read_text()):
+        assert (lockscreen / font).is_file(), f'Missing greeter font: {font}'
     for relative in ('usr/share/wayland-sessions/singlr.desktop',
                      'usr/lib/systemd/user/singlr-shell.service'):
         text = (root / relative).read_text()

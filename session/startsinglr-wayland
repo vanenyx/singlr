@@ -96,6 +96,7 @@ def main():
         env = {'XDG_SESSION_TYPE': 'wayland', 'XDG_SESSION_DESKTOP': 'Singlr',
                'XDG_CURRENT_DESKTOP': 'Singlr:KDE', 'XDG_MENU_PREFIX': 'plasma-',
                'KDE_FULL_SESSION': 'true', 'KDE_SESSION_VERSION': '6',
+               'PLASMA_DEFAULT_SHELL': 'org.singlr.desktop',
                'KDE_SESSION_UID': str(os.getuid()), 'QT_WAYLAND_RECONNECT': '1',
                'SINGLR_DEV_ROOT': os.environ.get('SINGLR_DEV_ROOT', ''),
                'XDG_SESSION_ID': os.environ.get('XDG_SESSION_ID', '')}
