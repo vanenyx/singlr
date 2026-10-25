@@ -16,6 +16,7 @@
 #include <QRegion>
 #include <QUrl>
 #include "secretagent.h"
+#include "tray.h"
 
 namespace
 {
@@ -159,8 +160,12 @@ int main(int argc, char *argv[])
     auto bus = QDBusConnection::sessionBus();
     const bool ownsPlasma = !app.arguments().contains(QStringLiteral("--windowed"))
         && bus.registerService(QStringLiteral("org.kde.plasmashell"));
-    if (ownsPlasma)
+    if (ownsPlasma) {
         engine.rootContext()->setContextProperty(QStringLiteral("SinglrSecrets"), new SecretAgent(&engine));
+        auto *tray = new Tray(&engine);
+        engine.addImageProvider(QStringLiteral("singlrtray"), tray->createImageProvider());
+        engine.rootContext()->setContextProperty(QStringLiteral("SinglrTray"), tray);
+    }
     engine.load(QUrl::fromLocalFile(QString::fromLocal8Bit(argv[2])));
     if (engine.rootObjects().isEmpty())
         return 1;
