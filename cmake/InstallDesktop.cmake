@@ -55,7 +55,7 @@ install(FILES session/systemd/plasma-kwin_wayland.service.d/50-singlr-recovery.c
 
 add_subdirectory(session/appearance)
 install(DIRECTORY session/look-and-feel/ DESTINATION "${KDE_INSTALL_DATADIR}/plasma/look-and-feel")
-install(FILES session/xdg/kdeglobals DESTINATION "${KDE_INSTALL_LIBDIR}/singlr/xdg")
+install(FILES session/xdg/kdeglobals session/xdg/ksplashrc DESTINATION "${KDE_INSTALL_LIBDIR}/singlr/xdg")
 install(FILES session/color-schemes/SinglrDark.colors session/color-schemes/SinglrLight.colors DESTINATION "${KDE_INSTALL_DATADIR}/color-schemes")
 
 # Read-only, privacy-filtered support report, available from a TTY as well.
@@ -86,4 +86,13 @@ foreach(workspace_package overview switcher switcher-view)
         set(workspace_filename main.qml)
     endif()
     install(FILES "${PROJECT_BINARY_DIR}/workspace-${workspace_package}.qml" DESTINATION "${destination}" RENAME "${workspace_filename}")
+endforeach()
+
+# KSplash loads a standalone KPackage, outside the shell's engine/import path.
+foreach(mode dark light)
+    file(READ "${PROJECT_SOURCE_DIR}/session/look-and-feel/dev.singlr.${mode}/contents/splash/Splash.qml" splash_qml)
+    string(REPLACE "../../../../../shell/qml/Singlr/Ui" "file://${SINGLR_ROOT}/qml/Singlr/Ui" splash_qml "${splash_qml}")
+    file(WRITE "${PROJECT_BINARY_DIR}/Splash-${mode}.qml" "${splash_qml}")
+    install(FILES "${PROJECT_BINARY_DIR}/Splash-${mode}.qml"
+        DESTINATION "${KDE_INSTALL_DATADIR}/plasma/look-and-feel/dev.singlr.${mode}/contents/splash" RENAME Splash.qml)
 endforeach()

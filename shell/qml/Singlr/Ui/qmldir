@@ -15,3 +15,5 @@ ContextMenu 1.0 ContextMenu.qml
 singleton Appearance 1.0 Appearance.qml
 Wallpaper 1.0 Wallpaper.qml
 singleton Motion 1.0 Motion.qml
+
+SessionSplash 1.0 SessionSplash.qml

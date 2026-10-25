@@ -1,4 +1,6 @@
 #include "system.h"
+#include <QProcess>
+#include <QStandardPaths>
 #include <LayerShellQt/Window>
 #include <QGuiApplication>
 #include <QScreen>
@@ -445,4 +447,28 @@ bool System::launchApplicationAction(const QUrl &launcher, const QString &name)
         return true;
     }
     return false;
+}
+
+
+QVariantList System::commandSettingsPages() const
+{
+    // Expose only pages delivered by the installed app (or the explicit dev checkout).
+    if (!KService::serviceByStorageId(QStringLiteral("singlr-settings.desktop"))
+        && !QFileInfo::exists(qEnvironmentVariable("SINGLR_DEV_ROOT") + QStringLiteral("/apps/settings/Main.qml"))) return {};
+    return {
+        QVariantMap{{"page", "appearance"}, {"label", "Apariencia"}, {"keywords", "appearance theme tema oscuro dark claro light color acento accent transparencia transparency animacion motion"}},
+        QVariantMap{{"page", "wallpaper"}, {"label", "Fondo de escritorio"}, {"keywords", "wallpaper background fondo imagen"}},
+        QVariantMap{{"page", "material"}, {"label", "Material"}, {"keywords", "material glass vidrio liquid solido solid intensidad intensity"}}
+    };
+}
+
+bool System::openCommandSettings(const QString &page)
+{
+    if (page != QLatin1String("appearance") && page != QLatin1String("wallpaper") && page != QLatin1String("material")) return false;
+    QString program = QStandardPaths::findExecutable(QStringLiteral("singlr-settings"));
+    const QString dev = qEnvironmentVariable("SINGLR_DEV_ROOT");
+    if (!dev.isEmpty()) program = dev + QStringLiteral("/apps/settings/singlr-settings");
+    if (program.isEmpty()) return false;
+    // Material is currently a section of Appearance; do not advertise a nonexistent page.
+    return QProcess::startDetached(program, page == QLatin1String("wallpaper") ? QStringList{QStringLiteral("--wallpaper")} : QStringList{});
 }

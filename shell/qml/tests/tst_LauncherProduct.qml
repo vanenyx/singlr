@@ -50,6 +50,14 @@ Item {
             keyClick(Qt.Key_Return);
             compare(clipboard.content, data.result); compare(runner.lastRow, -1); verify(!launcher.visible);
         }
+        function test_configurationActions() {
+            append("systemsettings_kcm_bluetooth", "Bluetooth", "Configuración", [], []);
+            tryCompare(launcher, "resultCount", 1);
+            launcher.focusInput(); keyClick(Qt.Key_K, Qt.ControlModifier);
+            verify(launcher.actionsOpen); compare(launcher.contextEntries[0].label, "Abrir configuración");
+            launcher.triggerAction(launcher.contextEntries[0]);
+            compare(runner.lastRow, 0); verify(!launcher.visible);
+        }
         function test_fileOpenAndShowInFolder() {
             append("baloosearch_report", "Informe.pdf", "Archivos", ["file:///tmp/Informe.pdf"], []);
             tryCompare(launcher, "resultCount", 1);

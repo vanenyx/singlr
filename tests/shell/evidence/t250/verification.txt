@@ -1,0 +1,10 @@
+dark: Totals: 199 passed, 0 failed, 1 skipped, 0 blacklisted, 23746ms; Totals: 8 passed, 0 failed, 0 skipped, 0 blacklisted, 210ms
+light: Totals: 199 passed, 0 failed, 1 skipped, 0 blacklisted, 23795ms; Totals: 8 passed, 0 failed, 0 skipped, 0 blacklisted, 214ms
+reduced: Totals: 197 passed, 0 failed, 3 skipped, 0 blacklisted, 21513ms; Totals: 8 passed, 0 failed, 0 skipped, 0 blacklisted, 210ms
+cmake build: success (SINGLR_BUILD_LIQUIDGLASS=OFF; missing Vulkan headers)
+qmllint changed components: exit 0, no warnings
+session entry: 17 passed
+check_setup: passed
+ksplash --test --window --nofork: dark=0, light=0; AnimationDurationFactor=0
+native KCM runner: blocked without session bus; sandbox cannot bind private D-Bus socket
+nested resources: blocked exit 127, host config hashes unchanged
