@@ -50,7 +50,7 @@ Item {
     Rectangle {
         anchors.fill: parent; radius: glass.radius
         color: !glass.rhi || !Theme.translucent ? Theme.raised : glass.compositorBlur ? Theme.surface : glass.canBlur ? Palette.alpha(Theme.raised, Palette.materialOpacity(Theme.materialStrength, false)) : Theme.raised
-        border.width: 1; border.color: Theme.focusBorder
+        // Flat material (P-020): a faint hairline only; no sheen line, bevel or rim.
+        border.width: 1; border.color: Theme.translucent ? Theme.faintBorder : Theme.border
     }
-    Rectangle { x:12; y:1; width:parent.width-24; height:1; color:Theme.sheen }
 }

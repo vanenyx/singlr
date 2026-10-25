@@ -44,7 +44,7 @@ Item {
         objectName: "osdLoader"; anchors.fill: parent; opened: osd.surfaceVisible
         sourceComponent: Component {
             Item {
-                Rectangle { anchors.fill: parent; radius: 12; color: Theme.surface; border.color: Theme.focusBorder }
+                Rectangle { anchors.fill: parent; radius: 12; color: Theme.surface; border.color: Theme.surfaceBorder }
                 Icon { x: 16; anchors.verticalCenter: parent.verticalCenter; width: 20; height: 20; name: osd.icon }
                 Rectangle {
                     x: 50; anchors.verticalCenter: parent.verticalCenter; width: 174; height: 4; radius: 2

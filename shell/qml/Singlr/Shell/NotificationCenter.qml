@@ -182,7 +182,7 @@ Item {
                     }
                 }
 
-                radius: 10; color: center.sessionMode ? Theme.surface : Theme.raised; border.color: Theme.border
+                radius: 10; color: center.sessionMode ? Theme.surface : Theme.raised; border.color: Theme.surfaceBorder
                 Column {
                     id: panelHeader; x: 14; y: 10; width: parent.width - 28; spacing: 4
                     Row {

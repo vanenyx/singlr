@@ -350,9 +350,8 @@ Rectangle {
         return count;
     }
     width: contents.width+16; height: 48; radius: 14
-    color: Theme.dockSurface; border.color: Theme.border
+    color: Theme.dockSurface; border.color: Theme.surfaceBorder
     RectangularShadow { anchors.fill: parent; z: -1; radius: 14; blur: 24; offset: Qt.vector2d(0, 8); color: Theme.shadow; visible: GraphicsInfo.api !== GraphicsInfo.Software }
-    Rectangle { x: 14; y: 1; width: parent.width-28; height: 1; color: Theme.sheen }
     Row { id: contents; x: 8; height: 48; spacing: 6
         Repeater {
             id: pinned

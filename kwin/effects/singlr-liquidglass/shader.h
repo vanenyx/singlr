@@ -59,24 +59,25 @@ void main() {
     if (d > 0.0) discard;
     vec2 n = normalize(vec2(sdf(p + vec2(0.5,0.0)) - sdf(p - vec2(0.5,0.0)),
                             sdf(p + vec2(0.0,0.5)) - sdf(p - vec2(0.0,0.5))) + vec2(0.00001));
-    float width = min(30.0, min(extent.x, extent.y) / 3.0);
+    // Flat material (P-020): a narrow lens band, never a thick raised rim.
+    float width = min(14.0, min(extent.x, extent.y) / 4.0);
     float edge = 1.0 - smoothstep(0.0, width, -d);
     // Convex cross-section: steep at the perimeter, flat through the body.
     // SDF normals rotate continuously around each corner; all four sides lens.
     vec2 bend = n * pow(edge, 1.65) * (24.0 * strength * liquid) / sourceExtent;
     bend.y = -bend.y;
     vec2 uv = texcoord0 - bend;
-    vec3 color = diffuse(uv, strength * mix(14.0, 5.0, liquid));
+    // Keep every diffusion sample inside the surface: near the perimeter the
+    // spread shrinks to the distance to the edge, so no outside tone bleeds in
+    // as a darker or lighter band (P-020: flat, no rim).
+    vec3 color = diffuse(uv, min(strength * mix(14.0, 5.0, liquid), max(0.0, -d - 1.0)));
     vec2 dispersion = bend * 0.055;
     color.r += (texture(sampler, uv + dispersion).r - texture(sampler, uv).r) * edge;
     color.b += (texture(sampler, uv - dispersion).b - texture(sampler, uv).b) * edge;
-    // Broad directional lobe plus a narrow Fresnel crest, following the SDF
-    // normal instead of a horizontal painted line. Opposing lower bounce light.
-    float key = pow(max(0.0, dot(n, normalize(vec2(-0.55,-1.0)))), 3.0);
-    float bounce = pow(max(0.0, dot(n, normalize(vec2(0.7,1.0)))), 5.0);
-    float shoulder = exp(-pow((-d-4.0)/4.5, 2.0));
-    float crest = exp(-pow((-d-1.0)/0.9, 2.0));
-    float specular = ((0.10 + 0.70*key + 0.25*bounce)*shoulder + 0.32*crest);
+    // Flat material (P-020): no broad lobes or bounce light that read as relief;
+    // only a hairline Fresnel crest, faint and uniform around the perimeter.
+    float crest = exp(-pow((-d-0.5)/0.6, 2.0));
+    float specular = 0.10 * crest;
     color += vec3(specular * liquid * strength);
     color = clamp(color, vec3(0.0), vec3(1.0));
     // Vibrancy is a local material response, not a field or glyph rectangle.

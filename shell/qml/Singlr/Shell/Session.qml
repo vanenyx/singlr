@@ -370,7 +370,7 @@ Item {
                 LayerShell.Window.exclusionZone: 0
                 LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
                 LayerShell.Window.scope: "tooltip"
-                Rectangle { anchors.fill: parent; radius: 8; color: Theme.surface; border.color: Theme.border }
+                Rectangle { anchors.fill: parent; radius: 8; color: Theme.surface; border.color: Theme.surfaceBorder }
                 UiText { id: tooltipLabel; anchors.centerIn: parent; text: dock.tooltipText; font.pixelSize: 12 }
             }
         }

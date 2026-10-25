@@ -192,7 +192,7 @@ Controls.Control {
         else panel.errorText = "Configuración no encontrada en el catálogo.";
     }
     Keys.onEscapePressed: back()
-    Rectangle { anchors.fill: parent; radius: 12; color: Theme.surface; border.color: Theme.focusBorder }
+    Rectangle { anchors.fill: parent; radius: 12; color: Theme.surface; border.color: Theme.surfaceBorder }
     Kicker.SimpleFavoritesModel { id: settingsApp; favorites: ["systemsettings.desktop"] }
     Battery.BatteryControlModel { id: batteryModel }
     Power.PowerProfilesControl { id: powerProfiles }

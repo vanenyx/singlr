@@ -26,6 +26,8 @@ Item {
     readonly property color barSurface: Palette.alpha(panel, Palette.materialOpacity(materialStrength, Appearance.liquidAvailable))
     readonly property color dockSurface: Palette.alpha(panel, Palette.materialOpacity(materialStrength, Appearance.liquidAvailable))
     readonly property color sheen: Palette.alpha(text, .04)
+    // Flat floating surfaces (P-020): one faint hairline when translucent, never a bright rim.
+    readonly property color surfaceBorder: translucent ? faintBorder : border
     readonly property color wallpaperDefault: "#08090a"
     readonly property color wallpaperGlow: "#17191d"
     readonly property color wallpaperLight: "#e8e7e4"
