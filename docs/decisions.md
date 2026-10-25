@@ -62,3 +62,10 @@ preferencia antigua `material=liquid` se persiste como `glass` al cargar Appeara
 El radio real se consulta asíncronamente al shell por ID de superficie Wayland;
 KDE blur/ext-background-effect-v1 no incluyen radio. Adaptador Qt privado aislado,
 revisable al actualizar Qt. Detalle y límites en `kwin/effects/singlr-liquidglass/README.md`.
+
+## T254 — solución técnica derivada de P-022
+
+- Ajustes `[Dock]` en `singlr/singlr.conf`: `mode=floating|fixed`, `height=40|48|56|64|72`, `autoHide=true|false`. Valores iniciales: flotante, 48 px, sin ocultación. Se reutiliza el KConfigWatcher abierto por nombre relativo de Appearance; escrituras con `KConfig::Notify`. Sin reiniciar el shell.
+- Flotante conserva radio 14 y baja el margen inferior de 10 a 4 px. Fijo tiene radio 0 y solo hilo superior; reserva `altura + margen` sin ocultación y 0 con ella. Iconos y espacios proporcionales con tamaños enteros.
+- Activación por una superficie layer-shell de 2 px, a todo lo ancho del borde inferior de la pantalla principal, capa Overlay, sin teclado ni exclusión. Evita polling, desplazamientos del puntero y scripts de bordes globales; solo existe con autohide. El dock se desmapea al ocultarse. Espera de salida de 450 ms para cruzar el margen y los menús; transición inmediata, también con movimiento reducido. Preferencias y geometrías derivadas del encargo; revisión visual y del comportamiento nativo pendientes.
+- La vista general comunica su visibilidad por el puente Workspace existente para mantener visible el dock también con Meta+Tab y gestos. Ver [entrega T254](handoffs/T254-dock-settings.md).

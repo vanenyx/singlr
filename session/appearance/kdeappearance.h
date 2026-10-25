@@ -22,6 +22,9 @@ class KDEAppearance : public QObject {
     Q_PROPERTY(int intensity READ intensity NOTIFY changed)
     Q_PROPERTY(bool reduceTransparency READ reduceTransparency NOTIFY changed)
     Q_PROPERTY(bool glassAvailable READ glassAvailable NOTIFY changed)
+    Q_PROPERTY(QString dockMode READ dockMode NOTIFY changed)
+    Q_PROPERTY(int dockHeight READ dockHeight NOTIFY changed)
+    Q_PROPERTY(bool dockAutoHide READ dockAutoHide NOTIFY changed)
     Q_PROPERTY(bool busy READ busy NOTIFY changed)
     Q_PROPERTY(QString error READ error NOTIFY changed)
 public:
@@ -35,6 +38,12 @@ public:
     int intensity() const;
     bool reduceTransparency() const;
     bool glassAvailable() const { return m_glassAvailable; }
+    QString dockMode() const;
+    int dockHeight() const;
+    bool dockAutoHide() const;
+    Q_INVOKABLE void setDockMode(const QString &mode);
+    Q_INVOKABLE void setDockHeight(int height);
+    Q_INVOKABLE void setDockAutoHide(bool enabled);
     Q_INVOKABLE void setMaterial(const QString &material);
     Q_INVOKABLE void setIntensity(int intensity);
     Q_INVOKABLE void setReduceTransparency(bool reduce);

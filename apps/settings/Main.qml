@@ -37,7 +37,7 @@ Window {
             Column {
                 x: 12; y: 88; width: 176; spacing: 4
                 Repeater {
-                    model: [{label: "Apariencia", icon: "sun", key: "appearance"}, {label: "Fondo", icon: "image", key: "wallpaper"}]
+                    model: [{label: "Apariencia", icon: "sun", key: "appearance"}, {label: "Fondo", icon: "image", key: "wallpaper"}, {label: "Dock", icon: "squares-four", key: "dock"}]
                     delegate: Controls.AbstractButton {
                         id: nav; required property var modelData
                         width: 176; height: 36
@@ -56,7 +56,7 @@ Window {
         }
         Item {
             x: 240; y: 32; width: parent.width - 280; height: parent.height - 64
-            Ui.UiText { height: 32; text: window.page === "appearance" ? "Apariencia" : "Fondo"; font.pixelSize: 20; weight: 620 }
+            Ui.UiText { height: 32; text: window.page === "appearance" ? "Apariencia" : window.page === "dock" ? "Dock" : "Fondo"; font.pixelSize: 20; weight: 620 }
             Column {
                 y: 72; width: parent.width; spacing: 20; visible: window.page === "appearance"
                 Item {
@@ -170,6 +170,60 @@ Window {
                         : ""
                 }
                 Ui.UiText { width: parent.width; height: 36; text: Ui.Appearance.mode === "auto" ? "Sigue el horario automático de KDE y Luz nocturna." : ""; color: Ui.Theme.muted; font.pixelSize: 12 }
+            }
+            Column {
+                y: 72; width: parent.width; spacing: 20; visible: window.page === "dock"
+                Item {
+                    width: parent.width; height: 40
+                    Ui.UiText { height: 40; text: "Modo"; color: Ui.Theme.secondary }
+                    Rectangle {
+                        anchors.right: parent.right; width: 246; height: 36; y: 2
+                        radius: 7; color: Ui.Theme.panel; border.color: Ui.Theme.border
+                        Row {
+                            x: 3; y: 3
+                            Repeater {
+                                model: [{label: "Flotante", key: "floating"}, {label: "Fijo", key: "fixed"}]
+                                delegate: Controls.AbstractButton {
+                                    id: dockMode; required property var modelData
+                                    objectName: "dock-mode-" + modelData.key
+                                    width: 120; height: 30
+                                    Accessible.name: modelData.label; Accessible.role: Accessible.RadioButton
+                                    Accessible.checked: Ui.DockSettings.mode === modelData.key
+                                    onClicked: Ui.DockSettings.setMode(modelData.key)
+                                    background: Rectangle {
+                                        radius: 5; color: Ui.DockSettings.mode === dockMode.modelData.key ? Ui.Theme.raised : "transparent"
+                                        border.color: dockMode.visualFocus ? Ui.Theme.control : "transparent"
+                                    }
+                                    contentItem: Ui.UiText { text: dockMode.modelData.label; horizontalAlignment: Text.AlignHCenter }
+                                }
+                            }
+                        }
+                    }
+                }
+                Rectangle { width: parent.width; height: 1; color: Ui.Theme.faintBorder }
+                Item {
+                    width: parent.width; height: 36
+                    Ui.UiText { height: 36; text: "Altura"; color: Ui.Theme.secondary }
+                    Ui.SliderControl {
+                        id: dockHeight; objectName: "dockHeight"
+                        anchors.right: heightLabel.left; anchors.rightMargin: 16; width: 230; height: 36
+                        from: 40; to: 72; stepSize: 8; snapMode: Controls.Slider.SnapAlways
+                        value: Ui.DockSettings.height
+                        Accessible.name: "Altura del dock"
+                        onMoved: Ui.DockSettings.setHeight(Math.round(value))
+                    }
+                    Ui.UiText { id: heightLabel; anchors.right: parent.right; width: 48; height: 36; text: Ui.DockSettings.height + " px"; horizontalAlignment: Text.AlignRight; color: Ui.Theme.secondary }
+                }
+                Rectangle { width: parent.width; height: 1; color: Ui.Theme.faintBorder }
+                Item {
+                    width: parent.width; height: 36
+                    Ui.UiText { height: 36; text: "Ocultar automáticamente"; color: Ui.Theme.secondary }
+                    Ui.Toggle {
+                        objectName: "dockAutoHide"; anchors.right: parent.right; width: 34; height: 36
+                        Accessible.name: "Ocultar automáticamente"; checked: Ui.DockSettings.autoHide
+                        onToggled: Ui.DockSettings.setAutoHide(checked)
+                    }
+                }
             }
             Column {
                 y: 72; width: parent.width; spacing: 20; visible: window.page === "wallpaper"

@@ -21,8 +21,10 @@ public:
         return m_exported;
     }
 public Q_SLOTS:
+    void overview(bool open) { Q_EMIT overviewChanged(open); }
     void search(const QString &text, const QString &screenName) { Q_EMIT searchRequested(text, screenName); }
 Q_SIGNALS:
+    void overviewChanged(bool open);
     void searchRequested(const QString &text, const QString &screenName);
 private:
     bool m_exported = false;

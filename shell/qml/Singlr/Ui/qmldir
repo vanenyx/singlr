@@ -17,3 +17,4 @@ Wallpaper 1.0 Wallpaper.qml
 singleton Motion 1.0 Motion.qml
 
 SessionSplash 1.0 SessionSplash.qml
+singleton DockSettings 1.0 DockSettings.qml

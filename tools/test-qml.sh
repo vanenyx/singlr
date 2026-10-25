@@ -59,6 +59,10 @@ if [[ ${SINGLR_CAPTURE_T250:-0} == 1 ]]; then
     mkdir -p "$root/tests/shell/evidence/t250"
     printf '[General]\ncapturePrefix=%s/tests/shell/evidence/t250/%s\n' "$root" "$mode" > "$tmp/config/t250.ini"
 fi
+if [[ ${SINGLR_CAPTURE_T254:-0} == 1 ]]; then
+    mkdir -p "$root/tests/shell/evidence/t254"
+    printf '[General]\ncapturePrefix=%s/tests/shell/evidence/t254/%s\n' "$root" "$mode" > "$tmp/config/t254.ini"
+fi
 status=0
 for suite in "$tmp/tests" "$root/apps/settings/tests"; do
     [ -d "$suite" ] || continue

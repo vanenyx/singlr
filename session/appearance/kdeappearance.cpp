@@ -76,6 +76,34 @@ int KDEAppearance::intensity() const {
 bool KDEAppearance::reduceTransparency() const {
     return m_materialConfig->group("Accessibility").readEntry("reduceTransparency", false);
 }
+QString KDEAppearance::dockMode() const {
+    return m_materialConfig->group("Dock").readEntry("mode", QStringLiteral("floating")) == QLatin1String("fixed")
+        ? QStringLiteral("fixed") : QStringLiteral("floating");
+}
+int KDEAppearance::dockHeight() const {
+    const int value = m_materialConfig->group("Dock").readEntry("height", 48);
+    return 40 + ((std::clamp(value, 40, 72) - 40 + 4) / 8) * 8;
+}
+bool KDEAppearance::dockAutoHide() const {
+    return m_materialConfig->group("Dock").readEntry("autoHide", false);
+}
+void KDEAppearance::setDockMode(const QString &mode) {
+    if (mode != QLatin1String("floating") && mode != QLatin1String("fixed")) return;
+    m_materialConfig->reparseConfiguration();
+    m_materialConfig->group("Dock").writeEntry("mode", mode, KConfig::Notify);
+    m_materialConfig->sync(); Q_EMIT changed();
+}
+void KDEAppearance::setDockHeight(int height) {
+    const int value = 40 + ((std::clamp(height, 40, 72) - 40 + 4) / 8) * 8;
+    m_materialConfig->reparseConfiguration();
+    m_materialConfig->group("Dock").writeEntry("height", value, KConfig::Notify);
+    m_materialConfig->sync(); Q_EMIT changed();
+}
+void KDEAppearance::setDockAutoHide(bool enabled) {
+    m_materialConfig->reparseConfiguration();
+    m_materialConfig->group("Dock").writeEntry("autoHide", enabled, KConfig::Notify);
+    m_materialConfig->sync(); Q_EMIT changed();
+}
 void KDEAppearance::setMaterial(const QString &value) {
     if (value != QLatin1String("solid") && value != QLatin1String("glass")) return;
     m_materialConfig->reparseConfiguration();

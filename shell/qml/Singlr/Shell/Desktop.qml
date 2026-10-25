@@ -21,7 +21,7 @@ Window {
         id: canvas; anchors.fill: parent
         Background { id: background; anchors.fill: parent }
         TopBar { notificationsUnread: notifications.unread; onNotificationsRequested: notifications.toggle(); anchors.top: parent.top; width: parent.width; z: 2; activeAppName: dock.activeAppName; onLauncherRequested: desktop.openLauncher(); onApplicationsRequested: desktop.openLauncher(true) }
-        Dock { id: dock; anchors.bottom: parent.bottom; anchors.bottomMargin: 10; anchors.horizontalCenter: parent.horizontalCenter; onLauncherRequested: desktop.openLauncher(); onApplicationsRequested: desktop.openLauncher(true) }
+        Dock { id: dock; anchors.bottom: parent.bottom; anchors.bottomMargin: dock.bottomMargin; screenWidth: canvas.width; anchors.horizontalCenter: parent.horizontalCenter; onLauncherRequested: desktop.openLauncher(); onApplicationsRequested: desktop.openLauncher(true) }
         Rectangle { anchors.fill: parent; visible: desktop.launcherOpen; color: Theme.scrim; z: 3
             MouseArea { anchors.fill: parent; onClicked: desktop.closeLauncher() }
         }
