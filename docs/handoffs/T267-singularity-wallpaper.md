@@ -105,3 +105,24 @@ Contratos consultados: [material Qt Quick](https://doc.qt.io/qt-6/qtquick-sceneg
 [QSGMaterialShader](https://doc.qt.io/qt-6/qsgmaterialshader.html),
 [Loader](https://doc.qt.io/qt-6/qml-qtquick-loader.html), y cabecera local
 `KScreen/kscreendpms/dpms.h` para observación de cambios de DPMS.
+
+## Corrección de entrega tras fondo negro (26 oct, 10:49)
+
+El creador seleccionó el fondo en Ajustes mientras el shell abierto mantenía
+el QML y módulo nativo anteriores. El build aislado no actualizaba su canal de
+desarrollo: la opción visible aún no era utilizable en esa sesión.
+
+Se publicaron los dos binarios del módulo y sus metadatos en `build/` mediante
+reemplazo atómico, con RUNPATH relativo a `$ORIGIN`. Los inodos anteriores se
+conservaron en `.local/singularity/dev-module-before-update`, sin truncar las
+bibliotecas mapeadas ni reiniciar el shell (PID 33974 conservado). Se comprobó
+la carga y renderizado OpenGL del tipo Singularidad desde **build/qml**.
+El próximo inicio de la sesión del creador cargará ese módulo; el login en sí
+queda pendiente de su comprobación. Los Ajustes abiertos también conservan su
+módulo anterior y deben cerrarse y abrirse de nuevo.
+
+Además, `tools/build-package.sh` completó el paquete
+`.local/repo/singlr-desktop-0.1.0.r197.g2dad2f8-2-x86_64.pkg.tar.zst`, con fondo,
+QML y biblioteca incluidos. No se instaló con pacman. Para el canal de desarrollo
+actual no hace falta instalarlo para probar el fondo tras volver a iniciar sesión;
+la sesión empaquetada sí requiere actualizarlo.
