@@ -23,3 +23,10 @@ Meta+V captura la ventana activa y abre/cierra el historial. Clic o Enter selecc
 y pega tras recuperar el foco original; Ctrl+Enter y menú «Copiar» solo copian.
 Escape cancela. Nunca se redirige el pegado a otra app que tome el foco.
 [Contrato y límites](../handoffs/T258-clipboard-paste.md).
+
+## Esquina superior izquierda — P-028/T260
+
+Durante Singlr no activa Overview nativo de KDE. El logo abre Menú Singlr mediante
+clic; Meta+Tab conserva la vista general de Singlr. Otros bordes que el usuario
+haya configurado no se eliminan. Al salir se restaura BorderActivate original,
+incluida ausencia de clave (valor predeterminado de Plasma).

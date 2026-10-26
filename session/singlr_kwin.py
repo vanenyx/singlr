@@ -20,6 +20,7 @@ KWIN_SETTINGS = [
     ('Plugins', 'magiclampEnabled', 'false'),
     ('Plugins', 'maximizeEnabled', 'true'),
     ('Plugins', 'singlr-overviewEnabled', 'true'),
+    ('Effect-overview', 'BorderActivate', ''),
     ('Plugins', 'singlr-gesturesEnabled', 'true'),
     ('Plugins', 'singlr-liquidglassEnabled', 'true'),
     ('Effect-singlrliquidglass', 'Enabled', 'true'),
@@ -34,6 +35,15 @@ RETIRED_KEYS = {('org.kde.kdecoration2', 'library'), ('org.kde.kdecoration2', 't
 # New keys have their own original snapshot, including absence. Accept pre-T248 journals.
 MATERIAL_KEYS = {('Plugins', 'singlr-liquidglassEnabled'),
                  ('Effect-singlrliquidglass', 'Enabled'), ('Effect-singlrliquidglass', 'Intensity')}
+
+# KWin 6.8: Overview defaults to ElectricTopLeft (7). An explicit empty IntList
+# disables that default; preserve any other corners chosen by the user.
+OVERVIEW_EDGE_KEYS = {('Effect-overview', 'BorderActivate')}
+
+
+def without_top_left(value):
+    return ','.join(edge for edge in (value or '').split(',')
+                    if edge.strip() not in ('7', 'ElectricTopLeft'))
 
 
 def material_settings():
@@ -123,9 +133,11 @@ def entries_from(path):
             or len({(row[0], row[1]) for row in entries}) != len(entries)):
         raise ValueError(f'Backup KWin no reconocido: {path}')
     keys = {(row[0], row[1]) for row in entries} - RETIRED_KEYS
-    # Backups written before the window switcher (TabBox) or materials existed remain valid.
+    # Backups predating TabBox, materials or the Overview corner remain valid.
     legacy = {(group, key) for group, key in allowed if group != 'TabBox'}
-    if keys not in (allowed, legacy, allowed - MATERIAL_KEYS, legacy - MATERIAL_KEYS):
+    supported = [base - extras for base in (allowed, legacy, allowed - MATERIAL_KEYS, legacy - MATERIAL_KEYS)
+                 for extras in (set(), OVERVIEW_EDGE_KEYS)]
+    if keys not in supported:
         raise ValueError(f'Backup KWin incompleto: {path}')
     return entries
 
@@ -148,9 +160,13 @@ def apply(path=None, *, recover_pending=False):
             if not recover_pending:
                 return False  # Never replace the original snapshot on repeat apply.
             _restore(path)
-        save(path, [[group, key, read(group, key)] for group, key, _ in KWIN_SETTINGS])
+        snapshot = [[group, key, read(group, key)] for group, key, _ in KWIN_SETTINGS]
+        save(path, snapshot)
+        original = {(group, key): value for group, key, value in snapshot}
         try:
             for group, key, value in KWIN_SETTINGS:
+                if (group, key) in OVERVIEW_EDGE_KEYS:
+                    value = without_top_left(original[group, key])
                 write(group, key, value)
             for group, key, value in material_settings():
                 write(group, key, value)

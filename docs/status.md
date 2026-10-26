@@ -79,8 +79,14 @@ Tooltip del dock corregido de 62 a 8 px en la muestra de 40 px; separación nati
 8 px en doce combinaciones de modo/altura/autohide, también menú contextual.
 QML 241 shell + 9 Ajustes por modo, 0 fallos. Capturas claro/oscuro revisadas;
 grosor propuesto pendiente de valoración del creador. La esquina de KDE se
-identificó, pero no se ha desactivado: la consulta del creador sigue abierta.
+identificó; la autorización posterior y su corrección se registran en T260.
 [Comparación y entrega](handoffs/T259-bar-dock-polish.md).
+
+T260/P-028: retirada la esquina superior izquierda de Overview nativo de KDE en
+la configuración de Singlr. Otros bordes personalizados se conservan; preferencia
+original restaurada al salir. Migración de journals anteriores y KConfig real
+verificados. El cambio entra al iniciar sesión con el paquete actualizado;
+no se ha reconfigurado el compositor activo. [Entrega](handoffs/T260-overview-corner.md).
 
 ## Siguientes cierres necesarios
 

@@ -71,3 +71,6 @@ No se recargó la sesión activa. Tras actualizar, el siguiente inicio de Singlr
 carga los ajustes. Pendientes: valoración del grosor, comprobación cotidiana del
 tooltip y decisión de retirar/reasignar la esquina. No declara completados los
 siete sistemas ni P-016 en sesión real.
+
+Actualización posterior: el creador autorizó retirar la esquina; implementado en
+[T260](T260-overview-corner.md), con restauración de preferencias.

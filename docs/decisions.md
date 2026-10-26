@@ -149,3 +149,20 @@ La esquina superior izquierda activa por defecto Overview de KDE (Effect-overvie
 BorderActivate=ElectricTopLeft en KWin 6.8). El usuario lo plantea como duda: se
 recomienda evitar duplicidad con Singlr, pero **no se modifica la configuración**
 ni se aprueba aún eliminar o reasignar la esquina. [Entrega](handoffs/T259-bar-dock-polish.md).
+
+
+## P-028 — retirar la esquina duplicada (explícita, 26 oct 2026)
+
+Tras el diagnóstico T259, el creador autoriza quitar la activación de Overview
+nativo de KDE al llevar el cursor a la esquina superior izquierda durante Singlr.
+Meta+Tab y la vista general propia permanecen como acceso de Singlr.
+
+## T260 — preferencia de borde reversible
+
+Se filtra ElectricTopLeft (7) de Effect-overview/BorderActivate al aplicar la
+configuración de sesión. Si no existía clave, se escribe lista vacía para anular
+el valor predeterminado de KWin 6.8. Se conservan otros bordes personalizados,
+los gestos y el resto de efectos. El journal captura el valor original, incluida
+su ausencia, y acepta los journals previos para actualizar y restaurar sin perder
+preferencias. No se aplicó ni reconfiguró KWin en la sesión activa como prueba.
+[Entrega y comprobación](handoffs/T260-overview-corner.md).

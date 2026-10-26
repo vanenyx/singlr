@@ -23,6 +23,7 @@ class KWinTests(unittest.TestCase):
         patcher.start(); self.addCleanup(patcher.stop)
         self.backup = Path(tmp.name) / 'state/kwinrc-backup.json'
         self.values = {(g, k): 'previous' for g, k, _ in kwin.KWIN_SETTINGS}
+        self.values[('Effect-overview', 'BorderActivate')] = '7'
         self.values[('Effect-scale', 'OutOpacity')] = ''
         self.values.pop(('Plugins', 'singlr-gesturesEnabled'))
         self.original = self.values.copy()
@@ -73,11 +74,38 @@ class KWinTests(unittest.TestCase):
         self.assertEqual(self.values[('Effect-singlrliquidglass', 'Intensity')], '81')
         kwin.restore(self.backup)
         self.assertEqual(self.values, self.original)
+
         config.write_text('[Appearance]\nmaterial=liquid\nintensity=81\n[Accessibility]\nreduceTransparency=true\n')
         kwin.apply(self.backup)
         self.assertEqual(self.values[('Effect-singlrliquidglass', 'Enabled')], 'false')
         kwin.restore(self.backup)
         self.assertEqual(self.values, self.original)
+
+    def test_overview_corner_preserves_other_edges_and_restores_exactly(self):
+        key = ('Effect-overview', 'BorderActivate')
+        for original, expected in ((None, ''), ('', ''), ('7', ''), ('1,7,3', '1,3'), ('1,3', '1,3'), ('9', '9')):
+            with self.subTest(original=original):
+                if original is None:
+                    self.values.pop(key, None)
+                else:
+                    self.values[key] = original
+                kwin.apply(self.backup)
+                self.assertEqual(self.values[key], expected)
+                kwin.restore(self.backup)
+                self.assertEqual(self.values.get(key), original)
+
+    def test_pre_corner_journal_recovers_before_snapshot_of_new_key(self):
+        self.backup.parent.mkdir()
+        self.backup.write_text(json.dumps([[g, k, self.original.get((g, k))]
+                                          for g, k, _ in kwin.KWIN_SETTINGS
+                                          if (g, k) not in kwin.OVERVIEW_EDGE_KEYS]))
+        key = ('Effect-overview', 'BorderActivate')
+        self.values[key] = '1,7'
+        self.assertTrue(kwin.apply(self.backup, recover_pending=True))
+        self.assertEqual(self.values[key], '1')
+        self.assertEqual(next(v for g, k, v in json.loads(self.backup.read_text()) if (g, k) == key), '1,7')
+        kwin.restore(self.backup)
+        self.assertEqual(self.values[key], '1,7')
 
     def test_malformed_material_preferences_do_not_prevent_login(self):
         config = Path(os.environ['XDG_CONFIG_HOME']) / 'singlr/singlr.conf'
@@ -200,6 +228,7 @@ class KConfigTests(unittest.TestCase):
                 self.assertIsNone(kwin.read('Plugins', 'singlr-overviewEnabled'))
                 self.assertEqual(kwin.read('org.kde.kdecoration2', 'theme'), '')
                 self.assertTrue(kwin.apply())
+                self.assertEqual(kwin.read('Effect-overview', 'BorderActivate'), '')
                 # New process models recovery after the original process disappeared.
                 subprocess.run([str(ROOT / 'session/singlr-kwin'), '--restore', '--offline'],
                                check=True, env=os.environ | {'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/nonexistent'})
@@ -207,6 +236,12 @@ class KConfigTests(unittest.TestCase):
                 self.assertEqual(kwin.read('Plugins', 'scaleEnabled'), 'false')
                 self.assertEqual(kwin.read('org.kde.kdecoration2', 'theme'), '')
                 self.assertFalse(kwin.backup_path().exists())
+                self.assertIsNone(kwin.read('Effect-overview', 'BorderActivate'))
+                kwin.write('Effect-overview', 'BorderActivate', '1,7,3')
+                kwin.apply()
+                self.assertEqual(kwin.read('Effect-overview', 'BorderActivate'), '1,3')
+                kwin.restore()
+                self.assertEqual(kwin.read('Effect-overview', 'BorderActivate'), '1,7,3')
 
 
 if __name__ == '__main__':
