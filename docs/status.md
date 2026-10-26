@@ -97,6 +97,18 @@ T262/P-030: KDE Overview y Window View desactivados en Singlr; 3 o 4 dedos
 arriba/abajo abren/cierran la multitarea de Singlr. Requiere paquete actualizado
 y nueva sesión. [Entrega](handoffs/T262-touchpad-gestures.md).
 
+T264: acciones de sesión (bloquear, suspender, hibernar, cerrar sesión, reiniciar,
+apagar) mediante `SessionManagement` de libkworkspace6, igual que Plasma. Plasma 6.8.1
+también suspende vía logind dentro de esa biblioteca: no era la causa del audio.
+[Entrega](handoffs/T264-session-management.md).
+
+**Prueba real en el equipo del creador, 26 oct 05:20** (canal de desarrollo con
+T261+T264): suspensión deep de 36 s. Al reanudar, dock visible en captura, salidas
+de audio activas y música audible (confirmado por el creador), red conectada. Sin
+`CORB reset timeout`; aviso del kernel `mt7921e pci_pm_resume returns -110` con red
+recuperada. El fallo de audio previo era intermitente (3 de 10 reanudaciones con
+CORB timeout y perfiles en «off»): un ciclo correcto no lo da por cerrado.
+
 ## Siguientes cierres necesarios
 
 1. Aceptación visual y nativa del dock corregido: touchpad, DND, autohide y espacio reservado en distintas salidas.
