@@ -130,6 +130,13 @@ Dock: los fijados nunca se guardaban (ruta `file://file:///…/dock.json`). Corr
 (4c68074) con prueba de regresión; en el equipo del creador `dock.json` guarda
 `pins=[]` y tras reiniciar el shell no vuelven los lanzadores por defecto.
 
+T267/P-031: fondo opcional «Singularidad» implementado y compilado en un build
+separado, con partículas GPU, movimiento, paralaje al cursor, modo estático y
+controles en Ajustes. QML: 246 shell + 10 Ajustes por modo; 9 resultados del
+recorrido GPU/pausa/reducir movimiento, sin fallos. No instalado ni activado en
+la sesión del creador. Pendientes valoración visual y aceptación de DPMS,
+bloqueo/suspensión físicos y multimonitor. [Entrega](handoffs/T267-singularity-wallpaper.md).
+
 ## Siguientes cierres necesarios
 
 1. Aceptación visual y nativa del dock corregido: touchpad, DND, autohide y espacio reservado en distintas salidas.

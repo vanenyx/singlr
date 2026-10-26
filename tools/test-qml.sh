@@ -3,7 +3,8 @@
 # palette and live session bus must not leak in (no calls reach the running shell).
 set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
-[ -f "$root/build/qml/Singlr/System/qmldir" ] || { echo "Falta build/qml: cmake --build build" >&2; exit 2; }
+build_dir=${SINGLR_TEST_BUILD_DIR:-$root/build}
+[ -f "$build_dir/qml/Singlr/System/qmldir" ] || { echo "Falta build/qml: cmake --build build" >&2; exit 2; }
 mode=${SINGLR_TEST_MODE:-dark}
 capture=""
 if [[ ${1:-} == --capture ]]; then capture=${2:?before or after}; shift 2; fi
@@ -54,7 +55,7 @@ if [[ -n $capture ]]; then
     [[ $capture == before || $capture == after ]] || { echo "Usa --capture before|after" >&2; exit 2; }
     mkdir -p "$root/shell/qml/captures/t244"
     printf '[General]\ncapturePrefix=%s/shell/qml/captures/t244/%s-%s\n' "$root" "$capture" "$mode" > "$tmp/config/t244.ini"
-    /usr/lib/qt6/bin/qmltestrunner -import "$tmp/imports" -import "$root/shell/qml" -import "$root/build/qml" -input "$tmp/tests/tst_AppearanceCapture.qml"
+    /usr/lib/qt6/bin/qmltestrunner -import "$tmp/imports" -import "$root/shell/qml" -import "$build_dir/qml" -input "$tmp/tests/tst_AppearanceCapture.qml"
     exit $?
 fi
 if [[ ${SINGLR_CAPTURE_T250:-0} == 1 ]]; then
@@ -72,6 +73,6 @@ fi
 status=0
 for suite in "$tmp/tests" "$root/apps/settings/tests"; do
     [ -d "$suite" ] || continue
-    /usr/lib/qt6/bin/qmltestrunner -import "$tmp/imports" -import "$root/shell/qml" -import "$root/build/qml" -input "$suite" || status=1
+    /usr/lib/qt6/bin/qmltestrunner -import "$tmp/imports" -import "$root/shell/qml" -import "$build_dir/qml" -input "$suite" || status=1
 done
 exit $status

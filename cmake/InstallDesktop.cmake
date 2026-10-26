@@ -28,7 +28,7 @@ install(DIRECTORY apps/settings/ DESTINATION "${KDE_INSTALL_LIBDIR}/singlr/apps/
     FILES_MATCHING PATTERN "*.qml" PATTERN "*.js" PATTERN "qmldir")
 install(CODE "if(NOT EXISTS \"${PROJECT_SOURCE_DIR}/apps/settings/Main.qml\")\n message(FATAL_ERROR \"Integrate apps/settings/Main.qml before packaging\")\nendif()")
 install(DIRECTORY shell/qml/ DESTINATION "${KDE_INSTALL_FULL_LIBDIR}/singlr/qml"
-    FILES_MATCHING PATTERN "*.qml" PATTERN "*.js" PATTERN "qmldir" PATTERN "tests" EXCLUDE)
+    FILES_MATCHING PATTERN "*.qml" PATTERN "*.js" PATTERN "qmldir" PATTERN "*.webp" PATTERN "tests" EXCLUDE)
 # Source Theme.qml addresses fonts relative to the repository root. Adapt only
 # the generated installation copy, keeping all assets private to Singlr.
 file(READ "${PROJECT_SOURCE_DIR}/shell/qml/Singlr/Ui/Theme.qml" theme)

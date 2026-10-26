@@ -4,6 +4,12 @@ import QtQuick.Window
 Rectangle {
     id: wallpaper
     property string source: Appearance.wallpaper
+    // Thumbnails, lock/splash and other consumers stay still unless explicitly opted in.
+    property bool liveAllowed: false
+    readonly property bool singularitySelected: source === "singlr:singularity"
+    readonly property bool liveFailed: singularitySelected && singularityLoader.status === Loader.Error
+    readonly property bool liveEffect: singularitySelected && liveAllowed && visible
+        && Appearance.wallpaperAnimated && Motion.enabled && GraphicsInfo.api !== GraphicsInfo.Software
     // Session surfaces supply the output size before the compositor configures
     // the window. Do not decode intermediate 1x1/default-window-sized copies.
     property size pixelSize: Qt.size(Math.ceil(width * Screen.devicePixelRatio), Math.ceil(height * Screen.devicePixelRatio))
@@ -12,7 +18,7 @@ Rectangle {
     // qmllint disable unqualified
     readonly property bool nativeProvider: typeof SinglrWallpaperProvider !== "undefined" && SinglrWallpaperProvider
     // qmllint enable unqualified
-    color: source === "singlr:light" ? Theme.wallpaperLight : source === "singlr:graphite" ? Theme.wallpaperGraphite : Theme.wallpaperDefault
+    color: singularitySelected ? "#000000" : source === "singlr:light" ? Theme.wallpaperLight : source === "singlr:graphite" ? Theme.wallpaperGraphite : Theme.wallpaperDefault
     clip: true
     Rectangle {
         anchors.fill: parent
@@ -22,6 +28,22 @@ Rectangle {
             GradientStop { position: 0.55; color: Theme.wallpaperGlow }
             GradientStop { position: 1; color: Theme.wallpaperDefault }
         }
+    }
+    Image {
+        objectName: "singularityStill"
+        anchors.fill: parent
+        source: wallpaper.singularitySelected && (!wallpaper.liveEffect || wallpaper.liveFailed) ? Qt.resolvedUrl("assets/singularity.webp") : ""
+        sourceSize: wallpaper.pixelSize
+        fillMode: Image.PreserveAspectFit
+        asynchronous: true
+        cache: false
+    }
+    Loader {
+        id: singularityLoader
+        objectName: "singularityLoader"
+        anchors.fill: parent
+        active: wallpaper.liveEffect
+        source: active ? Qt.resolvedUrl("SingularityWallpaper.qml") : ""
     }
     Image {
         objectName: "wallpaperImage"

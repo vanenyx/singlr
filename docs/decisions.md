@@ -192,3 +192,19 @@ XDG_SESSION_DESKTOP. La transacción KWin se integra mediante una unidad oneshot
 ordenada antes del compositor y detenida después. El agente de plasma-nm/kded
 atiende los secretos. No es una aprobación visual ni certificación de login real.
 [Diseño, fuentes y comprobaciones](handoffs/T266-startplasma.md).
+
+## P-031 — Singularidad opcional (explícita y solución derivada, 26 oct 2026)
+
+El creador encarga un fondo negro con un agujero negro construido con partículas
+blancas dinámicas, profundidad, movimiento y reacción al cursor, tomando sus
+cuatro imágenes y la técnica de partículas de remix.run como referencias.
+Se elige desde Ajustes; no sustituye el fondo actual ni permanece trabajando
+cuando se elige otro. El «OK. HAZLO» autoriza su implementación en este encargo.
+
+Solución técnica derivada: lote de geometría nativa Qt Quick y shaders GPU,
+órbitas procedurales, lente artística, hover local con paralaje amortiguado,
+límite de 30 fps y tres densidades. Imagen propia estática para miniaturas,
+reducir movimiento y backend software; carga diferida y observación de bloqueo,
+suspensión y DPMS. La composición exacta queda pendiente de valoración visual
+del creador; no es una simulación relativista ni una aprobación de consumo.
+[Entrega y límites](handoffs/T267-singularity-wallpaper.md).

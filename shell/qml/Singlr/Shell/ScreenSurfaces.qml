@@ -36,6 +36,7 @@ Item {
                 LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
                 LayerShell.Window.scope: "desktop"
                 Background {
+                    liveAllowed: true
                     anchors.fill: parent
                     // The screen object goes away before this delegate when an output is removed.
                     pixelSize: surfaces.outputScreen ? Qt.size(Math.ceil(surfaces.outputScreen.width * surfaces.outputScreen.devicePixelRatio),

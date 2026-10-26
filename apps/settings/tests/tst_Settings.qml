@@ -16,7 +16,33 @@ Item {
         function cleanup() {
             tryCompare(Ui.Appearance, "busy", false);
             Ui.Appearance.save("wallpaper", "singlr:linear");
+            Ui.Appearance.save("wallpaperAnimated", true);
+            Ui.Appearance.save("wallpaperReactive", true);
+            Ui.Appearance.save("wallpaperQuality", 1);
             Ui.Theme.reloadSettings();
+        }
+        function test_singularitySelectionAndPersistence() {
+            const app = createTemporaryObject(appFactory, fixture); verify(app);
+            mouseClick(findChild(app.contentItem, "nav-wallpaper"));
+            wait(80); // ScrollView lays out its newly visible content asynchronously.
+            mouseClick(findChild(app.contentItem, "singlr:singularity"));
+            compare(Ui.Appearance.wallpaper, "singlr:singularity");
+            const animated = findChild(app.contentItem, "wallpaperAnimated");
+            // Keyboard activation works even when the row needs scrolling.
+            animated.forceActiveFocus(); keyClick(Qt.Key_Space);
+            compare(Ui.Appearance.wallpaperAnimated, false);
+            verify(!findChild(app.contentItem, "wallpaperReactive").enabled);
+            Ui.Appearance.save("wallpaperQuality", 2);
+            Ui.Appearance.save("wallpaperReactive", false);
+            Ui.Appearance.reload();
+            compare(Ui.Appearance.wallpaperQuality, 2);
+            compare(Ui.Appearance.wallpaperReactive, false);
+            compare(Ui.Appearance.wallpaperAnimated, false);
+            external.sync(); compare(external.value("wallpaper"), "singlr:singularity");
+            compare(String(external.value("wallpaperAnimated")), "false");
+            mouseClick(findChild(app.contentItem, "singlr:light"));
+            compare(Ui.Appearance.wallpaper, "singlr:light");
+            app.close();
         }
         function test_dockControlsApplyAndPersist() {
             const app = createTemporaryObject(appFactory, fixture); verify(app);

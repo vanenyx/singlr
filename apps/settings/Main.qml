@@ -18,7 +18,8 @@ Window {
         {label: "Naranja", color: "#f2994a"}, {label: "Rosa", color: "#eb5ea9"}, {label: "Gris", color: "#8a8f98"}]
     readonly property var presets: [
         {label: "Linear", key: "singlr:linear"}, {label: "Brillo tenue", key: "singlr:glow"},
-        {label: "Neutro claro", key: "singlr:light"}, {label: "Grafito", key: "singlr:graphite"}]
+        {label: "Neutro claro", key: "singlr:light"}, {label: "Grafito", key: "singlr:graphite"},
+        {label: "Singularidad", key: "singlr:singularity"}]
     function save(key, value) {
         Ui.Appearance.save(key, value);
     }
@@ -225,33 +226,96 @@ Window {
                     }
                 }
             }
-            Column {
-                y: 72; width: parent.width; spacing: 20; visible: window.page === "wallpaper"
-                Row {
-                    spacing: 12
-                    Repeater {
-                        model: window.presets
-                        delegate: Controls.AbstractButton {
-                            id: preset; required property var modelData
-                            objectName: modelData.key
-                            width: (window.width - 316) / 4; height: 106
-                            Accessible.name: modelData.label; Accessible.role: Accessible.RadioButton; Accessible.checked: Ui.Appearance.wallpaper === modelData.key
-                            onClicked: window.save("wallpaper", modelData.key)
-                            background: Item {
-                                Rectangle { width: parent.width; height: 80; radius: 6; color: "transparent"; border.width: 2; border.color: Ui.Appearance.wallpaper === preset.modelData.key || preset.visualFocus ? Ui.Theme.control : Ui.Theme.border }
-                                Ui.Wallpaper { x: 4; y: 4; width: parent.width - 8; height: 72; radius: 3; source: preset.modelData.key }
-                                Ui.UiText { y: 84; height: 22; text: preset.modelData.label; font.pixelSize: 12; color: Ui.Theme.secondary }
+            Controls.ScrollView {
+                id: wallpaperScroll
+                y: 64; width: parent.width; height: parent.height - 104
+                visible: window.page === "wallpaper"
+                contentWidth: availableWidth
+                Column {
+                    width: wallpaperScroll.availableWidth; spacing: 16
+                    Row {
+                        spacing: 12
+                        Repeater {
+                            model: window.presets
+                            delegate: Controls.AbstractButton {
+                                id: preset; required property var modelData
+                                objectName: modelData.key
+                                width: (wallpaperScroll.availableWidth - 48) / 5; height: 106
+                                Accessible.name: modelData.label; Accessible.role: Accessible.RadioButton; Accessible.checked: Ui.Appearance.wallpaper === modelData.key
+                                onClicked: window.save("wallpaper", modelData.key)
+                                background: Item {
+                                    Rectangle { width: parent.width; height: 80; radius: 6; color: "transparent"; border.width: 2; border.color: Ui.Appearance.wallpaper === preset.modelData.key || preset.visualFocus ? Ui.Theme.control : Ui.Theme.border }
+                                    Ui.Wallpaper { x: 4; y: 4; width: parent.width - 8; height: 72; radius: 3; source: preset.modelData.key }
+                                    Ui.UiText { y: 84; height: 22; text: preset.modelData.label; font.pixelSize: 12; color: Ui.Theme.secondary }
+                                }
                             }
                         }
                     }
+                    Item {
+                        width: parent.width; height: 36
+                        Ui.UiText { height: 36; text: "Imagen personalizada"; color: Ui.Theme.secondary }
+                        Ui.Button { anchors.right: parent.right; height: 36; width: 142; icon: "image"; label: "Elegir imagen…"; onClicked: fileDialog.open() }
+                    }
+                    Ui.Wallpaper {
+                        id: preview; objectName: "wallpaperPreview"
+                        width: parent.width; height: 190; radius: 6
+                        liveAllowed: window.page === "wallpaper" && window.active
+                    }
+                    Row {
+                        visible: Ui.Appearance.wallpaper === "singlr:singularity"
+                        width: parent.width; spacing: 24
+                        Ui.Toggle {
+                            objectName: "wallpaperAnimated"; width: 190; text: "Movimiento"
+                            Accessible.name: "Animar Singularidad"
+                            checked: Ui.Appearance.wallpaperAnimated
+                            onToggled: window.save("wallpaperAnimated", checked)
+                        }
+                        Ui.Toggle {
+                            objectName: "wallpaperReactive"; width: 220; text: "Reaccionar al cursor"
+                            Accessible.name: "Reaccionar al cursor"
+                            enabled: Ui.Appearance.wallpaperAnimated && Ui.Motion.enabled
+                            checked: Ui.Appearance.wallpaperReactive
+                            onToggled: window.save("wallpaperReactive", checked)
+                        }
+                    }
+                    Row {
+                        visible: Ui.Appearance.wallpaper === "singlr:singularity"
+                        spacing: 8
+                        Ui.UiText { text: "Detalle"; width: 90; height: 30; color: Ui.Theme.secondary }
+                        Repeater {
+                            model: ["Ligero", "Equilibrado", "Alto"]
+                            delegate: Controls.AbstractButton {
+                                id: detail; required property int index; required property string modelData
+                                objectName: "wallpaperQuality-" + index
+                                width: 110; height: 30
+                                Accessible.name: "Detalle " + modelData
+                                Accessible.role: Accessible.RadioButton
+                                Accessible.checked: Ui.Appearance.wallpaperQuality === index
+                                onClicked: window.save("wallpaperQuality", index)
+                                background: Rectangle {
+                                    radius: 5
+                                    color: Ui.Appearance.wallpaperQuality === detail.index ? Ui.Theme.hover : Ui.Theme.panel
+                                    border.color: detail.visualFocus ? Ui.Theme.control : Ui.Theme.border
+                                }
+                                contentItem: Ui.UiText { text: detail.modelData; horizontalAlignment: Text.AlignHCenter }
+                            }
+                        }
+                    }
+                    Ui.UiText {
+                        width: parent.width
+                        height: Ui.Appearance.wallpaper === "singlr:singularity" ? 40 : 24
+                        wrapMode: Text.WordWrap
+                        text: {
+                            if (preview.imageFailed) return "Imagen no disponible. Se muestra el fondo predeterminado.";
+                            if (Ui.Appearance.wallpaper !== "singlr:singularity") return "Vista previa";
+                            if (preview.liveFailed) return "Actualiza el módulo de Singlr para animar este fondo. Se muestra la imagen fija.";
+                            if (!Ui.Motion.enabled) return "Reducir movimiento está activo: se muestra una imagen fija.";
+                            return "La animación se pausa al bloquear o apagar la pantalla. Más detalle consume más GPU.";
+                        }
+                        color: preview.imageFailed ? Ui.Theme.error : Ui.Theme.muted
+                        font.pixelSize: 12
+                    }
                 }
-                Item {
-                    width: parent.width; height: 36
-                    Ui.UiText { height: 36; text: "Imagen personalizada"; color: Ui.Theme.secondary }
-                    Ui.Button { anchors.right: parent.right; height: 36; width: 142; icon: "image"; label: "Elegir imagen…"; onClicked: fileDialog.open() }
-                }
-                Ui.Wallpaper { id: preview; width: parent.width; height: 228; radius: 6 }
-                Ui.UiText { width: parent.width; height: 24; text: preview.imageFailed ? "Imagen no disponible. Se muestra el fondo predeterminado." : "Vista previa"; color: preview.imageFailed ? Ui.Theme.error : Ui.Theme.muted; font.pixelSize: 12 }
             }
             Ui.UiText { anchors.bottom: parent.bottom; width: parent.width; height: 36; text: window.feedback; color: Ui.Theme.error; wrapMode: Text.WordWrap; font.pixelSize: 12; Accessible.role: Accessible.AlertMessage }
         }

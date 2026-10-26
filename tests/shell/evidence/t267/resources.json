@@ -1,0 +1,26 @@
+[
+  {
+    "phase": "unloaded-before",
+    "sample_seconds": 2.0,
+    "cpu_one_core_percent": 0.0,
+    "pss_kib": 28192
+  },
+  {
+    "phase": "animated-balanced",
+    "sample_seconds": 2.0,
+    "cpu_one_core_percent": 1.0,
+    "pss_kib": 51191
+  },
+  {
+    "phase": "paused-resident",
+    "sample_seconds": 2.0,
+    "cpu_one_core_percent": 0.0,
+    "pss_kib": 51195
+  },
+  {
+    "phase": "unloaded-after",
+    "sample_seconds": 2.0,
+    "cpu_one_core_percent": 0.0,
+    "pss_kib": 46178
+  }
+]

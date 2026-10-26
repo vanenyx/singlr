@@ -1,0 +1,10 @@
+qml-dark.log
+Totals: 246 passed, 0 failed, 5 skipped, 0 blacklisted, 31656ms
+Totals: 10 passed, 0 failed, 0 skipped, 0 blacklisted, 485ms
+qml-light.log
+Totals: 246 passed, 0 failed, 5 skipped, 0 blacklisted, 26531ms
+Totals: 10 passed, 0 failed, 0 skipped, 0 blacklisted, 490ms
+gpu-tests.log
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 685ms
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 226ms
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 60ms

@@ -30,6 +30,10 @@ El snapshot usa `SKIP` por ser local: fijar SHA-256 antes de distribuirlo.
 No mezclar este paquete con el instalador manual de metadatos `session/install.sh`.
 Para desinstalar, `pacman -R singlr-desktop` desde otra sesión, con Singlr cerrado.
 
+El fondo opcional Singularidad añade `qt6-shadertools` a las dependencias de
+compilación y `libkscreen` a las de ejecución (observación del apagado de pantallas).
+Los shaders se compilan a QSB; no se necesita un compilador durante la sesión.
+
 ## Validación sin instalar
 
 ```bash
