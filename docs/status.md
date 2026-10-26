@@ -58,6 +58,14 @@ la prueba nativa correctos, incluyendo selección y cancelación. Dependencias
 Dolphin/plasma-integration explícitas. Requiere actualizar el paquete para que
 el lanzador instalado incluya el cambio. [Entrega](handoffs/T256-native-file-picker.md).
 
+T257/P-025: retirado el punto de aplicación abierta del dock, iconos centrados y
+escala visible compensada a partir de sus márgenes transparentes. Marcas originales
+conservadas; ajuste solo en dock, pendiente de valoración visual. QML: 239 shell +
+9 Ajustes por modo, 0 fallos; 6 resultados nativos de métricas y 9 QML a escala 2
+correctos. Medida aislada: 93,45 MB PSS y 0,033 % CPU; no acredita P-016 real.
+Requiere actualizar paquete y relanzar shell/sesión por el nuevo tipo QML nativo.
+[Entrega y comparación](handoffs/T257-dock-icons.md).
+
 ## Siguientes cierres necesarios
 
 1. Aceptación visual y nativa del dock corregido: touchpad, DND, autohide y espacio reservado en distintas salidas.

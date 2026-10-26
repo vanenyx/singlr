@@ -4,7 +4,7 @@ qt_add_qml_module(singlr-system
     URI Singlr.System VERSION 1.0
     RESOURCE_PREFIX /qt/qml
     OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml/Singlr/System"
-    SOURCES kdeappearance.h kdeappearance.cpp workspacebridge.h
+    SOURCES kdeappearance.h kdeappearance.cpp workspacebridge.h dockiconmetrics.h
 )
 target_link_libraries(singlr-system PRIVATE Qt6::Gui Qt6::Quick Qt6::DBus KF6::ConfigGui)
 set_target_properties(singlr-system singlr-systemplugin PROPERTIES INSTALL_RPATH "$ORIGIN")
@@ -30,3 +30,7 @@ find_package(KF6KIO 6.0 REQUIRED)
 add_executable(singlr-file-dialog-test EXCLUDE_FROM_ALL ../../tests/shell/settings_file_dialog.cpp)
 target_link_libraries(singlr-file-dialog-test PRIVATE Qt6::Widgets Qt6::Quick Qt6::Qml Qt6::Test KF6::KIOFileWidgets)
 target_compile_definitions(singlr-file-dialog-test PRIVATE SINGLR_SOURCE_ROOT="${PROJECT_SOURCE_DIR}")
+
+add_executable(singlr-dock-icon-test EXCLUDE_FROM_ALL ../../tests/shell/dock_icon_metrics.cpp dockiconmetrics.h)
+target_include_directories(singlr-dock-icon-test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(singlr-dock-icon-test PRIVATE Qt6::Gui Qt6::Qml Qt6::Test)

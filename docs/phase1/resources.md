@@ -282,3 +282,17 @@ perfil de asignaciones en sesión desechable con fondo, escala y bandeja equival
 a la sesión real, seguido de una comparación antes/después. No hay heaptrack
 instalado en el inventario de esta entrega; no se instalaron paquetes ni se adjuntó
 un depurador al shell del creador. No se sacrificaron funciones para bajar la cifra.
+
+## T257 — iconos del dock (26 oct 2026)
+
+Medida puntual en sesión KWin privada nueva, fondo sólido y datos nuevos:
+93,45 MB PSS (67,18 MB anónimos), CPU 0,033 % / 30 s, tres superficies.
+Salida solicitada 2048×1280; no se registró backend/GPU efectivo en esta muestra.
+Limpieza `remaining=[]` y hashes host iguales. Está dentro del límite en esta
+fixture, **sin comparación A/B equivalente** y sin acreditar P-016 en sesión real.
+
+El helper guarda solo hasta 128 rectángulos de alfa, no pixmaps; mide a 128 px
+cuando cambia el icono, sin trabajo por frame. Kirigami conserva la rasterización;
+una fuente fija de 128 px evita ampliar bitmaps elegidos por tamaños intermedios.
+El coste de esas texturas sí existe y no se presenta como una optimización de
+memoria. [Evidencia filtrada](../../tests/shell/evidence/t257/README.md).

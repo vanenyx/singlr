@@ -33,6 +33,7 @@ La fuente de producto es [la recuperación original](../SINGLR_recuperacion_desd
 | P-022 | Explícita del creador | Vigente | Dock configurable en Ajustes de Singlr (2026-10-25): modo **flotante** (como ahora, algo más abajo) o **fijo** de borde a borde (como la barra de Windows); **altura** ajustable en ambos, con iconos proporcionales a la altura; **ocultación automática** opcional. |
 | P-023 | Explícita del creador | Vigente | Decoración de ventanas nativa de KDE (2026-10-25): se retira la decoración Aurorae Singlr; botones nativos a la derecha. Motivo: la personalizada añadía una barra sobre apps que no la necesitan, quitando espacio al contenido («ver más, más productividad»). |
 | P-024 | Explícita del creador | Vigente | Dolphin es el explorador de archivos de Singlr (26 oct 2026), ratificado porque al creador le gusta y lo considera completo. Se prioriza su integración en todo el escritorio y no un gestor propio. Los selectores de abrir/guardar son integración nativa KDE, documentada como solución técnica T256; no se presenta Dolphin como API de selección. |
+| P-025 | Explícita del creador | Vigente | Dock sin punto de aplicación abierta (26 oct 2026): se retira por limpieza visual. El creador también pide corregir el tamaño desigual de algunos logotipos. Se conservan las marcas originales; el ajuste técnico T257 se presenta con comparación visual, sin elevar su geometría a token general aprobado. |
 | T-006 | Técnica derivada | Aplicada | Portapapeles (T238): el historial es el de KDE (Klipper, `org.kde.plasma.private.clipboard`) cargado en el shell; Meta+V abre el panel Singlr. Klipper registra su popup en el componente del shell; Singlr le quita Meta+V solo en ese componente, como haría Configuración del sistema. |
 | T-007 | Técnica derivada | Aplicada | Recuperación del shell (T239): misma política que `plasma-plasmashell.service` (`Restart=on-failure`, 3 arranques/60 s); el target no depende del shell, como `plasma-core.target`. |
 | T-008 | Técnica derivada | Aplicada | Pantalla de bloqueo (T240): paquete `Plasma/Shell` `org.singlr.desktop` con su `lockscreen`; la sesión Singlr exporta `PLASMA_DEFAULT_SHELL`, que kscreenlocker 6.8.1 usa si `plasmashellrc` no fija otro. Plasma conserva la suya. |
@@ -96,3 +97,15 @@ El selector nativo utiliza KFileWidget; Dolphin permanece como explorador y
 proveedor FileManager1 para abrir ubicaciones. Dependencias de producto explícitas:
 Dolphin y plasma-integration. No se cambian asociaciones MIME del usuario.
 [Pruebas y entrega](handoffs/T256-native-file-picker.md).
+
+## T257 — iconos del dock (P-025)
+
+Se retira el punto de abierta y se centra verticalmente el icono en su celda.
+El estado abierto se conserva en la descripción accesible. Para compensar márgenes
+transparentes distintos se mide el alfa del QIcon original y se ajustan escala
+uniforme y centro, solo en el dock. Kirigami sigue dibujando los logotipos;
+`roundToIconSize=false`, muestra de 128 px y reducción al tamaño de pantalla.
+Rectángulos de medida en caché acotada a 128 entradas, sin imágenes retenidas por
+el helper, timers ni trabajo por frame. Caja de clic, orden y comportamiento intactos.
+El ajuste es una solución técnica/propuesta de pulido visual, no rediseño de marcas.
+[Comparación, pruebas y límites](handoffs/T257-dock-icons.md).

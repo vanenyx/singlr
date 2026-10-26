@@ -32,6 +32,7 @@ Controls.Control {
     onActiveFocusChanged: keyboardFocus = activeFocus
     Accessible.role: Accessible.Button
     Accessible.name: String(task?.AppName || task?.display || "Aplicación")
+    Accessible.description: task?.singlrGrid ? "Mostrar aplicaciones" : tile.running ? "Aplicación abierta" : "Iniciar aplicación"
     Keys.onMenuPressed: { interacted(); contextRequested(); }
     Accessible.onPressAction: activated()
     Keys.onEnterPressed: activated()
@@ -46,21 +47,14 @@ Controls.Control {
     }
     Item {
         id: iconContainer
-        anchors.horizontalCenter: parent.horizontalCenter; y: Math.round(5 * tile.sizeFactor); width: tile.iconSize; height: tile.iconSize
+        anchors.centerIn: parent; width: tile.iconSize; height: tile.iconSize
         scale: 1
         Item {
             id: pulse; anchors.fill: parent
-            AppIcon { visible: !tile.task?.singlrGrid; anchors.fill: parent; source: tile.task?.decoration }
+            DockAppIcon { visible: !tile.task?.singlrGrid; anchors.fill: parent; source: tile.task?.decoration }
             Icon { anchors.centerIn: parent; visible: !!tile.task?.singlrGrid; name: "squares-four"; width: Math.round(24 * tile.sizeFactor); height: width; font.pixelSize: width; color: Theme.secondary }
 
         }
-    }
-    Rectangle {
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: tile.height - height - Math.round(4 * tile.sizeFactor)
-        width: Math.max(3, Math.round(3 * tile.sizeFactor)); height: width; radius: width / 2
-        color: tile.task?.IsActive ? Theme.text : Theme.muted
-        visible: tile.running
     }
     // MouseArea keeps its grab outside the dock. Only a release over an app
     // commits a move; releasing anywhere else leaves the model untouched.

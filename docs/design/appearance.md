@@ -26,8 +26,8 @@ Ver [justificación, evidencia y límites](../handoffs/T252-material-polish.md).
 
 Pase C++ externo para KWin 6.8.1, limitado al shell. Difusión y adaptación de
 luminancia local, sin refracción, dispersión ni especular (P-021). Cobertura SDF
-premultiplicada en el contorno, escalada por el viewport. El radio real lo comunica
-el shell, no se deduce de la región entera del blur.
+premultiplicada en el contorno, escalada por el viewport. El radio se recupera de las filas de la región de blur rasterizada de forma
+determinista por el shell (corrección T253); no hay canal D-Bus de geometría.
 
 Se conserva el ID técnico `singlr-liquidglass` para mantener la reversión exacta del
 journal/kwinrc existente. El nombre visible es Singlr Glass. Véanse [contrato,
@@ -54,3 +54,18 @@ de copiarla. Monoespaciada: la de KDE (Hack) salvo decisión contraria. Pendient
 
 Una sesión con capturas lado a lado en ambos modos para aprobar: paleta y acento por defecto, esquema
 de apps, tipografía del sistema, radios, intensidad por defecto del vidrio y suavidad de esquinas en el pase de Vidrio y su respaldo.
+
+## 5. Iconos del dock (P-025 / T257)
+
+Por decisión del creador se retira el punto de abierta. El icono se centra en la
+altura del dock; su estado abierto sigue disponible para tecnologías de asistencia.
+
+Propuesta técnica: compensar el espacio transparente de cada marca mediante
+medida de alfa. Ajuste uniforme de tamaño y centro, un píxel lógico de respiro,
+ampliación máxima de 1,5× para limitar fuentes patológicas. No recolorear, deformar,
+poner todas las marcas en placas ni sustituir los originales. La igualdad del
+contorno visible no garantiza igualdad perceptual de masa entre formas distintas.
+La presentación queda para revisión del creador; no cambia tipografía ni materiales.
+
+Se comparan estado anterior, caja uniforme y compensación visible en claro/oscuro
+a 48/72 px. [Evidencia](../../tests/shell/evidence/t257/README.md).

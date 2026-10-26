@@ -1,0 +1,70 @@
+{
+  "scenario": "idle",
+  "environment": {
+    "kernel": "7.2.11-arch1-1",
+    "machine": "x86_64",
+    "size": "2048x1280",
+    "profile": false,
+    "kwin_wayland": "kwin 6.8.1",
+    "plasmashell": "plasmashell 6.8.1",
+    "pkg-config": "6.12.0"
+  },
+  "results": [
+    {
+      "phase": "idle",
+      "name": "singlr-shell",
+      "pss_bytes": 93448192,
+      "pss_anon_bytes": 67178496,
+      "pss_file_bytes": 25368576,
+      "pss_shmem_bytes": 901120,
+      "rss_bytes": 244568064,
+      "threads": 37,
+      "cpu_percent": 0.03332843944527744,
+      "interval_seconds": 30.004405145999044,
+      "scheduler_timeslices": null,
+      "wakeups": null,
+      "windows": [
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 28
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 920.5,
+          "y": 1228,
+          "width": 207,
+          "height": 48
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 0,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 1280
+        }
+      ],
+      "window_count": 3,
+      "budget": "PASS"
+    }
+  ],
+  "budget": {
+    "pss_bytes_lt": 120000000,
+    "cpu_percent_lt": 0.5
+  },
+  "note": "T257, ejecuci\u00f3n puntual privada sin A/B. Backend/GPU no registrado. No acredita P-016 en sesi\u00f3n real."
+}

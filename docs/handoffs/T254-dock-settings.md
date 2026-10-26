@@ -1,5 +1,8 @@
 # T254 — Dock configurable
 
+**Actualización 26 oct, P-025/T257:** el indicador de aplicación abierta descrito
+en esta entrega histórica fue retirado por decisión del creador.
+
 Codex 1, `day3/codex1-dock-settings`, sin commit. Implementa P-022 sobre Desktop, Appearance y Platform; no acredita la sesión completa de Singlr 1.0.
 
 ## Cambios

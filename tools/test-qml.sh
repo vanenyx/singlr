@@ -36,6 +36,8 @@ for source in ("inter/InterVariable.ttf", "phosphor/Phosphor.ttf"):
     shutil.copy2(root / "third_party" / source, fonts)
 fixtures = tmp / "tests"
 fixtures.mkdir()
+if (root / "shell/qml/tests/fixtures").is_dir():
+    shutil.copytree(root / "shell/qml/tests/fixtures", fixtures / "fixtures")
 for source in (root / "shell/qml/tests").glob("*.qml"):
     text = source.read_text().replace('"../../../session/shell-package/org.singlr.desktop/contents/lockscreen"', f'"{lock.as_uri()}"')
     text = text.replace('"../../../apps/settings/Main.qml"', f'"{(root / "apps/settings/Main.qml").as_uri()}"')
