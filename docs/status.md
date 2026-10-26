@@ -109,6 +109,23 @@ de audio activas y música audible (confirmado por el creador), red conectada. S
 recuperada. El fallo de audio previo era intermitente (3 de 10 reanudaciones con
 CORB timeout y perfiles en «off»): un ciclo correcto no lo da por cerrado.
 
+T266: sesión iniciada con `startplasma-wayland` oficial; Singlr sustituye solo el
+ejecutable de `plasma-plasmashell.service`. [Entrega](handoffs/T266-startplasma.md).
+
+**Incidente 26 oct 05:49:** instalar el paquete T266 *desde* la sesión antigua eliminó
+`singlr-workspace.target`; el `daemon-reload` del hook paró toda la sesión (pantalla
+negra). El apagado forzado dejó los archivos instalados en 0 bytes. Recuperado desde
+Plasma (registro pacman retirado, reinstalación con --overwrite, sync).
+
+**Pruebas reales en el equipo del creador tras T266:**
+- Plasma: reinicio de `plasma-plasmashell` por el dispatcher → `/usr/bin/plasmashell`, correcto.
+- Login Singlr 06:13: sin fallos; KWin, ksmserver, PowerDevil, kded activos; dock,
+  audio y red correctos (confirmado por el creador). Inicio algo menos fluido que
+  Plasma: `singlr-kwin-prepare` (~0,8 s) precede a KWin; pendiente optimizar.
+- Reinstalación del paquete con Singlr en marcha (06:27): el user manager se reejecuta
+  y ninguna unidad se detiene; el shell sigue activo. Actualizar en caliente ya no
+  rompe la sesión.
+
 ## Siguientes cierres necesarios
 
 1. Aceptación visual y nativa del dock corregido: touchpad, DND, autohide y espacio reservado en distintas salidas.
