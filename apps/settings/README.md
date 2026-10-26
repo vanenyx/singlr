@@ -31,6 +31,27 @@ imágenes locales file:///. Se guarda antes de notificar por D-Bus al shell.
 Wallpaper comparte la vista previa y el fondo entre app y shell y muestra el
 predeterminado detrás de imágenes no disponibles.
 
+## Selección nativa de archivos (T256)
+
+El explorador de Singlr es Dolphin (P-024). La ventana para elegir el fondo es un
+selector de archivos de KDE, no una instancia de Dolphin ni un explorador propio.
+`QtQuick.Dialogs.FileDialog` conserva la API, los filtros y la persistencia; el
+lanzador inicia `qml6 --apptype widget` para que plasma-integration proporcione
+su helper QWidget/KFileWidget. Si no hay tema explícito, usa `QT_QPA_PLATFORMTHEME=kde`.
+Una selección explícita del usuario del tema de plataforma se respeta.
+
+Prueba nativa del diálogo real, selección de PNG con espacios/#/Unicode y cancelación:
+
+```sh
+cmake --build build --target singlr-file-dialog-test
+QML_IMPORT_PATH="$PWD/build/qml" build/session/appearance/singlr-file-dialog-test
+```
+
+La prueba crea XDG temporales y desconecta ambos buses antes de QApplication.
+No modifica el fondo ni abre diálogos sobre la sesión habitual. El listado
+asíncrono KIO, montajes y red requieren una sesión KDE completa; la prueba
+comprueba el helper nativo y el retorno de una imagen local existente.
+
 ## Desarrollo y comprobación
 
 CMake compila e instala Singlr.System en el directorio QML estándar. Antes de

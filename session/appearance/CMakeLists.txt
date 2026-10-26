@@ -24,3 +24,9 @@ target_link_libraries(singlr-appearance-test PRIVATE Qt6::Gui Qt6::Quick Qt6::Qm
 add_executable(singlr-material-settings-test EXCLUDE_FROM_ALL
     ../../kwin/effects/singlr-liquidglass/tests/config.cpp)
 target_link_libraries(singlr-material-settings-test PRIVATE Qt6::Gui Qt6::Test KF6::ConfigCore)
+
+# Exercise the actual Settings FileDialog through KDE's native QWidget helper.
+find_package(KF6KIO 6.0 REQUIRED)
+add_executable(singlr-file-dialog-test EXCLUDE_FROM_ALL ../../tests/shell/settings_file_dialog.cpp)
+target_link_libraries(singlr-file-dialog-test PRIVATE Qt6::Widgets Qt6::Quick Qt6::Qml Qt6::Test KF6::KIOFileWidgets)
+target_compile_definitions(singlr-file-dialog-test PRIVATE SINGLR_SOURCE_ROOT="${PROJECT_SOURCE_DIR}")

@@ -32,6 +32,7 @@ La fuente de producto es [la recuperación original](../SINGLR_recuperacion_desd
 | P-021 | Explícita del creador | Vigente | Se retira Liquid Glass (2026-10-25): tras probarlo, el creador decide quedarse solo con el vidrio (glassmorphism plano, P-020) y el sólido. Sustituye a P-019. |
 | P-022 | Explícita del creador | Vigente | Dock configurable en Ajustes de Singlr (2026-10-25): modo **flotante** (como ahora, algo más abajo) o **fijo** de borde a borde (como la barra de Windows); **altura** ajustable en ambos, con iconos proporcionales a la altura; **ocultación automática** opcional. |
 | P-023 | Explícita del creador | Vigente | Decoración de ventanas nativa de KDE (2026-10-25): se retira la decoración Aurorae Singlr; botones nativos a la derecha. Motivo: la personalizada añadía una barra sobre apps que no la necesitan, quitando espacio al contenido («ver más, más productividad»). |
+| P-024 | Explícita del creador | Vigente | Dolphin es el explorador de archivos de Singlr (26 oct 2026), ratificado porque al creador le gusta y lo considera completo. Se prioriza su integración en todo el escritorio y no un gestor propio. Los selectores de abrir/guardar son integración nativa KDE, documentada como solución técnica T256; no se presenta Dolphin como API de selección. |
 | T-006 | Técnica derivada | Aplicada | Portapapeles (T238): el historial es el de KDE (Klipper, `org.kde.plasma.private.clipboard`) cargado en el shell; Meta+V abre el panel Singlr. Klipper registra su popup en el componente del shell; Singlr le quita Meta+V solo en ese componente, como haría Configuración del sistema. |
 | T-007 | Técnica derivada | Aplicada | Recuperación del shell (T239): misma política que `plasma-plasmashell.service` (`Restart=on-failure`, 3 arranques/60 s); el target no depende del shell, como `plasma-core.target`. |
 | T-008 | Técnica derivada | Aplicada | Pantalla de bloqueo (T240): paquete `Plasma/Shell` `org.singlr.desktop` con su `lockscreen`; la sesión Singlr exporta `PLASMA_DEFAULT_SHELL`, que kscreenlocker 6.8.1 usa si `plasmashellrc` no fija otro. Plasma conserva la suya. |
@@ -84,3 +85,14 @@ de las flechas es una propuesta visual pendiente; no se eleva a token aprobado.
 Qt 6.12.0 local; APIs públicas de
 [Flickable](https://doc.qt.io/qt-6/qml-qtquick-flickable.html) y WheelHandler.
 [Entrega y límites](handoffs/T255-audit-followup.md).
+
+## T256 — selector nativo KDE y Dolphin (P-024)
+
+Ajustes usaba `QtQuick.Dialogs.FileDialog`, pero `qml6` arranca por defecto con
+QGuiApplication. El helper de KDE requiere QApplication/QtWidgets: se cambia el
+lanzador a `qml6 --apptype widget`, con tema de plataforma `kde` si no hay uno
+explícito. No se implementa otro explorador ni se intenta usar Dolphin como diálogo.
+El selector nativo utiliza KFileWidget; Dolphin permanece como explorador y
+proveedor FileManager1 para abrir ubicaciones. Dependencias de producto explícitas:
+Dolphin y plasma-integration. No se cambian asociaciones MIME del usuario.
+[Pruebas y entrega](handoffs/T256-native-file-picker.md).

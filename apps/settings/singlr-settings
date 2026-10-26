@@ -24,4 +24,6 @@ unset QT_WAYLAND_SHELL_INTEGRATION
 if [[ -n "${root:-}" && -d "$root/build/qml" ]]; then
     export QML_IMPORT_PATH="$root/build/qml${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}"
 fi
-exec qml6 -I "$qml" "$entry" "$@"
+# KDE's native file dialog is QWidget-based and requires QApplication.
+export QT_QPA_PLATFORMTHEME="${QT_QPA_PLATFORMTHEME:-kde}"
+exec qml6 --apptype widget -I "$qml" "$entry" "$@"

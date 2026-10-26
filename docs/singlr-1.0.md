@@ -57,7 +57,8 @@ contribuye encuentra módulos separados.
 especializa en la experiencia de escritorio y la relación entre sus herramientas. Encontrar archivos,
 abrir ubicaciones, ejecutar acciones y capturar la pantalla se resuelve con integraciones bien
 diseñadas (Dolphin, Spectacle). Una experiencia de archivos propia sería una ampliación futura solo si
-demuestra merecerlo.
+demuestra merecerlo. **[Registro]** Dolphin ratificado por el creador como explorador
+de Singlr el 26 oct 2026 (P-024); los diálogos de selección usan integración nativa KDE.
 
 ## 3. Cómo se ve
 

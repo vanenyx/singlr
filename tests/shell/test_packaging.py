@@ -25,7 +25,7 @@ class PackagingTests(unittest.TestCase):
             base = Path(directory)
             fake = base / 'qml6'
             fake.write_text('#!/usr/bin/env python3\nimport json,os,sys\n'
-                            'print(json.dumps([sys.argv[1:], os.environ.get("QT_WAYLAND_SHELL_INTEGRATION")]))\n')
+                            'print(json.dumps([sys.argv[1:], os.environ.get("QT_WAYLAND_SHELL_INTEGRATION"), os.environ.get("QT_QPA_PLATFORMTHEME")]))\n')
             fake.chmod(0o755)
             for installed in (False, True):
                 with self.subTest(installed=installed):
@@ -40,14 +40,19 @@ class PackagingTests(unittest.TestCase):
                     env = os.environ | {'PATH': str(base) + ':' + os.environ['PATH'],
                                         'QT_WAYLAND_SHELL_INTEGRATION': 'layer-shell'}
                     env.pop('SINGLR_DEV_ROOT', None)
+                    env.pop('QT_QPA_PLATFORMTHEME', None)
                     if not installed:
                         env['SINGLR_DEV_ROOT'] = str(payload)
                     result = subprocess.run([str(launcher), '--', 'a b'], env=env,
                                             capture_output=True, text=True, check=True)
-                    args, integration = json.loads(result.stdout)
-                    self.assertEqual(args, ['-I', str(payload / ('qml' if installed else 'shell/qml')),
+                    args, integration, theme = json.loads(result.stdout)
+                    self.assertEqual(args, ['--apptype', 'widget', '-I', str(payload / ('qml' if installed else 'shell/qml')),
                                             str(payload / 'apps/settings/Main.qml'), '--', 'a b'])
                     self.assertIsNone(integration)
+                    self.assertEqual(theme, 'kde')
+                    custom = subprocess.run([str(launcher)], env=env | {'QT_QPA_PLATFORMTHEME': 'custom'},
+                                            capture_output=True, text=True, check=True)
+                    self.assertEqual(json.loads(custom.stdout)[2], 'custom')
                     (payload / 'apps/settings/Main.qml').unlink()
                     result = subprocess.run([str(launcher)], env=env, capture_output=True, text=True)
                     self.assertEqual(result.returncode, 1)

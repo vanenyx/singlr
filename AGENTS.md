@@ -7,6 +7,7 @@ Singlr es una experiencia de escritorio completa y distribuible para Linux, con 
 
 ## Producto
 - Linear influye en UI y UX; macOS también. Mantén una identidad propia.
+- Dolphin es el explorador elegido para Singlr (P-024). Integra sus capacidades y los selectores nativos de KDE; no construyas otro gestor ni presentes Dolphin como una API de selección de archivos.
 - Base visual y de UX: Linear, con glassmorphism de macOS y la operativa de Raycast (P-005). Materiales: vidrio plano (glassmorphism) y sólido; Liquid Glass retirado (P-021). Esquinas moderadas; Phosphor Icons y marcas originales de aplicaciones.
 - Distribución del escritorio, colores, tipografía, tokens y arquitectura detallada siguen abiertos salvo decisiones registradas. P-016 fija PSS propia del shell <120 MB y CPU en reposo casi cero; el coste del escritorio completo y GPU sigue requiriendo medición.
 - Identifica cada decisión como explícita del creador, propuesta por validar o solución técnica derivada. Regístrala en `docs/decisions.md` cuando afecte a otros trabajos.

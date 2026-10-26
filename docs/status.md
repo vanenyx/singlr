@@ -52,6 +52,12 @@ no se integran cambios experimentales de memoria.
 
 Entrega y evidencia: [T255](handoffs/T255-audit-followup.md).
 
+T256/P-024: Dolphin ratificado como explorador. Corregido el lanzador de Ajustes
+para habilitar el selector nativo KDE al elegir una imagen; cuatro resultados de
+la prueba nativa correctos, incluyendo selección y cancelación. Dependencias
+Dolphin/plasma-integration explícitas. Requiere actualizar el paquete para que
+el lanzador instalado incluya el cambio. [Entrega](handoffs/T256-native-file-picker.md).
+
 ## Siguientes cierres necesarios
 
 1. Aceptación visual y nativa del dock corregido: touchpad, DND, autohide y espacio reservado en distintas salidas.

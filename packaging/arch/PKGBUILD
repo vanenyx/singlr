@@ -8,7 +8,7 @@ arch=('x86_64')
 license=('LicenseRef-Singlr-Pending')
 depends=('bash' 'python' 'qt6-base' 'qt6-declarative' 'qt6-svg'
          'kservice' 'kio' 'kwindowsystem' 'kglobalaccel' 'networkmanager-qt' 'kwallet' 'layer-shell-qt'
-         'libnm' 'networkmanager' 'plasma-workspace' 'plasma-desktop' 'kwin=6.8.1'
+         'libnm' 'networkmanager' 'plasma-workspace' 'plasma-desktop' 'plasma-integration' 'dolphin' 'kwin=6.8.1'
          'plasma-nm' 'plasma-pa' 'bluez-qt' 'bluedevil' 'kitemmodels' 'kcmutils' 'milou'
          'breeze-icons' 'breeze-gtk' 'kde-gtk-config' 'xsettingsd'
          'powerdevil' 'polkit-kde-agent' 'xdg-desktop-portal-kde'

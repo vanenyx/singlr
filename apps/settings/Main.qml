@@ -23,7 +23,7 @@ Window {
         Ui.Appearance.save(key, value);
     }
     FileDialog {
-        id: fileDialog; title: "Elegir fondo de escritorio"
+        id: fileDialog; objectName: "wallpaperFileDialog"; title: "Elegir fondo de escritorio"
         currentFolder: StandardPaths.standardLocations(StandardPaths.PicturesLocation)[0]
         nameFilters: ["Imágenes (*.png *.jpg *.jpeg *.webp *.avif *.bmp)"]
         onAccepted: window.save("wallpaper", selectedFile.toString())
