@@ -353,11 +353,17 @@ void System::placeOnScreen(QObject *object, const QString &screenName)
     // Siempre se recrea: QML puede haber asignado ya la pantalla sin que la superficie nativa la siga.
     if (!target)
         return;
+    // Output loss dismisses the layer surface, not the logical QML window.
+    // LayerShellQt defaults to QWindow::close() on dismissal, which silently
+    // hides a persistent window even when its QML visibility binding stays true.
+    // Keep that state intact so remapping also preserves intentional auto-hide.
+    auto *layerWindow = LayerShellQt::Window::get(window);
+    layerWindow->setCloseOnDismissed(false);
     const bool visible = window->isVisible();
     window->destroy();
     window->setScreen(target);
     // LayerShellQt 6.8 decide la salida con su propia propiedad «screen» (no con QWindow::screen()).
-    LayerShellQt::Window::get(window)->setScreen(target);
+    layerWindow->setScreen(target);
     if (visible)
         window->show();
 }

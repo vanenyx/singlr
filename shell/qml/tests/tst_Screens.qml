@@ -5,9 +5,53 @@ import Singlr.Shell
 
 Item {
     id: fixture
+    width: 1280; height: 800
     Component { id: factory; Session {} }
     TestCase {
         name: "Screens"; when: windowShown
+        function test_dockStateAcrossEmptyInventory_data() {
+            return [
+                {tag: "floating-visible", mode: "floating", autoHide: false},
+                {tag: "fixed-visible", mode: "fixed", autoHide: false},
+                {tag: "floating-autohide", mode: "floating", autoHide: true},
+                {tag: "fixed-autohide", mode: "fixed", autoHide: true}
+            ];
+        }
+        function test_dockStateAcrossEmptyInventory(data) {
+            const session = createTemporaryObject(factory, fixture);
+            const screen = session.screens[0];
+            const dock = findChild(session, "sessionDock");
+            const window = findChild(session, "dockWindow");
+            dock.dockMode = data.mode;
+            dock.autoHide = data.autoHide;
+            dock.keyboardHeld = true;
+            dock.reveal();
+            session.screens = [];
+            wait(0); // Flush queued placement while no screen exists.
+            session.screens = [screen];
+            wait(0);
+            compare(dock.dockMode, data.mode);
+            compare(dock.autoHide, data.autoHide);
+            compare(dock.shown, true);
+            compare(window.visible, true);
+            if (data.autoHide) {
+                // QtTest delivers pointer events to the chosen native window;
+                // moving in the fixture cannot send Leave to this separate one.
+                mouseMove(window.contentItem, -100, -100);
+                tryCompare(dock, "pointerInside", false);
+                dock.keyboardHeld = false;
+                tryCompare(dock, "shown", false);
+                session.screens = [];
+                wait(0);
+                session.screens = [screen];
+                wait(0);
+                compare(dock.shown, false);
+                compare(window.visible, false);
+                verify(findChild(session, "dockEdgeSurface").item.visible);
+                dock.reveal();
+                compare(window.visible, true);
+            }
+        }
         function test_inventoryLifecycleAndLazySurfaces() {
             const session = createTemporaryObject(factory, fixture);
             const inventory = findChild(session, "screenSurfaces");

@@ -12,7 +12,7 @@ import Singlr.System
 // ventanas normales: aparecen en la multitarea y en Alt+Tab.
 Item {
     id: session
-    Component.onCompleted: { WorkspaceBridge.enable(); ClipboardPasteBridge.enable(); }
+    Component.onCompleted: { WorkspaceBridge.enable(); ClipboardPasteBridge.enable(); placeDock(); }
     Connections {
         target: WorkspaceBridge
         function onOverviewChanged(open) { session.overviewOpen = open; }
@@ -26,6 +26,7 @@ Item {
     property var screens: Qt.application.screens
     property var dockScreen: screens.length ? screens[0] : null
     readonly property var effectiveDockScreen: screens.indexOf(dockScreen) >= 0 ? dockScreen : (screens.length ? screens[0] : null)
+    onEffectiveDockScreenChanged: Qt.callLater(placeDock)
     property var launcherScreen: effectiveDockScreen
     property var controlScreen: effectiveDockScreen
     property var historyScreen: effectiveDockScreen
@@ -295,14 +296,14 @@ Item {
     // --no-background: sobre una sesión Plasma real se conserva el fondo del usuario.
     readonly property bool showBackground: Qt.application.arguments.indexOf("--no-background") < 0
     // The dock lives for the whole session, unlike the per-screen surfaces. A
-    // layer surface stays on the output it was created for and closes with it
-    // (resume, unplug), so re-create it on the dock screen whenever outputs change.
+    // layer surface stays on the output it was created for. Register the dock
+    // and edge before output loss, and recreate their native surfaces on the
+    // effective dock screen while preserving QML's visibility/auto-hide state.
     function placeDock() {
         // qmllint disable unqualified
         if (!effectiveDockScreen || typeof SinglrSystem === "undefined" || !SinglrSystem.placeOnScreen) return;
         SinglrSystem.placeOnScreen(dockWindow, effectiveDockScreen.name);
         // qmllint enable unqualified
-        dock.reveal();
         if (edgeSurface.item && systemBridge && systemBridge.placeOnScreen) systemBridge.placeOnScreen(edgeSurface.item, effectiveDockScreen.name);
     }
     Window {
@@ -322,6 +323,7 @@ Item {
     // Full-width target also accepts file drags before a destination is known.
     Loader {
         id: edgeSurface; objectName: "dockEdgeSurface"; active: dock.autoHide
+        onLoaded: session.placeDock()
         sourceComponent: Component {
             Window {
                 screen: session.effectiveDockScreen

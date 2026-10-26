@@ -16,8 +16,12 @@ Item {
     // Coloca la superficie en su pantalla (ver SinglrSystem.placeOnScreen).
     function place(window) {
         // qmllint disable unqualified
-        if (typeof SinglrSystem !== "undefined" && SinglrSystem.placeOnScreen && outputScreen)
-            Qt.callLater(() => SinglrSystem.placeOnScreen(window, outputScreen.name));
+        if (typeof SinglrSystem !== "undefined" && SinglrSystem.placeOnScreen)
+            Qt.callLater(() => {
+                // A screen (or its loader window) can disappear before this turn.
+                if (window && surfaces.outputScreen)
+                    SinglrSystem.placeOnScreen(window, surfaces.outputScreen.name);
+            });
         // qmllint enable unqualified
     }
     Loader {
