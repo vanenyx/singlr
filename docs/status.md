@@ -126,6 +126,10 @@ Plasma (registro pacman retirado, reinstalación con --overwrite, sync).
   y ninguna unidad se detiene; el shell sigue activo. Actualizar en caliente ya no
   rompe la sesión.
 
+Dock: los fijados nunca se guardaban (ruta `file://file:///…/dock.json`). Corregido
+(4c68074) con prueba de regresión; en el equipo del creador `dock.json` guarda
+`pins=[]` y tras reiniciar el shell no vuelven los lanzadores por defecto.
+
 ## Siguientes cierres necesarios
 
 1. Aceptación visual y nativa del dock corregido: touchpad, DND, autohide y espacio reservado en distintas salidas.
