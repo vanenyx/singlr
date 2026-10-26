@@ -126,3 +126,28 @@ Además, `tools/build-package.sh` completó el paquete
 QML y biblioteca incluidos. No se instaló con pacman. Para el canal de desarrollo
 actual no hace falta instalarlo para probar el fondo tras volver a iniciar sesión;
 la sesión empaquetada sí requiere actualizarlo.
+
+## Corrección de movimiento en la sesión real (26 oct, 11:00)
+
+El fondo ya aparecía, pero seguía fijo porque el creador tiene
+`[KDE] AnimationDurationFactor=0`. El interruptor guardado decía activado aunque
+la política global impedía crear el efecto. No era una falla del temporizador.
+
+El creador autorizó explícitamente animar **solo Singularidad**. Se añadió una
+excepción persistente `wallpaperMotionOverride` (false por defecto); se muestra
+el estado de reducir movimiento y un control propio de excepción en Ajustes.
+Sin excepción, Movimiento aparece deshabilitado/apagado; el cursor también se
+habilita únicamente si el movimiento efectivo está permitido.
+
+Comprobaciones: 11 resultados de Ajustes con factor 1 y 11 con factor 0, sin
+fallos; 9 resultados nativos/GPU, sin fallos. La prueba con factor 0 verifica la
+imagen fija inicial, activa la excepción, comprueba avance temporal, vuelve a
+retirarla y comprueba destrucción; la preferencia global continúa en 0. Lint y
+`git diff --check` correctos.
+
+Se guardó la excepción en la configuración del creador y se reinició únicamente
+`plasma-plasmashell.service`, sin propagación de parada a otras unidades. El nuevo
+shell PID 67256 registró a las 11:00:06 «Singlr Singularidad: animación activa».
+El SHA-256 de kdeglobals antes/después es idéntico. No se cerró la sesión.
+Los Ajustes que ya estaban abiertos conservan la UI anterior; cerrarlos y abrirlos
+carga el nuevo control. Persisten los límites de GPU/energía y aceptación visual.

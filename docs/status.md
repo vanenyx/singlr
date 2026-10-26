@@ -133,8 +133,9 @@ Dock: los fijados nunca se guardaban (ruta `file://file:///…/dock.json`). Corr
 T267/P-031: fondo opcional «Singularidad» implementado y compilado en un build
 separado, con partículas GPU, movimiento, paralaje al cursor, modo estático y
 controles en Ajustes. QML: 246 shell + 10 Ajustes por modo; 9 resultados del
-recorrido GPU/pausa/reducir movimiento, sin fallos. No instalado ni activado en
-la sesión del creador. Pendientes valoración visual y aceptación de DPMS,
+recorrido GPU/pausa/reducir movimiento, sin fallos. Paquete aún sin instalar; módulo actualizado en el canal de desarrollo.
+Activado en sesión real el 26 oct 11:00, con excepción local autorizada a reducir
+movimiento (kdeglobals conservado). Pendientes valoración visual y aceptación de DPMS,
 bloqueo/suspensión físicos y multimonitor. [Entrega](handoffs/T267-singularity-wallpaper.md).
 
 ## Siguientes cierres necesarios

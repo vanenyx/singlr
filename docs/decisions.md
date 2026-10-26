@@ -208,3 +208,12 @@ reducir movimiento y backend software; carga diferida y observación de bloqueo,
 suspensión y DPMS. La composición exacta queda pendiente de valoración visual
 del creador; no es una simulación relativista ni una aprobación de consumo.
 [Entrega y límites](handoffs/T267-singularity-wallpaper.md).
+
+### P-031 — excepción local a reducir movimiento (explícita, 26 oct 2026)
+
+Tras comprobar `AnimationDurationFactor=0`, el creador elige «Animar solo
+Singularidad, manteniendo las demás animaciones desactivadas». Se añade
+`wallpaperMotionOverride` (false por defecto) y el control «Permitir movimiento
+solo en este fondo». La excepción se ha activado en su equipo por este encargo;
+no modifica `kdeglobals`. Sin excepción, el fondo sigue respetando reducir
+movimiento y muestra el motivo junto a sus controles, con Movimiento inactivo.

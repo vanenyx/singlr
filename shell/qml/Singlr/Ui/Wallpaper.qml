@@ -9,7 +9,7 @@ Rectangle {
     readonly property bool singularitySelected: source === "singlr:singularity"
     readonly property bool liveFailed: singularitySelected && singularityLoader.status === Loader.Error
     readonly property bool liveEffect: singularitySelected && liveAllowed && visible
-        && Appearance.wallpaperAnimated && Motion.enabled && GraphicsInfo.api !== GraphicsInfo.Software
+        && Appearance.wallpaperAnimated && Appearance.wallpaperMotionAllowed && GraphicsInfo.api !== GraphicsInfo.Software
     // Session surfaces supply the output size before the compositor configures
     // the window. Do not decode intermediate 1x1/default-window-sized copies.
     property size pixelSize: Qt.size(Math.ceil(width * Screen.devicePixelRatio), Math.ceil(height * Screen.devicePixelRatio))

@@ -17,9 +17,33 @@ Item {
             tryCompare(Ui.Appearance, "busy", false);
             Ui.Appearance.save("wallpaper", "singlr:linear");
             Ui.Appearance.save("wallpaperAnimated", true);
+            Ui.Appearance.save("wallpaperMotionOverride", false);
             Ui.Appearance.save("wallpaperReactive", true);
             Ui.Appearance.save("wallpaperQuality", 1);
             Ui.Theme.reloadSettings();
+        }
+        function test_singularityRespectsSystemMotionPreference() {
+            const app = createTemporaryObject(appFactory, fixture); verify(app);
+            mouseClick(findChild(app.contentItem, "nav-wallpaper"));
+            wait(80);
+            Ui.Appearance.save("wallpaper", "singlr:singularity");
+            Ui.Appearance.save("wallpaperAnimated", true);
+            const animated = findChild(app.contentItem, "wallpaperAnimated");
+            compare(animated.enabled, Ui.Motion.enabled);
+            compare(animated.checked, Ui.Motion.enabled);
+            compare(findChild(app.contentItem, "wallpaperMotionStatus").visible, !Ui.Motion.enabled);
+            compare(findChild(app.contentItem, "wallpaperReactive").enabled, Ui.Motion.enabled);
+            if (!Ui.Motion.enabled) {
+                const override = findChild(app.contentItem, "wallpaperMotionOverride");
+                override.forceActiveFocus(); keyClick(Qt.Key_Space);
+                compare(Ui.Appearance.wallpaperMotionOverride, true);
+                compare(animated.enabled, true); compare(animated.checked, true);
+                Ui.Appearance.reload(); compare(Ui.Appearance.wallpaperMotionOverride, true);
+                kde.sync(); compare(Number(kde.value("AnimationDurationFactor")), 0);
+                override.forceActiveFocus(); keyClick(Qt.Key_Space);
+                compare(animated.enabled, false); compare(animated.checked, false);
+            }
+            app.close();
         }
         function test_singularitySelectionAndPersistence() {
             const app = createTemporaryObject(appFactory, fixture); verify(app);
@@ -29,7 +53,8 @@ Item {
             compare(Ui.Appearance.wallpaper, "singlr:singularity");
             const animated = findChild(app.contentItem, "wallpaperAnimated");
             // Keyboard activation works even when the row needs scrolling.
-            animated.forceActiveFocus(); keyClick(Qt.Key_Space);
+            if (Ui.Motion.enabled) { animated.forceActiveFocus(); keyClick(Qt.Key_Space); }
+            else { Ui.Appearance.save("wallpaperAnimated", false); }
             compare(Ui.Appearance.wallpaperAnimated, false);
             verify(!findChild(app.contentItem, "wallpaperReactive").enabled);
             Ui.Appearance.save("wallpaperQuality", 2);

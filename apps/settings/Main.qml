@@ -256,6 +256,23 @@ Window {
                         Ui.UiText { height: 36; text: "Imagen personalizada"; color: Ui.Theme.secondary }
                         Ui.Button { anchors.right: parent.right; height: 36; width: 142; icon: "image"; label: "Elegir imagen…"; onClicked: fileDialog.open() }
                     }
+                    Ui.UiText {
+                        objectName: "wallpaperMotionStatus"
+                        visible: Ui.Appearance.wallpaper === "singlr:singularity" && !Ui.Motion.enabled
+                        width: parent.width; height: 36
+                        text: Ui.Appearance.wallpaperMotionOverride
+                            ? "Reducir movimiento sigue activo en el sistema. La excepción se aplica solo a este fondo."
+                            : "El sistema tiene activado Reducir movimiento. Singularidad se muestra como imagen fija."
+                        wrapMode: Text.WordWrap; font.pixelSize: 12; color: Ui.Theme.secondary
+                    }
+                    Ui.Toggle {
+                        objectName: "wallpaperMotionOverride"
+                        visible: Ui.Appearance.wallpaper === "singlr:singularity" && !Ui.Motion.enabled
+                        width: parent.width; text: "Permitir movimiento solo en este fondo"
+                        Accessible.name: text
+                        checked: Ui.Appearance.wallpaperMotionOverride
+                        onToggled: window.save("wallpaperMotionOverride", checked)
+                    }
                     Ui.Wallpaper {
                         id: preview; objectName: "wallpaperPreview"
                         width: parent.width; height: 190; radius: 6
@@ -267,13 +284,14 @@ Window {
                         Ui.Toggle {
                             objectName: "wallpaperAnimated"; width: 190; text: "Movimiento"
                             Accessible.name: "Animar Singularidad"
-                            checked: Ui.Appearance.wallpaperAnimated
+                            enabled: Ui.Appearance.wallpaperMotionAllowed
+                            checked: Ui.Appearance.wallpaperAnimated && Ui.Appearance.wallpaperMotionAllowed
                             onToggled: window.save("wallpaperAnimated", checked)
                         }
                         Ui.Toggle {
                             objectName: "wallpaperReactive"; width: 220; text: "Reaccionar al cursor"
                             Accessible.name: "Reaccionar al cursor"
-                            enabled: Ui.Appearance.wallpaperAnimated && Ui.Motion.enabled
+                            enabled: Ui.Appearance.wallpaperAnimated && Ui.Appearance.wallpaperMotionAllowed
                             checked: Ui.Appearance.wallpaperReactive
                             onToggled: window.save("wallpaperReactive", checked)
                         }
@@ -309,7 +327,7 @@ Window {
                             if (preview.imageFailed) return "Imagen no disponible. Se muestra el fondo predeterminado.";
                             if (Ui.Appearance.wallpaper !== "singlr:singularity") return "Vista previa";
                             if (preview.liveFailed) return "Actualiza el módulo de Singlr para animar este fondo. Se muestra la imagen fija.";
-                            if (!Ui.Motion.enabled) return "Reducir movimiento está activo: se muestra una imagen fija.";
+                            if (!Ui.Appearance.wallpaperMotionAllowed) return "Reducir movimiento está activo: se muestra una imagen fija.";
                             return "La animación se pausa al bloquear o apagar la pantalla. Más detalle consume más GPU.";
                         }
                         color: preview.imageFailed ? Ui.Theme.error : Ui.Theme.muted
