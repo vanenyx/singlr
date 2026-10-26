@@ -1,0 +1,372 @@
+{
+  "source_revision": "e844fdf + T255 dock (runtime baseline sin trimComponentCache)",
+  "scenario": "open-panels",
+  "environment": {
+    "kernel": "7.2.11-arch1-1",
+    "machine": "x86_64",
+    "size": "2048x1280",
+    "profile": false,
+    "kwin_wayland": "kwin 6.8.1",
+    "plasmashell": "plasmashell 6.8.1",
+    "pkg-config": "6.12.0"
+  },
+  "output_scale_requested": 1.25,
+  "results": [
+    {
+      "phase": "idle",
+      "name": "singlr-shell",
+      "pss_bytes": 85335040,
+      "pss_anon_bytes": 65839104,
+      "pss_file_bytes": 18613248,
+      "pss_shmem_bytes": 882688,
+      "rss_bytes": 242630656,
+      "threads": 36,
+      "cpu_percent": 0.0,
+      "interval_seconds": 30.00377663299878,
+      "scheduler_timeslices": null,
+      "wakeups": null,
+      "windows": [
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 28
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 939.5,
+          "y": 1228,
+          "width": 169,
+          "height": 48
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 0,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 1280
+        }
+      ],
+      "window_count": 3,
+      "budget": "PASS"
+    },
+    {
+      "phase": "open-toggleLauncher",
+      "name": "singlr-shell",
+      "pss_bytes": 91913216,
+      "pss_anon_bytes": 72196096,
+      "pss_file_bytes": 18834432,
+      "pss_shmem_bytes": 881664,
+      "rss_bytes": 250470400,
+      "threads": 43,
+      "cpu_percent": 0.26663133182046594,
+      "interval_seconds": 30.003975696999987,
+      "scheduler_timeslices": 2119,
+      "wakeups": null,
+      "windows": [
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 28
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 939.5,
+          "y": 1228,
+          "width": 169,
+          "height": 48
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 0,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 1280
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 9,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 1280
+        }
+      ],
+      "window_count": 4,
+      "budget": "PASS"
+    },
+    {
+      "phase": "open-toggleControlCenter",
+      "name": "singlr-shell",
+      "pss_bytes": 95298560,
+      "pss_anon_bytes": 76627968,
+      "pss_file_bytes": 17607680,
+      "pss_shmem_bytes": 1061888,
+      "rss_bytes": 259280896,
+      "threads": 43,
+      "cpu_percent": 0.03332876239689169,
+      "interval_seconds": 30.00411440699827,
+      "scheduler_timeslices": 79,
+      "wakeups": null,
+      "windows": [
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 28
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 939.5,
+          "y": 1228,
+          "width": 169,
+          "height": 48
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 0,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 1280
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 9,
+          "hidden": false,
+          "x": 1692,
+          "y": 36,
+          "width": 340,
+          "height": 560
+        }
+      ],
+      "window_count": 4,
+      "budget": "PASS"
+    },
+    {
+      "phase": "open-toggleNotifications",
+      "name": "singlr-shell",
+      "pss_bytes": 93827072,
+      "pss_anon_bytes": 75206656,
+      "pss_file_bytes": 17557504,
+      "pss_shmem_bytes": 1061888,
+      "rss_bytes": 257032192,
+      "threads": 43,
+      "cpu_percent": 0.06665722212928905,
+      "interval_seconds": 30.00425064400042,
+      "scheduler_timeslices": 144,
+      "wakeups": null,
+      "windows": [
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 28
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 939.5,
+          "y": 1228,
+          "width": 169,
+          "height": 48
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 0,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 1280
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 9,
+          "hidden": false,
+          "x": 1672,
+          "y": 40,
+          "width": 360,
+          "height": 620
+        }
+      ],
+      "window_count": 4,
+      "budget": "PASS"
+    },
+    {
+      "phase": "open-toggleClipboard",
+      "name": "singlr-shell",
+      "pss_bytes": 94036992,
+      "pss_anon_bytes": 75431936,
+      "pss_file_bytes": 17509376,
+      "pss_shmem_bytes": 1094656,
+      "rss_bytes": 256634880,
+      "threads": 43,
+      "cpu_percent": 0.23330206420763555,
+      "interval_seconds": 30.00402085499809,
+      "scheduler_timeslices": 2175,
+      "wakeups": null,
+      "windows": [
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 28
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 939.5,
+          "y": 1228,
+          "width": 169,
+          "height": 48
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 0,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 1280
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 9,
+          "hidden": false,
+          "x": 644,
+          "y": 355,
+          "width": 760,
+          "height": 542
+        }
+      ],
+      "window_count": 4,
+      "budget": "PASS"
+    },
+    {
+      "phase": "after-close",
+      "name": "singlr-shell",
+      "pss_bytes": 90754048,
+      "pss_anon_bytes": 69939200,
+      "pss_file_bytes": 19719168,
+      "pss_shmem_bytes": 1095680,
+      "rss_bytes": 250474496,
+      "threads": 36,
+      "cpu_percent": 0.0,
+      "interval_seconds": 30.003956088999985,
+      "scheduler_timeslices": 41,
+      "wakeups": null,
+      "windows": [
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 28
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 939.5,
+          "y": 1228,
+          "width": 169,
+          "height": 48
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 0,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 1280
+        }
+      ],
+      "window_count": 3,
+      "budget": "PASS",
+      "pss_delta_bytes": 5419008
+    }
+  ],
+  "budget": {
+    "pss_bytes_lt": 120000000,
+    "cpu_percent_lt": 0.5
+  },
+  "note": "Sesi\u00f3n privada, fondo s\u00f3lido y datos nuevos. No mide sesi\u00f3n instalada ni escritorio completo. GPU/backend exactos no registrados en estas muestras."
+}

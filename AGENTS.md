@@ -8,10 +8,11 @@ Singlr es una experiencia de escritorio completa y distribuible para Linux, con 
 ## Producto
 - Linear influye en UI y UX; macOS también. Mantén una identidad propia.
 - Base visual y de UX: Linear, con glassmorphism de macOS y la operativa de Raycast (P-005). Materiales: vidrio plano (glassmorphism) y sólido; Liquid Glass retirado (P-021). Esquinas moderadas; Phosphor Icons y marcas originales de aplicaciones.
-- Distribución del escritorio, colores, tipografía, tokens, arquitectura detallada y presupuestos de rendimiento siguen abiertos.
+- Distribución del escritorio, colores, tipografía, tokens y arquitectura detallada siguen abiertos salvo decisiones registradas. P-016 fija PSS propia del shell <120 MB y CPU en reposo casi cero; el coste del escritorio completo y GPU sigue requiriendo medición.
 - Identifica cada decisión como explícita del creador, propuesta por validar o solución técnica derivada. Regístrala en `docs/decisions.md` cuando afecte a otros trabajos.
 
 ## Trabajo compartido
+- Encargo vigente del creador (25/26 oct 2026): Codex continúa directamente el desarrollo y mantiene los MD con un solo escritor, sin invocar Claude ni las otras cuentas. La autorización explícita incluye subir los commits a GitHub; no autoriza releases, cambios de licencia ni pruebas destructivas en la sesión activa. El flujo Claude/Codex siguiente se conserva como alternativa histórica.
 - Lee `docs/workflow.md`, `docs/status.md` y el perfil asignado en `docs/agents/`.
 - El creador da los encargos a Claude Code (Opus 5.5), arquitecto principal y orquestador, que delega tareas acotadas a Codex mediante el plugin oficial. Codex 1 implementa interfaz, Qt Quick/QML, interacciones y funcionalidades visuales. Codex 2 se ocupa de integración, herramientas, pruebas, rendimiento, corrección de errores y revisión independiente, y de funcionalidades técnicas en paralelo. Ambos usan `gpt-6.1-sol` en Medium; High solo si el encargo lo justifica.
 - Flujo habitual: una carpeta principal y un solo escritor a la vez. Claude entrega y recupera el turno explícitamente; no edita mientras el Codex delegado escribe. Las revisiones simultáneas son de solo lectura sobre un estado estable.

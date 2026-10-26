@@ -1,35 +1,63 @@
 # Estado de Singlr
 
-**Día 1 (24 oct 2026):** primer shell Singlr ejecutable sobre Plasma 6 en una sesión KWin anidada y aislada. Ver [handoffs/day1.md](handoffs/day1.md).
+Actualizado el **26 oct 2026**. Prototipo integrado e instalable de Fase 1.
+**Singlr 1.0 todavía no cumple su criterio de completo**: ver
+[definición](singlr-1.0.md) y [matriz de aceptación](compatibility.md).
 
-**25 oct 2026:** sesión Singlr instalada y usada a diario por el creador. Gestión de sesión con ksmserver de KDE (P-017, T237): cierre ordenado, restauración de lo abierto al salir; teclado, cursor y cartera KDE correctos. Confirmado por el creador en login real. Ver [handoffs/T237-ksmserver.md](handoffs/T237-ksmserver.md).
+## Coordinación vigente
 
-**Canal de desarrollo (25 oct):** con autorización del creador, su sesión Singlr instalada ejecuta el shell desde este checkout (`tools/dev-channel.sh`; drop-in de usuario). Los cambios de shell/QML se aplican con `tools/dev-channel.sh reload` sin reinstalar ni cerrar sesión; sesión, unidades y pantalla de bloqueo siguen requiriendo el paquete. Recargar solo con build y pruebas en verde.
+El creador encargó continuar directamente con Codex para reservar Claude para otros
+trabajos. Un solo escritor, código y documentación mantenidos conjuntamente.
+No se invocan Claude ni los agentes de las otras cuentas. El procedimiento anterior
+se conserva en [workflow.md](workflow.md) como alternativa histórica.
 
-Fase 1 en desarrollo: objetivo de producto instalable el 31 oct 2026. La visión original permanece conservada en la raíz.
+El 26 oct, con autorización del creador y autenticación GitHub realizada por él,
+se subió `main` hasta `e844fdf` a `https://github.com/vanenyx/singlr`.
+La licencia y una release distribuible siguen pendientes; el push no declara v1 estable.
 
-## Flujo vigente
+## Estado por sistema
 
-El creador encarga el trabajo a Claude Code (Opus 5.5), arquitecto principal y orquestador. Claude delega en Codex 1 (interfaz y QML) y Codex 2 (integración, herramientas y calidad), ambos con `gpt-6.1-sol` en Medium, mediante `scripts/codex-route.sh`. Modo habitual: carpeta principal y un solo escritor a la vez. Ver [workflow.md](workflow.md).
+| Sistema | Implementado | Pendiente de aceptación |
+| --- | --- | --- |
+| Desktop | Shell, barras, dock configurable y bandeja | Desbordamiento corregido y probado en QML (T255); aceptación visual, autohide/DND nativos y multimonitor |
+| Command | KRunner, aplicaciones, archivos, calculadora, ajustes y acciones | Recorridos completos y aprobación UX |
+| Workspace | Overview, Alt+Tab, escritorios y atajos | Topologías, foco y gestos en uso real |
+| System | Controles, notificaciones, multimedia y menú de sesión | Dispositivos y recorridos reales de extremo a extremo |
+| Appearance | Claro/oscuro, vidrio/sólido, preferencias KDE | Aprobación visual; matriz compositor/escalado; compatibilidad ABI KWin |
+| Session | Login dedicado, ksmserver, bloqueo propio, recuperación | PAM real, suspensión, salidas, ráfagas y continuidad completa |
+| Platform | CMake, paquete Arch, diagnóstico y herramientas de aceptación | Instalación limpia, actualización/reversión y otra configuración; licencia/documentación pública completa |
 
-## Verificado
+## Evidencia y límites
 
-- Estructura, instrucciones y cinco skills con enlaces compartidos preparados y comprobados; incluye `singlr-product-craft` y `singlr-interface-refinement` del ZIP aportado por el creador.
-- Identidad Git local configurada y commit inicial `f38dd34` registrado.
-- `origin` conectado a `https://github.com/vanenyx/singlr.git`; sin push realizado.
-- Plugin `codex@openai-codex` 1.0.6 instalado y habilitado localmente en el checkout principal.
-- Enrutamiento por cuenta: cada rol usa su `CODEX_HOME`, con estado y broker aislados. Hay una tarea de solo lectura por rol con el modelo y el esfuerzo previstos. Detalle en [agents/setup.md](agents/setup.md#enrutamiento-por-cuenta).
-- Worktrees anteriores conservados como opción para escritura paralela, no como flujo habitual. Sus instrucciones requieren sincronización antes de reutilizarlos.
+- Creador confirmó login real, teclado, cursor, cartera y ksmserver (T237).
+- T247: startup, crash y daemon-reexec comprobados en sesión del creador con canal
+  de desarrollo. No certifican el shell empaquetado ni la batería completa.
+- Paquete instalado inventariado en auditoría: `0.1.0.r178.ge844fdf-1`.
+- Canal de desarrollo activo: shell desde el checkout; no recargar como prueba rutinaria.
+  Sesión, bloqueo, unidades y efectos instalados siguen dependiendo del paquete.
+- Auditoría inicial: 93 pruebas Python shell y 6 de herramientas de sesión correctas;
+  QML por modo: 221 shell + 9 ajustes, cuatro capturas opcionales omitidas.
+  Compilación/DESTDIR correctos; plugin de vidrio construido aparte, 8 pruebas y
+  72 comparaciones del shader ejecutadas. No equivalen a validación visual KWin.
+- Muestra puntual de shell en uso: 167,75 MB PSS y 0,067 % CPU durante 30 s.
+  Supera P-016 (<120 MB); no es comparación controlada ni prueba de regresión.
+  El cumplimiento en sesión real sigue abierto.
 
-## Pendientes de coordinación
+T255: 231 comprobaciones QML del shell + 9 de Ajustes por modo (captura T255
+activada, cuatro capturas ajenas opcionales omitidas); corrección del desbordamiento,
+foco tras cambiar anchura y reordenación comprobados. Recorrido KWin privado de
+cuatro paneles: 85,34 MB al inicio y 90,75 MB tras cerrar; no equivale a la sesión
+instalada. Atlas reducido y liberación de metadatos QML ensayados sin mejora útil;
+no se integran cambios experimentales de memoria.
 
-- Validar en el primer encargo real una tarea con `--write`, la continuación con `--resume-last` y la carga de skills de Codex.
-- Tres brokers del plugin de la prueba anterior siguen activos con cwd en un directorio temporal; pueden detenerse.
+Entrega y evidencia: [T255](handoffs/T255-audit-followup.md).
 
-No repetir llamadas de prueba a modelos salvo que una tarea de configuración lo necesite; `setup --json` comprueba cada cuenta sin consumir modelo.
+## Siguientes cierres necesarios
 
-## Trabajo de producto futuro
+1. Aceptación visual y nativa del dock corregido: touchpad, DND, autohide y espacio reservado en distintas salidas.
+2. Diagnóstico y reducción de memoria con comparación reproducible, sin eliminar funciones.
+3. Batería real en usuario/equipo de prueba: autenticación, suspensión, monitores,
+   instalación, actualización y regreso a Plasma. No ejecutarla sobre el trabajo del creador.
+4. Aprobación visual del creador, primer uso, licencia y preparación de publicación.
 
-Cuando el creador lo encargue: Claude definirá requisitos y contratos, Codex 1 implementará la interfaz y Codex 2 preparará integración, herramientas y verificación. No se inicia desarrollo con esta configuración.
-
-La licencia y visibilidad de publicación siguen pendientes. La entrega inicial está en [handoffs/setup.md](handoffs/setup.md); la coordinación, en [handoffs/coordination.md](handoffs/coordination.md); el modelo de colaboración, en [handoffs/collaboration-model.md](handoffs/collaboration-model.md). Los checks de preparación no prueban una experiencia Plasma ejecutable.
+Las propuestas de diseño no se consideran aprobadas por tener pruebas correctas.

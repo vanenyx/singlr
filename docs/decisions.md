@@ -59,9 +59,9 @@ Se conserva el ID técnico `singlr-liquidglass` y su grupo kwinrc para no romper
 journals existentes ni exigir migrar y revertir dos juegos de claves/binarios. Nombre
 visible: Singlr Glass; función: difusión y adaptación de luminancia para Vidrio. La
 preferencia antigua `material=liquid` se persiste como `glass` al cargar Appearance.
-El radio real se consulta asíncronamente al shell por ID de superficie Wayland;
-KDE blur/ext-background-effect-v1 no incluyen radio. Adaptador Qt privado aislado,
-revisable al actualizar Qt. Detalle y límites en `kwin/effects/singlr-liquidglass/README.md`.
+Corrección integrada por Claude: el radio se recupera de las filas de la región de
+blur rasterizada por el shell (`blurregion.h`); no hay canal D-Bus ni adaptador privado
+de Qt. La ABI privada del plugin de KWin sigue limitada a KWin 6.8.1. Detalle y límites en `kwin/effects/singlr-liquidglass/README.md`.
 
 ## T254 — solución técnica derivada de P-022
 
@@ -69,3 +69,18 @@ revisable al actualizar Qt. Detalle y límites en `kwin/effects/singlr-liquidgla
 - Flotante conserva radio 14 y baja el margen inferior de 10 a 4 px. Fijo tiene radio 0 y solo hilo superior; reserva `altura + margen` sin ocultación y 0 con ella. Iconos y espacios proporcionales con tamaños enteros.
 - Activación por una superficie layer-shell de 2 px, a todo lo ancho del borde inferior de la pantalla principal, capa Overlay, sin teclado ni exclusión. Evita polling, desplazamientos del puntero y scripts de bordes globales; solo existe con autohide. El dock se desmapea al ocultarse. Espera de salida de 450 ms para cruzar el margen y los menús; transición inmediata, también con movimiento reducido. Preferencias y geometrías derivadas del encargo; revisión visual y del comportamiento nativo pendientes.
 - La vista general comunica su visibilidad por el puente Workspace existente para mantener visible el dock también con Meta+Tab y gestos. Ver [entrega T254](handoffs/T254-dock-settings.md).
+
+## T255 — solución técnica y continuidad, 26 oct 2026
+
+Encargo explícito del creador: continuar directamente con Codex y mantener los MD;
+subir primero los commits existentes a GitHub. `main` hasta `e844fdf` subido y verificado.
+No cambia la licencia ni constituye una release.
+
+El dock antes podía medir 1792 px en una salida lógica de 1280 px con 30 apps a
+72 px. Se acota al ancho de salida y se incorpora viewport con recorte, flechas
+solo al desbordar, rueda/touchpad y desplazamiento al recibir foco. Conserva las
+aplicaciones, sus acciones, orden, modo/altura y espacio reservado. La presentación
+de las flechas es una propuesta visual pendiente; no se eleva a token aprobado.
+Qt 6.12.0 local; APIs públicas de
+[Flickable](https://doc.qt.io/qt-6/qml-qtquick-flickable.html) y WheelHandler.
+[Entrega y límites](handoffs/T255-audit-followup.md).

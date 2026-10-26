@@ -1,6 +1,6 @@
 # Compatibilidad — matriz inicial Session/Platform
 
-Actualizada 25-10-2026, T247. Soporte objetivo v1: Arch Linux + Plasma 6 + Wayland.
+Actualizada 26-10-2026, T255 (conserva evidencia T247). Soporte objetivo v1: Arch Linux + Plasma 6 + Wayland.
 **Ninguna fila equivale a certificación v1.** «Inventariado» solo indica presencia;
 «componente»/«anidado» no prueban login, hardware, seguridad ni retorno a Plasma.
 
@@ -12,6 +12,15 @@ Actualizada 25-10-2026, T247. Soporte objetivo v1: Arch Linux + Plasma 6 + Wayla
 | KWin anidado + ksmserver, validación Claude T237 | Backend no registrado | Topología/escala no registradas | Véase handoff T237 | Guardado/restauración de Dolphin y sesión vacía, sin plasmashell/KRunner. No prueba instalación limpia ni guardado interactivo Kate. |
 | T247 CMake + instalación DESTDIR | No render | No aplica | Toolchain local: CMake 4.4.4, Qt 6.12.0 | Compilación/payload correctos, incluye singlr-doctor. No instala sobre el host. |
 | Usuario nuevo + batería T247 + regreso a Plasma | **Pendiente** | **Pendiente** | Fijar versión exacta del paquete antes de ejecutar | Procedimiento y scripts en [tests/session](../tests/session/README.md). No ejecutados aquí. |
+
+## Diagnóstico T255
+
+El 26 oct `real-session.py startup --allow-development` pasó en la sesión instalada,
+sin acciones de mutación. Shell, KWin y ksmserver estaban activos. Se generó informe
+filtrado con `singlr-doctor`. No se recargó el shell ni se probó el paquete fuera del
+canal dev. Dock: pruebas QML/capturas aisladas de muchas aplicaciones; pendiente
+valoración visual y touchpad/DND físico. Recursos: recorrido KWin privado y cifras
+en [resources.md](phase1/resources.md); no certifican el presupuesto en sesión real.
 
 ## Cobertura todavía necesaria
 

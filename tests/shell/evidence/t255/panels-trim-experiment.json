@@ -1,0 +1,379 @@
+{
+  "source_revision": "e844fdf + T255 dock + experimento trimComponentCache (retirado, no integrado)",
+  "scenario": "open-panels",
+  "environment": {
+    "kernel": "7.2.11-arch1-1",
+    "machine": "x86_64",
+    "size": "2048x1280",
+    "profile": false,
+    "kwin_wayland": "kwin 6.8.1",
+    "plasmashell": "plasmashell 6.8.1",
+    "pkg-config": "6.12.0"
+  },
+  "output_scale_requested": 1.25,
+  "compositor_support_information": [
+    "Compositing Type: OpenGL ES",
+    "OpenGL vendor string: AMD",
+    "OpenGL renderer string: AMD Radeon 610M (radeonsi, raphael_mendocino, ACO, DRM 3.64, 7.2.11-arch1-1)",
+    "OpenGL version string: OpenGL ES 3.2 Mesa 26.2.5-arch1.1",
+    "OpenGL version: 3.2"
+  ],
+  "results": [
+    {
+      "phase": "idle",
+      "name": "singlr-shell",
+      "pss_bytes": 85841920,
+      "pss_anon_bytes": 65900544,
+      "pss_file_bytes": 18466816,
+      "pss_shmem_bytes": 1474560,
+      "rss_bytes": 242720768,
+      "threads": 36,
+      "cpu_percent": 0.033329064713369994,
+      "interval_seconds": 30.00384225000016,
+      "scheduler_timeslices": null,
+      "wakeups": null,
+      "windows": [
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 28
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 939.5,
+          "y": 1228,
+          "width": 169,
+          "height": 48
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 0,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 1280
+        }
+      ],
+      "window_count": 3,
+      "budget": "PASS"
+    },
+    {
+      "phase": "open-toggleLauncher",
+      "name": "singlr-shell",
+      "pss_bytes": 92257280,
+      "pss_anon_bytes": 72069120,
+      "pss_file_bytes": 18713600,
+      "pss_shmem_bytes": 1473536,
+      "rss_bytes": 250376192,
+      "threads": 43,
+      "cpu_percent": 0.19997246787061998,
+      "interval_seconds": 30.004130387998885,
+      "scheduler_timeslices": 2034,
+      "wakeups": null,
+      "windows": [
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 28
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 939.5,
+          "y": 1228,
+          "width": 169,
+          "height": 48
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 0,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 1280
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 9,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 1280
+        }
+      ],
+      "window_count": 4,
+      "budget": "PASS"
+    },
+    {
+      "phase": "open-toggleControlCenter",
+      "name": "singlr-shell",
+      "pss_bytes": 97927168,
+      "pss_anon_bytes": 76578816,
+      "pss_file_bytes": 19693568,
+      "pss_shmem_bytes": 1653760,
+      "rss_bytes": 259485696,
+      "threads": 43,
+      "cpu_percent": 0.03332857347755963,
+      "interval_seconds": 30.00428448200182,
+      "scheduler_timeslices": 118,
+      "wakeups": null,
+      "windows": [
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 28
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 939.5,
+          "y": 1228,
+          "width": 169,
+          "height": 48
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 0,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 1280
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 9,
+          "hidden": false,
+          "x": 1692,
+          "y": 36,
+          "width": 340,
+          "height": 560
+        }
+      ],
+      "window_count": 4,
+      "budget": "PASS"
+    },
+    {
+      "phase": "open-toggleNotifications",
+      "name": "singlr-shell",
+      "pss_bytes": 96458752,
+      "pss_anon_bytes": 75149312,
+      "pss_file_bytes": 19654656,
+      "pss_shmem_bytes": 1653760,
+      "rss_bytes": 257167360,
+      "threads": 43,
+      "cpu_percent": 0.03332843428790456,
+      "interval_seconds": 30.0044097889986,
+      "scheduler_timeslices": 57,
+      "wakeups": null,
+      "windows": [
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 28
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 939.5,
+          "y": 1228,
+          "width": 169,
+          "height": 48
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 0,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 1280
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 9,
+          "hidden": false,
+          "x": 1672,
+          "y": 40,
+          "width": 360,
+          "height": 620
+        }
+      ],
+      "window_count": 4,
+      "budget": "PASS"
+    },
+    {
+      "phase": "open-toggleClipboard",
+      "name": "singlr-shell",
+      "pss_bytes": 96568320,
+      "pss_anon_bytes": 75214848,
+      "pss_file_bytes": 19665920,
+      "pss_shmem_bytes": 1686528,
+      "rss_bytes": 256700416,
+      "threads": 43,
+      "cpu_percent": 0.2332910900092296,
+      "interval_seconds": 30.00543226800073,
+      "scheduler_timeslices": 2132,
+      "wakeups": null,
+      "windows": [
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 28
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 939.5,
+          "y": 1228,
+          "width": 169,
+          "height": 48
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 0,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 1280
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 9,
+          "hidden": false,
+          "x": 644,
+          "y": 355,
+          "width": 760,
+          "height": 542
+        }
+      ],
+      "window_count": 4,
+      "budget": "PASS"
+    },
+    {
+      "phase": "after-close",
+      "name": "singlr-shell",
+      "pss_bytes": 91004928,
+      "pss_anon_bytes": 69672960,
+      "pss_file_bytes": 19644416,
+      "pss_shmem_bytes": 1687552,
+      "rss_bytes": 250462208,
+      "threads": 36,
+      "cpu_percent": 0.03332881714085401,
+      "interval_seconds": 30.00406512399786,
+      "scheduler_timeslices": 115,
+      "wakeups": null,
+      "windows": [
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 28
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 939.5,
+          "y": 1228,
+          "width": 169,
+          "height": 48
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 0,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 1280
+        }
+      ],
+      "window_count": 3,
+      "budget": "PASS",
+      "pss_delta_bytes": 5163008
+    }
+  ],
+  "budget": {
+    "pss_bytes_lt": 120000000,
+    "cpu_percent_lt": 0.5
+  },
+  "note": "Una ejecuci\u00f3n individual; no es una serie controlada ni acredita ahorro real. Backend del shell no inventariado. El callback de reajuste del viewport tambi\u00e9n fue refinado entre las ejecuciones. Experimento retirado por ausencia de mejora \u00fatil."
+}

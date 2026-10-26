@@ -1,4 +1,9 @@
-# Colaboración coordinada desde Claude Code
+# Colaboración y continuidad
+
+**Encargo vigente, 25/26 oct 2026:** el creador continúa directamente con Codex para
+reservar Claude para otros trabajos. Un solo escritor mantiene código, documentación
+y evidencia. No requiere delegación ni cambio de cuenta. El flujo descrito a
+continuación corresponde al trabajo anterior y se conserva como procedimiento alternativo.
 
 El creador da objetivos y feedback a Claude Code. Claude actúa como arquitecto principal y orquestador: divide el trabajo, define contratos de implementación, encarga tareas a Codex mediante el plugin oficial, revisa resultados e integra. El creador conserva las decisiones de producto.
 

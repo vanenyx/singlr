@@ -14,5 +14,7 @@ python3 "$root/tests/shell/verify_package.py" "$stage"
 if [[ $(< "$root/build/CMakeCache.txt") == *"SINGLR_BUILD_LIQUIDGLASS:BOOL=ON"* ]]; then
     test -s "$stage/usr/lib/qt6/plugins/kwin/effects/plugins/singlr-liquidglass.so"
     echo 'CMake: pase externo de Vidrio incluido en staging.'
+else
+    echo 'CMake: Vidrio omitido (SINGLR_BUILD_LIQUIDGLASS=OFF); este check no valida el plugin.'
 fi
 echo 'CMake: compilación e instalación DESTDIR verificadas (staging temporal eliminado).'

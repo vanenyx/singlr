@@ -1,33 +1,52 @@
 # Singlr
 
-Experiencia de escritorio original para Linux, con primera base en KDE Plasma 6. Influencias visuales y de interacción: Linear y macOS, reinterpretadas con identidad propia.
+Experiencia de escritorio original para Linux, construida sobre KDE Plasma 6 y KWin/Wayland.
+Linear, macOS y Raycast son referencias, reinterpretadas con identidad propia.
 
-**Estado: preparación del proyecto.** Todavía no hay shell, componentes QML, instalador ni experiencia ejecutable. No se han fijado composición, paleta, tipografía o arquitectura final.
+**Estado: prototipo integrado e instalable de Fase 1; no es una versión 1.0 estable.**
+Incluye shell QML, Command, dock configurable, vista general, controles del sistema,
+ajustes, pantalla de bloqueo, sesión dedicada y paquete Arch. El creador utiliza la sesión;
+la aceptación completa en instalación limpia, otra configuración, bloqueo, suspensión,
+multimonitor, rendimiento y reversión sigue pendiente.
 
-- [Visión original y decisiones del creador](SINGLR_recuperacion_desde_mensajes_originales.md)
-- [Configurar Claude y sus colaboradores Codex](docs/agents/setup.md)
-- [Reglas de colaboración](docs/workflow.md)
-- [Estado y siguientes tareas](docs/status.md)
-- [Registro de decisiones](docs/decisions.md)
-- [Situación técnica](docs/architecture.md)
+## Referencias vigentes
 
-## Comprobar la preparación
+- [Singlr 1.0: objetivos, siete sistemas y criterio de completo](docs/singlr-1.0.md)
+- [Estado actual y pendientes](docs/status.md)
+- [Arquitectura implementada](docs/architecture.md)
+- [Decisiones del creador y soluciones técnicas](docs/decisions.md)
+- [Compatibilidad y límites de la evidencia](docs/compatibility.md)
+- [Visión original (registro histórico)](SINGLR_recuperacion_desde_mensajes_originales.md)
 
-Requisitos de esta fase: Git y Python 3.11 o posterior.
+## Compilar y comprobar
+
+Base local contrastada: Arch Linux, Plasma/KWin 6.8.1 y Qt 6.12.0.
+El efecto de vidrio usa la ABI de **KWin 6.8.1 exacto**; no se promete compatibilidad
+con otras versiones por los mínimos de CMake.
 
 ```bash
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/usr -DKDE_INSTALL_LIBDIR=lib
+cmake --build build
 python3 scripts/check_setup.py
 python3 scripts/doctor.py
+tools/test-qml.sh
+tools/test-qml.sh --light
 ```
 
-Las skills están versionadas en `.agents/skills/` y compartidas con Claude mediante enlaces en `.claude/skills/`. No necesitan instalarse globalmente ni contratar servicios adicionales.
+Dependencias y paquete: [packaging/README.md](packaging/README.md).
+Sesión aislada: [shell/session/README.md](shell/session/README.md).
+Aceptación real y regreso a Plasma: [tests/session/README.md](tests/session/README.md).
+Los checks de preparación solo validan estructura/inventario. Las pruebas offscreen
+no acreditan autenticación, dispositivos ni renderizado del compositor.
 
-También están incorporadas las skills aportadas por el creador: [Product Craft](.agents/skills/singlr-product-craft/SKILL.md) e [Interface Refinement](.agents/skills/singlr-interface-refinement/SKILL.md), con sus referencias originales. El catálogo y uso están en la [guía de agentes](docs/agents/setup.md).
+## Desarrollo
 
-## Flujo de trabajo
+Por encargo del creador del 25/26 oct 2026, Codex continúa directamente el desarrollo
+y la documentación con un solo escritor; Claude queda disponible para otros trabajos.
+El flujo previo y el enrutamiento por cuentas se conservan en
+[docs/workflow.md](docs/workflow.md). Las skills compartidas están en `.agents/skills/`.
 
-El creador da instrucciones a Claude Code (Opus 5.5), arquitecto principal y orquestador. Claude delega encargos autocontenidos en Codex 1 (interfaz y QML) o Codex 2 (integración, herramientas y calidad) mediante el plugin oficial, y consolida los resultados. Se trabaja habitualmente en la carpeta principal, con un único escritor por turno. Los worktrees quedan para escritura paralela justificada.
-
-`scripts/codex-route.sh` selecciona la cuenta, el modelo y el esfuerzo de cada rol. Las ventanas Codex Desktop son opcionales para revisar o continuar trabajos, no agentes controlados por Claude.
-
-`origin` está conectado al remoto proporcionado por el creador; no se ha hecho push. No se ha elegido una licencia de distribución; decidirla antes de publicar el proyecto.
+Código sincronizado con [GitHub](https://github.com/vanenyx/singlr) por autorización
+explícita del creador. No hay release estable. La licencia de distribución sigue
+pendiente (P-002); este repositorio aún no concede una licencia general del proyecto.
+Las dependencias mantienen sus propias licencias en `third_party/` y sus fuentes.

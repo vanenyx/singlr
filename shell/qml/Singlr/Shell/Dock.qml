@@ -28,6 +28,24 @@ Rectangle {
     readonly property int exclusionZone: autoHide ? 0 : height + bottomMargin
     readonly property int iconSize: Math.round(height * 2 / 3)
     readonly property real sizeFactor: height / 48
+    readonly property int horizontalPadding: Math.round(8 * sizeFactor)
+    readonly property bool overflowing: contents.width > width - 2 * horizontalPadding
+    function scrollBy(distance) {
+        viewport.contentX = Math.max(0, Math.min(viewport.contentWidth - viewport.width, viewport.contentX + distance));
+        hideTooltip();
+    }
+    function ensureVisible(item) {
+        if (!item || !overflowing) return;
+        const point = item.mapToItem(viewport.contentItem, 0, 0);
+        if (point.x < viewport.contentX) viewport.contentX = point.x;
+        else if (point.x + item.width > viewport.contentX + viewport.width)
+            viewport.contentX = point.x + item.width - viewport.width;
+    }
+    function fitViewport() {
+        scrollBy(0);
+        const focused = dock.Window.window ? dock.Window.window.activeFocusItem : null;
+        if (focused && Focus.belongsTo(focused, contents)) ensureVisible(focused);
+    }
     property bool keyboardHeld: false
     property bool launcherHeld: false
     property bool edgeHovered: false
@@ -212,6 +230,7 @@ Rectangle {
     }
     function moveAt(from, position) {
         if (position.y < 0 || position.y >= height) return false;
+        if (position.x < viewport.x || position.x >= viewport.x + viewport.width) return false;
         for (let row = 0; row < pinned.count; ++row) {
             const item = pinned.itemAt(row) as TaskEntry;
             if (!item) continue;
@@ -377,19 +396,54 @@ Rectangle {
         }
         return count;
     }
-    width: fixed ? screenWidth : contents.width + Math.round(16 * sizeFactor); height: dockHeight; radius: fixed ? 0 : 14
+    width: fixed ? screenWidth : Math.min(Math.max(1, screenWidth - 16), contents.width + 2 * horizontalPadding); height: dockHeight; radius: fixed ? 0 : 14
     color: Theme.dockSurface; border.color: fixed ? "transparent" : Theme.surfaceBorder
     Rectangle { width: parent.width; height: 1; color: Theme.surfaceBorder; visible: dock.fixed }
     RectangularShadow { anchors.fill: parent; z: -1; radius: 14; blur: 24; offset: Qt.vector2d(0, 8); color: Theme.shadow; visible: !dock.fixed && GraphicsInfo.api !== GraphicsInfo.Software }
-    Row { id: contents; x: Math.round((dock.width - width) / 2); height: dock.height; spacing: Math.round(6 * dock.sizeFactor)
-        Repeater {
-            id: pinned
-            model: dock.taskSource
-            delegate: TaskEntry {}
+    Tool {
+        id: previous; objectName: "dockScrollPrevious"
+        x: dock.horizontalPadding; anchors.verticalCenter: parent.verticalCenter
+        visible: dock.overflowing; enabled: viewport.contentX > 0
+        icon: "caret-left"; description: "Aplicaciones anteriores"
+        onClicked: dock.scrollBy(-Math.max(dock.iconSize, viewport.width * 0.75))
+    }
+    Tool {
+        id: next; objectName: "dockScrollNext"
+        x: dock.width - dock.horizontalPadding - width; anchors.verticalCenter: parent.verticalCenter
+        visible: dock.overflowing; enabled: viewport.contentX < viewport.contentWidth - viewport.width
+        icon: "caret-right"; description: "Más aplicaciones"
+        onClicked: dock.scrollBy(Math.max(dock.iconSize, viewport.width * 0.75))
+    }
+    Flickable {
+        id: viewport; objectName: "dockViewport"
+        x: dock.horizontalPadding + (dock.overflowing ? previous.width : 0)
+        width: Math.max(1, dock.width - 2 * x); height: dock.height
+        contentWidth: Math.max(width, contents.width); contentHeight: height
+        clip: true; interactive: false; boundsBehavior: Flickable.StopAtBounds
+        // Preserve the app's drag grab for reordering. Wheel/touchpad and explicit
+        // buttons scroll; keyboard focus brings each entry into the viewport.
+        onWidthChanged: Qt.callLater(dock.fitViewport)
+        onContentWidthChanged: Qt.callLater(dock.fitViewport)
+        WheelHandler {
+            enabled: dock.overflowing; target: null
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            onWheel: event => {
+                const pixels = event.pixelDelta.x || event.pixelDelta.y;
+                const angle = event.angleDelta.x || event.angleDelta.y;
+                dock.scrollBy(pixels ? -pixels : -angle / 120 * dock.iconSize * 2);
+                event.accepted = true;
+            }
         }
-        Rectangle { visible: pinned.count > 0; width: 1; height: Math.round(20 * dock.sizeFactor); anchors.verticalCenter: parent.verticalCenter; color: Theme.border }
-        DockItem { dockHeight: dock.height; sessionMode: dock.sessionMode; onTooltipRequested: (text, center) => dock.showTooltip(text, center); task: ({AppName: "Todas las aplicaciones", singlrGrid: true, decoration: ""}); onActivated: dock.applicationsRequested() }
-        Tool { objectName: "overviewButton"; visible: dock.overviewAvailable; width: dock.iconSize; height: dock.height; icon: "cards-three"; iconSize: Math.round(20 * dock.sizeFactor); description: "Multitarea"; onClicked: { dock.reveal(); dock.systemBridge.invokeShortcut("kwin", "Singlr Overview"); } }
+        Row { id: contents; x: dock.overflowing ? 0 : Math.round((viewport.width - width) / 2); height: dock.height; spacing: Math.round(6 * dock.sizeFactor)
+            Repeater {
+                id: pinned
+                model: dock.taskSource
+                delegate: TaskEntry {}
+            }
+            Rectangle { visible: pinned.count > 0; width: 1; height: Math.round(20 * dock.sizeFactor); anchors.verticalCenter: parent.verticalCenter; color: Theme.border }
+            DockItem { id: appsButton; dockHeight: dock.height; sessionMode: dock.sessionMode; onActiveFocusChanged: if (activeFocus) dock.ensureVisible(appsButton); onTooltipRequested: (text, center) => dock.showTooltip(text, center); task: ({AppName: "Todas las aplicaciones", singlrGrid: true, decoration: ""}); onActivated: dock.applicationsRequested() }
+            Tool { id: overviewButton; objectName: "overviewButton"; visible: dock.overviewAvailable; width: dock.iconSize; height: dock.height; icon: "cards-three"; iconSize: Math.round(20 * dock.sizeFactor); description: "Multitarea"; onActiveFocusChanged: if (activeFocus) dock.ensureVisible(overviewButton); onClicked: { dock.reveal(); dock.systemBridge.invokeShortcut("kwin", "Singlr Overview"); } }
+        }
     }
     component TaskEntry: Item {
         id: entry
@@ -403,6 +457,7 @@ Rectangle {
             objectName: "dockTask" + entry.index
             sessionMode: dock.sessionMode; task: entry.model
             dockOwner: dock
+            onActiveFocusChanged: if (activeFocus) dock.ensureVisible(this)
             onFileDragChanged: inside => dock.fileDragActive = inside
             onReorderDragChanged: active => dock.dragging = active
             onReorderFinished: position => dock.moveAt(entry.index, position)

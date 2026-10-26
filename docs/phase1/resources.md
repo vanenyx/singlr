@@ -238,3 +238,47 @@ da 91,6 MB: no era la textura, sino los temporales de decodificación retenidos 
 dinámico de mmap de glibc. Corrección: `mallopt(M_MMAP_THRESHOLD, 128 KiB)` al arrancar y
 `trimMemory()` al quedar listo el fondo. Resultado con el fondo real: **91,6 MB** en reposo,
 98–105 MB con paneles abiertos, CPU en reposo ≈ 0. Plasma aislado: 93,8 MB.
+
+## T255 — diagnóstico aislado (26 oct 2026)
+
+Se mantuvo la sesión del creador intacta. Base: Qt 6.12.0, KWin 6.8.1, salida
+anidada solicitada 2048×1280 / escala 1,25, fondo sólido, configuración privada
+nueva; no replica el fondo, aplicaciones, historial ni bandeja del creador.
+GPU/backend exactos no quedaron registrados en las muestras: no atribuir resultados
+a una GPU concreta. Cada fase registra 30 s de CPU y PSS al final de la muestra.
+
+| Escenario | PSS MB | CPU % | Resultado |
+| --- | ---: | ---: | --- |
+| Reposo, atlas automático Qt | 83,47 | 0,033 | Dentro de P-016 en esta fixture |
+| Reposo, atlas 1024×1024 (experimento externo) | 85,79 | 0,000 | Sin mejora; no se incorpora |
+| Recorrido de paneles: reposo inicial | 85,34 | 0,000 | Dentro de P-016 |
+| Lanzador abierto | 91,91 | 0,267 | Dentro del límite de memoria |
+| Centro de control abierto | 95,30 | 0,033 | Dentro del límite de memoria |
+| Notificaciones abiertas | 93,83 | 0,067 | Dentro del límite de memoria |
+| Portapapeles abierto | 94,04 | 0,233 | Dentro del límite de memoria |
+| Tras cerrar los cuatro paneles | 90,75 | 0,000 | Tres superficies base; +5,41 MB frente al inicio |
+
+La diferencia entre las dos medidas de atlas no permite una conclusión de ahorro;
+no se cambia la configuración gráfica del producto. El recorrido confirmó apertura
+y cierre de superficies en KWin privado, con limpieza `remaining=[]` y hashes del
+host iguales. Un panel abierto se considera uso, no CPU de reposo. No acredita
+liberación total de GPU/modelos ni ausencia de fugas por una sola ejecución.
+
+Evidencia filtrada: [T255](../../tests/shell/evidence/t255/README.md).
+La muestra histórica de sesión real de 167,75 MB sigue fuera de presupuesto;
+**estas cifras aisladas no resuelven P-016 de la sesión instalada**.
+
+Se ensayó además `QQmlEngine::trimComponentCache()` antes de `malloc_trim`,
+con API pública y binario de prueba separado. Resultado: 85,84 MB al inicio y
+91,00 MB tras cerrar los cuatro paneles (+5,16 MB). La base dio 85,34 / 90,75 MB
+(+5,41 MB). Son ejecuciones individuales, con variación de cachés/bibliotecas y
+un refinamiento del reajuste del viewport entre ambas: no es una serie controlada
+ni acredita ahorro. **El experimento se retiró**; el runtime conserva su
+comportamiento anterior. Fuente de la API:
+[QQmlEngine](https://doc.qt.io/qt-6/qqmlengine.html#trimComponentCache).
+
+Tras dos enfoques sin mejora útil (atlas y metadatos), el siguiente paso es un
+perfil de asignaciones en sesión desechable con fondo, escala y bandeja equivalentes
+a la sesión real, seguido de una comparación antes/después. No hay heaptrack
+instalado en el inventario de esta entrega; no se instalaron paquetes ni se adjuntó
+un depurador al shell del creador. No se sacrificaron funciones para bajar la cifra.

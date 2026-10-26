@@ -1,0 +1,72 @@
+{
+  "source_revision": "e844fdf + T255 dock (runtime baseline sin trimComponentCache)",
+  "scenario": "idle",
+  "environment": {
+    "kernel": "7.2.11-arch1-1",
+    "machine": "x86_64",
+    "size": "2048x1280",
+    "profile": false,
+    "kwin_wayland": "kwin 6.8.1",
+    "plasmashell": "plasmashell 6.8.1",
+    "pkg-config": "6.12.0"
+  },
+  "output_scale_requested": 1.25,
+  "results": [
+    {
+      "phase": "idle",
+      "name": "singlr-shell",
+      "pss_bytes": 83465216,
+      "pss_anon_bytes": 65900544,
+      "pss_file_bytes": 16679936,
+      "pss_shmem_bytes": 884736,
+      "rss_bytes": 242241536,
+      "threads": 37,
+      "cpu_percent": 0.03332873957649944,
+      "interval_seconds": 30.004134950999287,
+      "scheduler_timeslices": null,
+      "wakeups": null,
+      "windows": [
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 28
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 3,
+          "hidden": false,
+          "x": 939.5,
+          "y": 1228,
+          "width": 169,
+          "height": 48
+        },
+        {
+          "resourceClass": "singlr-shell",
+          "resourceName": "singlr-shell",
+          "caption": "",
+          "layer": 0,
+          "hidden": false,
+          "x": 0,
+          "y": 0,
+          "width": 2048,
+          "height": 1280
+        }
+      ],
+      "window_count": 3,
+      "budget": "PASS"
+    }
+  ],
+  "budget": {
+    "pss_bytes_lt": 120000000,
+    "cpu_percent_lt": 0.5
+  },
+  "note": "Sesi\u00f3n privada, fondo s\u00f3lido y datos nuevos. No mide sesi\u00f3n instalada ni escritorio completo. GPU/backend exactos no registrados en estas muestras."
+}

@@ -1,0 +1,42 @@
+T255 — 26 oct 2026
+
+SINGLR_CAPTURE_T255=1 tools/test-qml.sh
+Shell: 231 passed, 0 failed, 4 skipped (capturas opcionales ajenas).
+Settings: 9 passed, 0 failed.
+
+SINGLR_CAPTURE_T255=1 tools/test-qml.sh --light
+Shell: 231 passed, 0 failed, 4 skipped (capturas opcionales ajenas).
+Settings: 9 passed, 0 failed.
+
+qmllint -I <repo>/shell/qml -I <repo>/build/qml Dock.qml tst_DockOverflow.qml
+PASS, sin diagnósticos.
+
+python3 -m unittest discover -s tests/shell
+93 tests, OK. Ejecución completa con variante temporal de metadatos.
+Tras retirar esa variante:
+PYTHONPATH=tests/shell python3 -m unittest test_application_actions test_robustness test_session_actions -v
+7 tests, OK.
+
+python3 -m unittest discover -s tests/session -v
+6 tests, OK.
+
+tools/check-cmake.sh (repetido tras retirar experimento)
+PASS staged payload, executable modes, fonts and session paths.
+Vidrio omitido: cache SINGLR_BUILD_LIQUIDGLASS=OFF, advertido expresamente.
+Staging temporal eliminado. No instala ni certifica el plugin.
+
+python3 tests/session/real-session.py startup --allow-development --evidence <archivo temporal nuevo>
+startup: PASS. Solo lectura. No acredita shell empaquetado ni ciclo de vida completo.
+singlr-doctor: informe filtrado generado en /tmp, sin publicar journal crudo.
+
+python3 scripts/check_setup.py
+PASS documentos, JSON/TOML, skills y enlaces. No prueba KDE.
+python3 scripts/doctor.py
+Inventario realizado.
+git diff --check
+PASS.
+
+Recursos: dos ejecuciones de reposo y dos de recorrido de paneles en KWin privado.
+JSON filtrados adjuntos, sin PID ni mensajes libres. Limpieza final remaining=[],
+configuración host files_before=30 files_after=30 equal=True en las cuatro.
+Los cambios de atlas y metadatos se descartan. P-016 real queda pendiente.
