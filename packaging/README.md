@@ -1,5 +1,11 @@
 # Empaquetado local de Singlr (T229)
 
+> **Vía vigente:** `tools/build-package.sh` construye desde HEAD (sin cambios
+> pendientes) con versión `<base>.r<commits>.g<hash>` y deja el paquete en
+> `.local/repo/`. Instalar con
+> `sudo pacman -U .local/repo/singlr-desktop-<versión>-x86_64.pkg.tar.zst`.
+> El procedimiento manual de abajo es histórico.
+
 Preparación técnica de Fase 1, sin publicación ni instalación en esta entrega.
 El paquete instala una sesión separada; no habilita unidades ni cambia KDE.
 Debe integrarse primero `apps/settings/Main.qml` del trabajo de Codex 1.
