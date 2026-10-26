@@ -12,7 +12,7 @@ import Singlr.System
 // ventanas normales: aparecen en la multitarea y en Alt+Tab.
 Item {
     id: session
-    Component.onCompleted: WorkspaceBridge.enable()
+    Component.onCompleted: { WorkspaceBridge.enable(); ClipboardPasteBridge.enable(); }
     Connections {
         target: WorkspaceBridge
         function onOverviewChanged(open) { session.overviewOpen = open; }
@@ -78,10 +78,16 @@ Item {
     }
     ClipboardBackend { id: clipboardBackend; objectName: "clipboardBackend" }
     property bool clipboardOpen: false
+    onClipboardOpenChanged: if (!clipboardOpen) ClipboardPasteBridge.cancelIfIdle()
+    Connections {
+        target: ClipboardPasteBridge
+        function onFailed(message) { notifications.notifyLocal(message); }
+    }
     readonly property var clipboardPanel: clipboardContent.item
     property var clipboardScreen: effectiveDockScreen
     function toggleClipboard() {
         const wasOpen = clipboardOpen;
+        if (!wasOpen) ClipboardPasteBridge.captureTarget();
         closeMenus(); if (launcher) launcher.close(); launcherOpen = false;
         clipboardScreen = effectiveDockScreen;
         clipboardOpen = !wasOpen;
@@ -90,7 +96,7 @@ Item {
     Timer { id: clipboardFocus; interval: 0; onTriggered: if (session.clipboardOpen) session.clipboardPanel.focusInput() }
     DeferredLoader {
         id: clipboardContent; objectName: "clipboardLoader"; opened: session.clipboardOpen
-        Component.onCompleted: setSource(Qt.resolvedUrl("ClipboardPanel.qml"), {history: clipboardBackend.history})
+        Component.onCompleted: setSource(Qt.resolvedUrl("ClipboardPanel.qml"), {history: clipboardBackend.history, pasteBridge: ClipboardPasteBridge})
         onLoaded: {
             const panel = item as Item;
             panel.parent = Qt.binding(() => clipboardSurface.item ? (clipboardSurface.item as Window).contentItem : session);

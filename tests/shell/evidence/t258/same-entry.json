@@ -1,0 +1,6 @@
+{
+  "case": "same-entry",
+  "result": "PASS",
+  "real_history": true,
+  "terminal_metadata_fixture": false
+}

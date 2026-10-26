@@ -17,11 +17,12 @@ Item {
     property var entries: (backendObject ? backendObject.entries : []).concat(localEntries)
     function notifyLocal(message, forceAction) {
         const id = localId--;
-        localActions[id] = forceAction;
+        const actionable = typeof forceAction === "function";
+        if (actionable) localActions[id] = forceAction;
         localEntries = localEntries.concat([{id: id, local: true, app: "Singlr", icon: "dialog-warning",
-            title: message, body: "", time: new Date(), timeout: 0, critical: true,
+            title: message, body: "", time: new Date(), timeout: actionable ? 0 : 5000, critical: actionable,
             expired: false, dismissed: false, suppressed: false, defaultAction: false,
-            actionNames: ["force"], actionLabels: ["Forzar"]}]);
+            actionNames: actionable ? ["force"] : [], actionLabels: actionable ? ["Forzar"] : []}]);
         return id;
     }
     property var popups: []

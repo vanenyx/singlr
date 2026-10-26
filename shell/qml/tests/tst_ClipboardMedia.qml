@@ -28,6 +28,13 @@ Item {
         }
     }
     Component { id: clipboardFactory; ClipboardPanel { history: historyDouble } }
+    QtObject {
+        id: pasteDouble
+        property bool canPaste: true
+        property var calls: []
+        function preparePaste() { calls.push("prepare"); }
+        function requestPaste() { calls.push("paste:" + historyDouble.copied); }
+    }
     property var player: ({
         track: "Tema", artist: "Artista", identity: "mpv", artUrl: "",
         playbackStatus: Mpris.PlaybackStatus.Playing,
@@ -84,18 +91,39 @@ Item {
             compare(findChild(panel.currentEntry, "clipboardTypeIcon").name, "link");
             verify(!findChild(panel.currentEntry, "clipboardThumbnail").visible);
         }
+        function test_clickPastesAndCopyOnlyRemainsAvailable() {
+            pasteDouble.calls = []; pasteDouble.canPaste = true;
+            const panel = createTemporaryObject(clipboardFactory, fixture, {pasteBridge: pasteDouble});
+            closed.target = panel; closed.clear(); panel.open();
+            tryVerify(() => panel.currentEntry !== null);
+            mouseClick(panel.currentEntry, 80, 20);
+            compare(historyDouble.copied, "a"); compare(pasteDouble.calls.join(","), "prepare,paste:a");
+            compare(closed.count, 1);
+            pasteDouble.calls = [];
+            panel.open(); keyClick(Qt.Key_Return, Qt.ControlModifier);
+            compare(pasteDouble.calls.length, 0); compare(closed.count, 2);
+            panel.open(); panel.openMenu(panel.currentEntry.model, panel, 100, 100);
+            panel.menu.activate(0); compare(pasteDouble.calls.length, 0); compare(closed.count, 3);
+            pasteDouble.canPaste = false;
+            panel.open(); mouseClick(panel.currentEntry, 80, 20);
+            compare(pasteDouble.calls.length, 0); compare(closed.count, 4);
+            pasteDouble.canPaste = true;
+            panel.open(); panel.currentEntry.forceActiveFocus(Qt.TabFocusReason);
+            keyClick(Qt.Key_Return, Qt.ControlModifier);
+            compare(pasteDouble.calls.length, 0); compare(closed.count, 5);
+        }
         function test_contextPinAndClearConfirmation() {
             const panel = createTemporaryObject(clipboardFactory, fixture); panel.open();
             tryVerify(() => panel.currentEntry !== null);
             mouseClick(panel.currentEntry, 80, 20, Qt.RightButton);
             tryCompare(panel.menu, "opened", true);
-            panel.menu.activate(0); compare(clipboard.get(0).starred, true);
+            panel.menu.activate(1); compare(clipboard.get(0).starred, true);
             panel.openMenu(panel.currentEntry.model, panel, 100, 100);
-            compare(panel.menu.entries[0].label, "Desfijar"); panel.menu.activate(0);
+            compare(panel.menu.entries[1].label, "Desfijar"); panel.menu.activate(1);
             compare(clipboard.get(0).starred, false);
             panel.openMenu(panel.currentEntry.model, panel, 100, 100);
-            panel.menu.activate(2); compare(historyDouble.clears, 0); verify(panel.menu.opened);
-            panel.menu.activate(2); compare(historyDouble.clears, 1); tryCompare(panel, "resultCount", 0);
+            panel.menu.activate(3); compare(historyDouble.clears, 0); verify(panel.menu.opened);
+            panel.menu.activate(3); compare(historyDouble.clears, 1); tryCompare(panel, "resultCount", 0);
             compare(panel.height, 542);
         }
         function test_removeFilteredUuidAndOverflow() {
@@ -104,7 +132,7 @@ Item {
             tryVerify(() => panel.currentEntry !== null);
             const more = findChild(panel.currentEntry, "clipboardMore"); verify(more);
             mouseClick(more, 14, 14); tryCompare(panel.menu, "opened", true);
-            panel.menu.activate(1); compare(historyDouble.removed, "b");
+            panel.menu.activate(2); compare(historyDouble.removed, "b");
             compare(clipboard.count, 2); compare(clipboard.get(0).uuid, "a");
             tryCompare(panel, "resultCount", 0); compare(panel.height, 542);
         }

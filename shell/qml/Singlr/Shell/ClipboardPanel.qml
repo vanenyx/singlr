@@ -15,6 +15,8 @@ FocusScope {
     readonly property alias menu: actions
     property var actionModel: null
     property string actionUuid: ""
+    property var pasteBridge: null
+    readonly property bool pasteOnSelect: !!pasteBridge && pasteBridge.canPaste
     signal closed()
     Keys.onUpPressed: { panel.move(-1); if (list.currentItem) list.currentItem.forceActiveFocus(Qt.TabFocusReason); }
     Keys.onDownPressed: { panel.move(1); if (list.currentItem) list.currentItem.forceActiveFocus(Qt.TabFocusReason); }
@@ -26,12 +28,20 @@ FocusScope {
         if (list.count) selectedIndex = (Math.max(0, selectedIndex) + delta + list.count) % list.count;
     }
     function copy(uuid) { history.moveToTop(uuid); close(); }
+    function select(uuid) {
+        if (!pasteOnSelect) { copy(uuid); return; }
+        pasteBridge.preparePaste();
+        history.moveToTop(uuid);
+        pasteBridge.requestPaste();
+        close();
+    }
     readonly property ClipboardEntry currentEntry: list.currentItem as ClipboardEntry
-    function run() { if (currentEntry) copy(currentEntry.model.uuid); }
+    function run(copyOnly = false) { if (currentEntry) { if (copyOnly) copy(currentEntry.model.uuid); else select(currentEntry.model.uuid); } }
     function openMenu(data, anchor, px, py) {
         actionModel = data; actionUuid = data ? data.uuid : "";
         actions.entries = [
-            {label: data && data.starred ? "Desfijar" : "Fijar", icon: "push-pin", action: "pin", enabled: !!data},
+            {label: "Copiar", icon: "clipboard-text", action: "copy", enabled: !!data},
+            {label: data && data.starred ? "Desfijar" : "Fijar", icon: "push-pin", action: "pin", enabled: !!data, separator: true},
             {label: "Eliminar", icon: "trash", action: "remove", enabled: !!data},
             {label: "Vaciar historial", icon: "trash", action: "clear", separator: true,
                 enabled: typeof panel.history.removeRows === "function", destructive: true, confirmation: "¿Vaciar todo? Pulsa de nuevo"}
@@ -50,13 +60,13 @@ FocusScope {
         color: Theme.text; selectionColor: Theme.selection; selectedTextColor: Theme.text
         font.family: Theme.family; font.pixelSize: 13; verticalAlignment: TextInput.AlignVCenter
         Accessible.role: Accessible.EditableText
-        Accessible.description: "Flechas para seleccionar, Enter para abrir, Escape para cerrar"
+        Accessible.description: panel.pasteOnSelect ? "Flechas para seleccionar, Enter para pegar, Ctrl+Enter para copiar, Escape para cerrar" : "Flechas para seleccionar, Enter para copiar, Escape para cerrar"
         // Always-focused command field (as in Raycast): the caret is the focus indicator; no ring.
         Accessible.name: "Buscar en el portapapeles"
         Keys.onUpPressed: panel.move(-1)
         Keys.onDownPressed: panel.move(1)
-        Keys.onReturnPressed: panel.run()
-        Keys.onEnterPressed: panel.run()
+        Keys.onReturnPressed: event => panel.run(!!(event.modifiers & Qt.ControlModifier))
+        Keys.onEnterPressed: event => panel.run(!!(event.modifiers & Qt.ControlModifier))
         UiText { anchors.fill: parent; text: "Buscar en el portapapeles…"; color: Theme.faint; visible: !search.text }
     }
     ShortcutHint { x: parent.width - 47; y: 27; text: "esc" }
@@ -80,13 +90,20 @@ FocusScope {
         id: entry
         required property var model
         required property int index
-            onActiveFocusChanged: if (activeFocus) panel.selectedIndex = index
+        onActiveFocusChanged: if (activeFocus) panel.selectedIndex = index
         required property int type
         width: list.width; height: 44; trailingWidth: 72
         title: entry.type === 4 ? "Imagen" : String(model.display || "").replace(/\s+/g, " ")
         selected: list.currentIndex === index
+        // Forwarding runs before ListItem's inherited Enter handlers.
+        Keys.forwardTo: [clipboardKeys]
+        Item {
+            id: clipboardKeys
+            Keys.onReturnPressed: event => { panel.selectedIndex = entry.index; panel.run(!!(event.modifiers & Qt.ControlModifier)); }
+            Keys.onEnterPressed: event => { panel.selectedIndex = entry.index; panel.run(!!(event.modifiers & Qt.ControlModifier)); }
+        }
         Keys.onMenuPressed: panel.openMenu(entry.model, entry, width - 28, height)
-        onClicked: { list.currentIndex = index; panel.copy(model.uuid); }
+        onClicked: { list.currentIndex = index; panel.select(model.uuid); }
         Image {
             objectName: "clipboardThumbnail"
             x: 14; anchors.verticalCenter: parent.verticalCenter; width: 24; height: 28
@@ -104,13 +121,16 @@ FocusScope {
     Tool { x: 18; y: parent.height - 35; icon: "dots-three"; description: "Acciones del historial"; onClicked: panel.openMenu(panel.currentEntry ? panel.currentEntry.model : null, panel, 18, panel.height - 42) }
     Row { anchors.right: parent.right; anchors.rightMargin: 16; y: parent.height - 31; spacing: 8
         ShortcutHint { text: "⏎" }
-        UiText { height: 20; text: "Copiar"; color: Theme.secondary }
+        UiText { height: 20; text: panel.pasteOnSelect ? "Pegar" : "Copiar"; color: Theme.secondary }
+        ShortcutHint { text: "ctrl ⏎"; visible: panel.pasteOnSelect }
+        UiText { height: 20; text: "Copiar"; color: Theme.secondary; visible: panel.pasteOnSelect }
     }
     ContextMenu {
         id: actions; parent: panel
         onClosed: { panel.actionModel = null; panel.actionUuid = ""; }
         onTriggered: entry => {
-            if (entry.action === "clear") {
+            if (entry.action === "copy") panel.copy(panel.actionUuid);
+            else if (entry.action === "clear") {
                 // clearHistory() opens a QWidget confirmation in Klipper 6.8.1.
                 // The menu already confirmed: use the same KDE model row action.
                 const count = panel.history.rowCount();

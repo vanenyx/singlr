@@ -40,6 +40,15 @@ Item {
             center.toggle(); verify(!center.unread); compare(center.backendObject.calls[0], "read");
             center.clearAll(); compare(center.backendObject.calls[1][1], "close"); compare(center.popups.length, 0);
         }
+        function test_localNoticeWithoutAction() {
+            const id = center.notifyLocal("No se pudo pegar automáticamente");
+            const notice = center.localEntries.find(e => e.id === id);
+            compare(notice.timeout, 5000); verify(!notice.critical);
+            compare(notice.actionNames.length, 0);
+            verify(center.localActions[id] === undefined);
+            center.dispatch(id, "close");
+            verify(!center.localEntries.some(e => e.id === id));
+        }
         function test_timeoutAndHoverPause() {
             center.backendObject.entries = [entry(1, 300)];
             center.hovered[1] = true; wait(450); compare(center.popups.length, 1); compare(center.popups[0].remaining, 300);

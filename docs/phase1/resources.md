@@ -296,3 +296,12 @@ cuando cambia el icono, sin trabajo por frame. Kirigami conserva la rasterizaci�
 una fuente fija de 128 px evita ampliar bitmaps elegidos por tamaños intermedios.
 El coste de esas texturas sí existe y no se presenta como una optimización de
 memoria. [Evidencia filtrada](../../tests/shell/evidence/t257/README.md).
+
+## T258 — pegado del historial (26 oct 2026)
+
+Mismo procedimiento privado de measure-resources.sh: 93,94 MB PSS (67,53 MB
+anónimos), CPU 0 % / 30 s, tres superficies, 37 hilos. Limpieza sin procesos y
+hashes host iguales. Sin A/B ni certificación del presupuesto en sesión real.
+El puente conserva metadatos de ventanas y referencias; no duplica historial o
+contenido. Reintento 15 ms y límite 1500 ms solo mientras hay una solicitud;
+ambos se detienen al completar o cancelar.

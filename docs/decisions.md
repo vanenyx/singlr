@@ -109,3 +109,20 @@ Rectángulos de medida en caché acotada a 128 entradas, sin imágenes retenidas
 el helper, timers ni trabajo por frame. Caja de clic, orden y comportamiento intactos.
 El ajuste es una solución técnica/propuesta de pulido visual, no rediseño de marcas.
 [Comparación, pruebas y límites](handoffs/T257-dock-icons.md).
+
+
+## P-026 — pegar desde el historial (explícita del creador, 26 oct 2026)
+
+Seleccionar con clic una entrada del portapapeles debe copiarla y pegarla en la
+aplicación desde la que se abrió Meta+V. Se conserva la posibilidad de solo copiar.
+
+## T258 — solución técnica derivada de P-026
+
+Enter equivale al clic; Ctrl+Enter y el menú «Copiar» solo seleccionan el contenido.
+Se captura la ventana antes de abrir el panel y se espera a que Klipper restaure
+los formatos y KWin devuelva el foco. Puente nativo Wayland del shell con APIs
+públicas KWayland/KSystemClipboard; sin demonio ni almacén de historial adicional.
+Ctrl+V para aplicaciones; Ctrl+Shift+V para servicios con categoría TerminalEmulator.
+Si desaparece el destino o cambia el foco a otra app, no se envía el atajo.
+Espera acotada a 1,5 s, sin temporizador activo en reposo. Ver
+[verificación y límites](handoffs/T258-clipboard-paste.md).

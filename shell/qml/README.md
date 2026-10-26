@@ -892,3 +892,9 @@ incluye), comprobar playerctl, anterior/pausa/siguiente y retirada del player;
 con dos, Automático y selección explícita, carátula y título largos, sin cambiar
 el alto del panel. Revisar foco/Escape/clic fuera y log QML. Conservar pendientes
 hasta ejecutar estos recorridos; no tocar la sesión KDE habitual.
+
+## T258 — contrato actual del portapapeles (P-026)
+
+Actualiza el comportamiento de copia descrito en T238: clic o Enter selecciona y
+pega en el destino original con capacidad Wayland. Ctrl+Enter o menú «Copiar» solo
+copia. Sin destino válido se mantiene copia. [Entrega](../../docs/handoffs/T258-clipboard-paste.md).

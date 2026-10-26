@@ -1,0 +1,13 @@
+26 oct 2026 — T258
+Qt 6.12.0; KWin/KWayland 6.8.1; KF6 6.31.0
+Native ClipboardPasteTest: 4 passed, 0 failed
+QML dark: 241 shell + 9 settings passed, 0 failed, 5 optional captures skipped
+QML light: 241 shell + 9 settings passed, 0 failed, 5 optional captures skipped
+Python test_packaging: 5 passed
+qmllint --bare build/qml + shell/qml + Qt: PASS
+CMake build + DESTDIR: PASS; glass OFF, effect not validated
+check_setup.py: PASS; git diff --check: PASS
+KWin private: paste, terminal fixture, image, same-entry, copy-only, target-gone, focus-changed PASS
+Each private run: remaining=[]; host config equal=True
+Idle resource fixture: PSS 93.94 MB, anonymous 67.53 MB, CPU 0.000%, 37 threads, 3 windows
+No equivalent A/B or real-session P-016 acceptance claimed.

@@ -16,3 +16,10 @@
 ## KWin (Codex 1)
 - Efecto `singlr-overview`: `SwipeGestureHandler`, 3 dedos hacia arriba en el panel táctil, con progreso.
 - Script declarativo `kwin/scripts/singlr-gestures`: 3 dedos hacia abajo alterna `workspace.showingDesktop`; la pinza de 4 dedos hacia dentro llama por D-Bus a `org.kde.plasmashell /PlasmaShell singlrShowApplications`.
+
+## Portapapeles — P-026/T258
+
+Meta+V captura la ventana activa y abre/cierra el historial. Clic o Enter selecciona
+y pega tras recuperar el foco original; Ctrl+Enter y menú «Copiar» solo copian.
+Escape cancela. Nunca se redirige el pegado a otra app que tome el foco.
+[Contrato y límites](../handoffs/T258-clipboard-paste.md).

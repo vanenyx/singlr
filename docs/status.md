@@ -66,6 +66,12 @@ correctos. Medida aislada: 93,45 MB PSS y 0,033 % CPU; no acredita P-016 real.
 Requiere actualizar paquete y relanzar shell/sesión por el nuevo tipo QML nativo.
 [Entrega y comparación](handoffs/T257-dock-icons.md).
 
+T258/P-026: clic o Enter en el historial pega en la ventana original; Ctrl+Enter
+o «Copiar» conserva selección sin pegado. Texto, imagen, atajo de terminal,
+solo copiar, destino cerrado, cambio de foco y entrada actual comprobados en KWin
+privado. Requiere paquete actualizado y nueva sesión para cargar el puente nativo.
+[Entrega, evidencia y límites](handoffs/T258-clipboard-paste.md).
+
 ## Siguientes cierres necesarios
 
 1. Aceptación visual y nativa del dock corregido: touchpad, DND, autohide y espacio reservado en distintas salidas.
