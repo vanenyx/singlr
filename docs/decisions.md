@@ -173,3 +173,11 @@ El creador restablece el equipo: el creador más Claude Code, que controla su tr
 y el de Codex 1 y Codex 2 mediante el plugin. Sustituye el encargo del 25/26 oct de
 trabajar solo con Codex. Al delegar, los encargos de mayor consumo de tokens van a
 Codex 1 y los de menor consumo a Codex 2; el consumo prevalece sobre la especialidad.
+
+## P-030 — gestos de multitarea como en macOS (explícita, 26 oct 2026)
+
+En la sesión Singlr no existe una segunda multitarea: se desactivan los efectos
+KDE Overview y Window View (journal reversible). Tres o cuatro dedos hacia arriba
+abren la multitarea de Singlr y hacia abajo la cierran. El desplazamiento natural
+del touchpad no lo gestiona Singlr: el creador lo configura en Ajustes de KDE.
+[Entrega T262](handoffs/T262-touchpad-gestures.md).

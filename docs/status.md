@@ -87,6 +87,16 @@ original restaurada al salir. Migración de journals anteriores y KConfig real
 verificados. El cambio entra al iniciar sesión con el paquete actualizado;
 no se ha reconfigurado el compositor activo. [Entrega](handoffs/T260-overview-corner.md).
 
+T261: el dock desaparecía tras suspender porque LayerShellQt cerraba la ventana
+al perder todas las salidas y la vinculación QML no volvía a mostrarla. Corregido
+en `System::placeOnScreen`. E2E en KWin virtual privado: falla con el binario
+anterior y pasa en dock flotante/fijo con y sin autoocultado. Falta suspensión física.
+[Evidencia](../tests/shell/output-control/README.md).
+
+T262/P-030: KDE Overview y Window View desactivados en Singlr; 3 o 4 dedos
+arriba/abajo abren/cierran la multitarea de Singlr. Requiere paquete actualizado
+y nueva sesión. [Entrega](handoffs/T262-touchpad-gestures.md).
+
 ## Siguientes cierres necesarios
 
 1. Aceptación visual y nativa del dock corregido: touchpad, DND, autohide y espacio reservado en distintas salidas.
