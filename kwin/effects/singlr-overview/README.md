@@ -1,3 +1,8 @@
+> **T262b / P-030:** tres **o cuatro** dedos arriba abren la multitarea con el mismo
+> progreso; tres o cuatro abajo la cierran. En la sesión Singlr se deshabilitan
+> los efectos KDE `overview` y `windowview` mediante el journal reversible.
+> Inventario de gestos y límites: [entrega T262](../../../docs/handoffs/T262-touchpad-gestures.md).
+
 > **T246:** el comportamiento y la verificación vigentes están en
 > [Workspace](../../../session/WORKSPACE.md). Se comparten los tokens de Singlr.Ui,
 > claro/oscuro y movimiento reducido; escribir abre Command; Ctrl+1…9 cambia
@@ -160,8 +165,8 @@ solo su carpeta instalada. La prueba aislada no necesita alterar kwinrc habitual
 
 ## Gestos — T226 / P-015
 
-Tres dedos arriba en panel táctil revela la vista proporcionalmente al progreso;
-tres abajo con la vista abierta la cierra. Durante el gesto no hay animación
+Tres o cuatro dedos arriba en panel táctil revelan la vista proporcionalmente al progreso;
+tres o cuatro abajo con la vista abierta la cierran (P-030). Durante el gesto no hay animación
 interpolada; al terminar completa el fundido de 120 ms. `activated` completa la
 dirección; `cancelled` resuelve al estado abierto si la opacidad alcanzó 0,5, o al
 cerrado en caso contrario. El umbral de 0,5 es una solución técnica derivada.

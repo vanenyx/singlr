@@ -47,22 +47,20 @@ KWin.SceneEffect {
             reveal = 1;
         } else deactivate();
     }
-    KWin.SwipeGestureHandler {
-        direction: KWin.SwipeGestureHandler.Direction.Up
+    // P-030: both finger counts share progress, completion and cancellation.
+    component OverviewSwipe: KWin.SwipeGestureHandler {
+        property int overviewDirection: 1
+        direction: overviewDirection === 1 ? KWin.SwipeGestureHandler.Direction.Up
+                                          : KWin.SwipeGestureHandler.Direction.Down
         deviceType: KWin.SwipeGestureHandler.Device.Touchpad
-        fingerCount: 3
-        onProgressChanged: effect.updateGesture(1, progress)
-        onActivated: effect.finishGesture(1, true)
-        onCancelled: effect.finishGesture(1, false)
+        onProgressChanged: effect.updateGesture(overviewDirection, progress)
+        onActivated: effect.finishGesture(overviewDirection, true)
+        onCancelled: effect.finishGesture(overviewDirection, false)
     }
-    KWin.SwipeGestureHandler {
-        direction: KWin.SwipeGestureHandler.Direction.Down
-        deviceType: KWin.SwipeGestureHandler.Device.Touchpad
-        fingerCount: 3
-        onProgressChanged: effect.updateGesture(-1, progress)
-        onActivated: effect.finishGesture(-1, true)
-        onCancelled: effect.finishGesture(-1, false)
-    }
+    OverviewSwipe { fingerCount: 3 }
+    OverviewSwipe { fingerCount: 4 }
+    OverviewSwipe { fingerCount: 3; overviewDirection: -1 }
+    OverviewSwipe { fingerCount: 4; overviewDirection: -1 }
 
     function toggle() {
         pendingQuery = "";

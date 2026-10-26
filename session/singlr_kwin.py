@@ -20,6 +20,8 @@ KWIN_SETTINGS = [
     ('Plugins', 'magiclampEnabled', 'false'),
     ('Plugins', 'maximizeEnabled', 'true'),
     ('Plugins', 'singlr-overviewEnabled', 'true'),
+    ('Plugins', 'overviewEnabled', 'false'),
+    ('Plugins', 'windowviewEnabled', 'false'),
     ('Effect-overview', 'BorderActivate', ''),
     ('Plugins', 'singlr-gesturesEnabled', 'true'),
     ('Plugins', 'singlr-liquidglassEnabled', 'true'),
@@ -39,6 +41,9 @@ MATERIAL_KEYS = {('Plugins', 'singlr-liquidglassEnabled'),
 # KWin 6.8: Overview defaults to ElectricTopLeft (7). An explicit empty IntList
 # disables that default; preserve any other corners chosen by the user.
 OVERVIEW_EDGE_KEYS = {('Effect-overview', 'BorderActivate')}
+
+# Disable KDE multitasking entry points; journals before T262 omit both keys.
+GESTURE_KEYS = {('Plugins', 'overviewEnabled'), ('Plugins', 'windowviewEnabled')}
 
 
 def without_top_left(value):
@@ -135,8 +140,10 @@ def entries_from(path):
     keys = {(row[0], row[1]) for row in entries} - RETIRED_KEYS
     # Backups predating TabBox, materials or the Overview corner remain valid.
     legacy = {(group, key) for group, key in allowed if group != 'TabBox'}
-    supported = [base - extras for base in (allowed, legacy, allowed - MATERIAL_KEYS, legacy - MATERIAL_KEYS)
-                 for extras in (set(), OVERVIEW_EDGE_KEYS)]
+    supported = [base - extras - new
+                 for base in (allowed, legacy, allowed - MATERIAL_KEYS, legacy - MATERIAL_KEYS)
+                 for extras in (set(), OVERVIEW_EDGE_KEYS)
+                 for new in (set(), GESTURE_KEYS)]
     if keys not in supported:
         raise ValueError(f'Backup KWin incompleto: {path}')
     return entries
@@ -188,6 +195,9 @@ def reload_kwin(*, applying):
              ('/Effects', 'org.kde.kwin.Effects.' + ('loadEffect' if applying else 'unloadEffect'), 'singlr-overview'),
              (('/Scripting', 'org.kde.kwin.Scripting.start') if applying else
               ('/Scripting', 'org.kde.kwin.Scripting.unloadScript', 'singlr-gestures'))]
+    if applying:
+        calls.extend(('/Effects', 'org.kde.kwin.Effects.unloadEffect', effect)
+                     for effect in ('overview', 'windowview'))
     # Restore a pre-existing user effect activation as well as its configuration.
     calls.append(('/Effects', 'org.kde.kwin.Effects.' +
                   ('loadEffect' if applying or read('Plugins', 'singlr-liquidglassEnabled') == 'true' else 'unloadEffect'),

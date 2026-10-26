@@ -94,6 +94,37 @@ class KWinTests(unittest.TestCase):
                 kwin.restore(self.backup)
                 self.assertEqual(self.values.get(key), original)
 
+    def test_native_multitasking_restores_absent_or_explicit(self):
+        for original in (None, 'true', 'false'):
+            for key in kwin.GESTURE_KEYS:
+                with self.subTest(key=key, original=original):
+                    self.write(*key, original)
+                    before = self.values.copy()
+                    kwin.apply(self.backup)
+                    self.assertEqual(self.values[('Plugins', 'overviewEnabled')], 'false')
+                    self.assertEqual(self.values[('Plugins', 'windowviewEnabled')], 'false')
+                    kwin.restore(self.backup)
+                    self.assertEqual(self.values, before)
+
+    def test_pre_t262_journals_recover_before_snapshot_of_new_keys(self):
+        for extras in (set(), kwin.MATERIAL_KEYS | kwin.OVERVIEW_EDGE_KEYS):
+            with self.subTest(extras=extras):
+                self.backup.parent.mkdir(exist_ok=True)
+                self.backup.write_text(json.dumps([
+                    [g, k, self.original.get((g, k))] for g, k, _ in kwin.KWIN_SETTINGS
+                    if (g, k) not in kwin.GESTURE_KEYS | extras]))
+                self.assertTrue(kwin.apply(self.backup, recover_pending=True))
+                self.assertTrue(kwin.restore(self.backup))
+                self.assertEqual(self.values, self.original)
+
+    def test_desktop_layout_is_not_changed(self):
+        self.values[('Desktops', 'Rows')] = '2'
+        kwin.apply(self.backup)
+        self.assertEqual(self.values[('Desktops', 'Rows')], '2')
+        kwin.restore(self.backup)
+        self.assertEqual(self.values[('Desktops', 'Rows')], '2')
+        self.assertFalse(any((g, k) == ('Desktops', 'Rows') for g, k, _ in self.writes))
+
     def test_pre_corner_journal_recovers_before_snapshot_of_new_key(self):
         self.backup.parent.mkdir()
         self.backup.write_text(json.dumps([[g, k, self.original.get((g, k))]
@@ -228,6 +259,8 @@ class KConfigTests(unittest.TestCase):
                 self.assertIsNone(kwin.read('Plugins', 'singlr-overviewEnabled'))
                 self.assertEqual(kwin.read('org.kde.kdecoration2', 'theme'), '')
                 self.assertTrue(kwin.apply())
+                for effect in ('overviewEnabled', 'windowviewEnabled'):
+                    self.assertEqual(kwin.read('Plugins', effect), 'false')
                 self.assertEqual(kwin.read('Effect-overview', 'BorderActivate'), '')
                 # New process models recovery after the original process disappeared.
                 subprocess.run([str(ROOT / 'session/singlr-kwin'), '--restore', '--offline'],
@@ -236,6 +269,8 @@ class KConfigTests(unittest.TestCase):
                 self.assertEqual(kwin.read('Plugins', 'scaleEnabled'), 'false')
                 self.assertEqual(kwin.read('org.kde.kdecoration2', 'theme'), '')
                 self.assertFalse(kwin.backup_path().exists())
+                for effect in ('overviewEnabled', 'windowviewEnabled'):
+                    self.assertIsNone(kwin.read('Plugins', effect))
                 self.assertIsNone(kwin.read('Effect-overview', 'BorderActivate'))
                 kwin.write('Effect-overview', 'BorderActivate', '1,7,3')
                 kwin.apply()
