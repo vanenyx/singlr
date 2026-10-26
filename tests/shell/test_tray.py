@@ -33,7 +33,7 @@ class TrayTests(unittest.TestCase):
                                  str(ROOT / 'shell/session/src/tray.cpp'),
                                  str(ROOT / 'shell/session/src/trayformat.cpp'),
                                  str(ROOT / 'shell/session/src/system.cpp'), moc, system_moc,
-                                 *flags, '-lKF6Service', '-I/usr/include/KF6/KIO', '-I/usr/include/KF6/KIOGui', '-I/usr/include/KF6/KIOCore', '-I/usr/include/KF6/KCoreAddons', '-lKF6KIOGui', '-lKF6CoreAddons', '-lLayerShellQtInterface', '-o', cls.binary], capture_output=True, text=True, timeout=60)
+                                 *flags, '-lKF6Service', '-I/usr/include/KF6/KIO', '-I/usr/include/KF6/KIOGui', '-I/usr/include/KF6/KIOCore', '-I/usr/include/KF6/KCoreAddons', '-lKF6KIOGui', '-lKF6CoreAddons', '-lLayerShellQtInterface', '-I/usr/include/kworkspace6', '-lkworkspace6', '-o', cls.binary], capture_output=True, text=True, timeout=60)
         if result.returncode:
             raise RuntimeError(result.stderr)
         cls.env = os.environ | {'QT_QPA_PLATFORM': 'offscreen', 'QT_QUICK_BACKEND': 'software',

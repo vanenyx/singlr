@@ -10,6 +10,10 @@ Item {
         id: backend
         property string userName: "Ada"
         property string userIcon: ""
+        property bool canLock: true
+        property bool canLogout: true
+        property bool canReboot: true
+        property bool canShutdown: true
         property bool canSuspend: true
         property bool canHibernate: true
         property string operation: ""
@@ -26,21 +30,9 @@ Item {
     Component { id: sessionFactory; Session { screens: []; systemBridge: backend } }
     TestCase {
         name: "SessionMenu"; when: windowShown
-        function init() { backend.operation = ""; backend.canSuspend = true; backend.canHibernate = true; }
-        function test_destructiveActionsConfirmInPlace() {
-            const menu = createTemporaryObject(factory, fixture);
-            menu.showAt(fixture, 20, 20); wait(20);
-            compare(menu.headerName, "Ada"); compare(menu.entries[1].shortcut, "Meta+L");
-            const height = menu.height;
-            for (let i = 4; i < 7; ++i) {
-                menu.open();
-                menu.activate(i); compare(backend.operation, ""); compare(menu.confirmingIndex, i); compare(menu.height, height);
-                menu.activate(i); tryCompare(backend, "operation", menu.entries[i].action); verify(!menu.visible);
-                backend.operation = "";
-            }
-            menu.open(); menu.activate(5); menu.close(); menu.open();
-            compare(menu.confirmingIndex, -1);
-            menu.activate(1); compare(backend.operation, "lockScreen");
+        function init() {
+            backend.operation = ""; backend.canSuspend = true; backend.canHibernate = true;
+            backend.canLock = true; backend.canLogout = true; backend.canReboot = true; backend.canShutdown = true;
         }
         function test_sessionActionsDispatchDirectly_data() {
             return [{tag: "logout", action: "logout"}, {tag: "reboot", action: "reboot"}, {tag: "powerOff", action: "powerOff"}];
@@ -49,13 +41,12 @@ Item {
             const menu = createTemporaryObject(factory, fixture);
             menu.open();
             const row = menu.entries.findIndex(e => e.action === data.action);
-            menu.activate(row); compare(backend.operation, "");
             menu.activate(row); compare(backend.operation, data.action);
             verify(!menu.visible);
         }
-        function test_escapeCancelsConfirmation() {
+        function test_escapeClosesWithoutDispatch() {
             const menu = createTemporaryObject(factory, fixture);
-            menu.open(); menu.activate(6);
+            menu.open();
             keyClick(Qt.Key_Escape);
             tryCompare(menu, "visible", false);
             compare(backend.operation, "");
@@ -92,8 +83,14 @@ Item {
             const height = menu.height;
             backend.canSuspend = true; compare(menu.height, height); compare(menu.entries.length, 5);
             menu.close(); menu.open(); compare(menu.entries.length, 6); menu.close();
-            menu.systemBridge = ({}); menu.open(); compare(menu.entries.length, 5); compare(menu.headerName, "Usuario");
+            menu.systemBridge = ({}); menu.open(); compare(menu.entries.length, 1); compare(menu.headerName, "Usuario");
             menu.dispatch("lockScreen"); compare(backend.operation, "");
+        }
+        function test_otherCapabilities() {
+            const menu = createTemporaryObject(factory, fixture);
+            backend.canLock = false; backend.canLogout = false; backend.canReboot = false; backend.canShutdown = false;
+            menu.open();
+            compare(menu.entries.map(e => e.action).join(","), "settings,suspend,hibernate");
         }
         function test_windowedOnlyLogs() {
             const menu = createTemporaryObject(factory, fixture, {sessionMode: false});

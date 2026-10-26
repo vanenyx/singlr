@@ -18,16 +18,20 @@ ContextMenu {
     onAboutToShow: entries = buildEntries()
     function buildEntries() {
         const actions = [
-            {label: "Ajustes de Singlr…", icon: "gear", action: "settings"},
-            {label: "Bloquear", icon: "lock-simple", shortcut: "Meta+L", action: "lockScreen"}
+            {label: "Ajustes de Singlr…", icon: "gear", action: "settings"}
         ];
+        if (systemBridge && systemBridge.canLock)
+            actions.push({label: "Bloquear", icon: "lock-simple", shortcut: "Meta+L", action: "lockScreen"});
         if (systemBridge && typeof systemBridge.canSuspend !== "undefined" && systemBridge.canSuspend)
             actions.push({label: "Suspender", icon: "moon", action: "suspend"});
         if (systemBridge && typeof systemBridge.canHibernate !== "undefined" && systemBridge.canHibernate)
             actions.push({label: "Hibernar", icon: "moon", action: "hibernate"});
-        actions.push({label: "Reiniciar…", icon: "power", action: "reboot", destructive: true, confirmation: "¿Reiniciar? Pulsa de nuevo"});
-        actions.push({label: "Apagar…", icon: "power", action: "powerOff", destructive: true, confirmation: "¿Apagar? Pulsa de nuevo"});
-        actions.push({label: "Cerrar sesión…", icon: "arrow-right", action: "logout", destructive: true, confirmation: "¿Cerrar sesión? Pulsa de nuevo"});
+        if (systemBridge && systemBridge.canReboot)
+            actions.push({label: "Reiniciar…", icon: "power", action: "reboot"});
+        if (systemBridge && systemBridge.canShutdown)
+            actions.push({label: "Apagar…", icon: "power", action: "powerOff"});
+        if (systemBridge && systemBridge.canLogout)
+            actions.push({label: "Cerrar sesión…", icon: "arrow-right", action: "logout"});
         return actions;
     }
     function dispatch(action) {

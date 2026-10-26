@@ -31,6 +31,7 @@ def main():
     command = compiler + ['-std=c++17', '-O2', '-fPIC'] + shlex.split(os.environ.get('CXXFLAGS', ''))
     command += shlex.split(flags.stdout) + [
         # KF6GlobalAccel no instala un .pc: cabeceras y biblioteca directas.
+        '-I/usr/include/kworkspace6', '-lkworkspace6',
         '-I/usr/include/KF6/KGlobalAccel', '-lKF6GlobalAccel', '-lLayerShellQtInterface',
         '-I/usr/include/KF6/NetworkManagerQt', '-lKF6NetworkManagerQt',
         '-I/usr/include/KF6/KWallet', '-lKF6Wallet',

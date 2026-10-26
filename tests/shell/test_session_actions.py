@@ -1,4 +1,4 @@
-"""T232: native protocol test on a private bus; never sends real session actions."""
+"""T264: native protocol test on a private bus; never sends real session actions."""
 import os
 from pathlib import Path
 import shlex
@@ -26,24 +26,33 @@ class SessionActionsTests(unittest.TestCase):
                         '-I' + str(ROOT / 'shell/session/src'), '-I/usr/include/KF6/KService', '-I/usr/include/KF6/KConfigCore',
                         str(ROOT / 'tests/shell/session_actions.cpp'),
                         str(ROOT / 'shell/session/src/system.cpp'), moc,
-                        *flags, '-lKF6Service', '-I/usr/include/KF6/KIO', '-I/usr/include/KF6/KIOGui', '-I/usr/include/KF6/KIOCore', '-I/usr/include/KF6/KCoreAddons', '-lKF6KIOGui', '-lKF6CoreAddons', '-lLayerShellQtInterface', '-o', cls.binary], check=True, timeout=60)
+                        *flags, '-lKF6Service', '-I/usr/include/KF6/KIO', '-I/usr/include/KF6/KIOGui', '-I/usr/include/KF6/KIOCore', '-I/usr/include/KF6/KCoreAddons', '-lKF6KIOGui', '-lKF6CoreAddons', '-lLayerShellQtInterface', '-I/usr/include/kworkspace6', '-lkworkspace6', '-o', cls.binary], check=True, timeout=60)
 
     def test_disconnected_bus_and_qml_contract(self):
-        result = subprocess.run([self.binary, '--offline'], capture_output=True, text=True, timeout=10)
+        result = subprocess.run([self.binary, '--offline'], capture_output=True, text=True, timeout=10,
+                                env=os.environ | {'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/nonexistent',
+                                                  'DBUS_SYSTEM_BUS_ADDRESS': 'unix:path=/nonexistent'})
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('PASS offline', result.stdout)
+
+    def test_kde_test_backend_dispatches_sleep(self):
+        result = subprocess.run([self.binary, '--gui-test'], capture_output=True, text=True, timeout=10,
+                                env=os.environ | {'PLASMA_SESSION_GUI_TEST': '1',
+                                                  'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/nonexistent',
+                                                  'DBUS_SYSTEM_BUS_ADDRESS': 'unix:path=/nonexistent'})
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('suspend\nhibernate\nPASS KDE test backend', result.stdout)
 
     def test_private_bus_session_actions(self):
         if not shutil.which('dbus-run-session'):
             if os.environ.get('SINGLR_REQUIRE_SESSION_DBUS') == '1':
                 self.fail('requires dbus-run-session')
             self.skipTest('requires dbus-run-session')
-        data = Path(self.tmp.name) / 'data'
-        services = data / 'dbus-1/services'
-        services.mkdir(parents=True)
+        data = Path(self.tmp.name) / self._testMethodName
+        data.mkdir(parents=True)
         runtime = Path(self.tmp.name) / 'runtime'
         runtime.mkdir(mode=0o700)
-        env = os.environ | {'DBUS_SYSTEM_BUS_ADDRESS': 'unix:path=/nonexistent',
+        env = os.environ | {'XDG_CONFIG_HOME': str(data),
                             'XDG_DATA_HOME': str(data), 'XDG_DATA_DIRS': str(data),
                             'XDG_RUNTIME_DIR': str(runtime),
                             'SINGLR_ACTIVATION_RECORD': str(Path(self.tmp.name) / 'activation')}
@@ -53,12 +62,20 @@ class SessionActionsTests(unittest.TestCase):
             if os.environ.get('SINGLR_REQUIRE_SESSION_DBUS') == '1':
                 self.fail(probe.stderr)
             self.skipTest('private D-Bus unavailable: ' + probe.stderr.strip())
-        (services / 'org.kde.Shutdown.service').write_text(
-            '[D-BUS Service]\nName=org.kde.Shutdown\nExec=' + self.binary + ' --shutdown-service\n')
-        result = subprocess.run(['dbus-run-session', '--', self.binary], capture_output=True, text=True,
-                                env=env, timeout=30)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn('PASS session-actions', result.stdout)
+        for confirm, denied in ((True, False), (False, False), (True, True)):
+            with self.subTest(confirm=confirm, denied=denied):
+                (data / 'ksmserverrc').write_text('[General]\nconfirmLogout=' + str(confirm).lower() + '\n')
+                record = Path(env['SINGLR_ACTIVATION_RECORD'])
+                record.unlink(missing_ok=True)
+                case_env = env | ({'SINGLR_TEST_DENIED': '1'} if denied else {})
+                # Set the system bus address inside the private daemon's environment.
+                result = subprocess.run(['dbus-run-session', '--', 'sh', '-c',
+                    'export DBUS_SYSTEM_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS"; exec "$@"',
+                    'session-test', self.binary, *([] if confirm else ['--skip-confirmation'])],
+                    capture_output=True, text=True, env=case_env, timeout=30)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn('PASS session-actions', result.stdout)
+
 
 
 if __name__ == '__main__':

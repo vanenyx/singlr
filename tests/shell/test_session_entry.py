@@ -82,6 +82,12 @@ class SessionEntryTests(unittest.TestCase):
                 self.assertEqual(events[stop + 1], 'restore-kwin')
                 self.assertEqual(events[stop + 2][0], 'dbus-update-activation-environment')
 
+    def test_shell_waits_for_ksmserver_environment(self):
+        shell = (SESSION / 'systemd/singlr-shell.service').read_text()
+        self.assertIn('After=plasma-ksmserver.service', shell)
+        target = (SESSION / 'systemd/singlr-workspace.target').read_text()
+        self.assertIn('Requires=plasma-ksmserver.service', target)
+
     def test_waits_for_shutdown_helper_after_target_stops(self):
         events = []
         with patch.object(entry, 'active', side_effect=[True, False, False]) as target, \

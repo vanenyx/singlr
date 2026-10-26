@@ -27,7 +27,7 @@ class ApplicationActionsTests(unittest.TestCase):
                           ('KService', 'KConfigCore', 'KIO', 'KIOGui', 'KIOCore', 'KCoreAddons')],
                         str(ROOT / 'tests/shell/application_actions.cpp'),
                         str(ROOT / 'shell/session/src/system.cpp'), str(moc), *flags,
-                        '-lKF6Service', '-lKF6KIOGui', '-lKF6CoreAddons', '-lLayerShellQtInterface',
+                        '-lKF6Service', '-lKF6KIOGui', '-lKF6CoreAddons', '-lLayerShellQtInterface', '-I/usr/include/kworkspace6', '-lkworkspace6',
                         '-o', str(cls.binary)], check=True, timeout=60)
 
     def test_list_translation_and_launch(self):

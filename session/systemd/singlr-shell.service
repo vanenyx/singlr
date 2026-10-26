@@ -3,6 +3,10 @@ Description=Singlr Desktop Shell
 Requires=plasma-kwin_wayland.service
 BindsTo=plasma-kwin_wayland.service
 After=plasma-kwin_wayland.service
+# Match plasma-plasmashell.service: ksmserver publishes SESSION_MANAGER and
+# ICEAUTHORITY before acquiring its BusName. Launchers must inherit that
+# environment, otherwise their XSMP apps cannot save or negotiate logout.
+After=plasma-ksmserver.service
 Before=plasma-kded6.service
 PartOf=singlr-workspace.target graphical-session.target
 StartLimitIntervalSec=60s

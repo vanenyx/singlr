@@ -5,13 +5,17 @@
 #include <QDBusConnection>
 #include <QTimer>
 #include <QDBusMessage>
-#include <QDBusServiceWatcher>
+#include <sessionmanagement.h>
 #include <functional>
 
 class System final : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool overviewAvailable READ overviewAvailable NOTIFY overviewAvailableChanged)
+    Q_PROPERTY(bool canLock READ canLock NOTIFY canLockChanged)
+    Q_PROPERTY(bool canLogout READ canLogout NOTIFY canLogoutChanged)
+    Q_PROPERTY(bool canReboot READ canReboot NOTIFY canRebootChanged)
+    Q_PROPERTY(bool canShutdown READ canShutdown NOTIFY canShutdownChanged)
     Q_PROPERTY(bool canSuspend READ canSuspend NOTIFY canSuspendChanged)
     Q_PROPERTY(bool canHibernate READ canHibernate NOTIFY canHibernateChanged)
     Q_PROPERTY(QString userName READ userName NOTIFY userNameChanged)
@@ -19,14 +23,19 @@ class System final : public QObject
     Q_PROPERTY(bool sessionActionPending READ sessionActionPending NOTIFY sessionActionPendingChanged)
 public:
     explicit System(QObject *parent = nullptr);
-    // Separate connections allow tests to use only private buses.
+    // Metadata connections can be injected; KDE SessionManagement uses Qt default buses.
     System(const QDBusConnection &sessionBus, const QDBusConnection &systemBus, QObject *parent = nullptr);
     bool overviewAvailable() const { return m_overviewAvailable; }
-    bool canSuspend() const { return m_canSuspend; }
-    bool canHibernate() const { return m_canHibernate; }
+    bool canSuspend() const { return m_sessionManagement.canSuspend(); }
+    bool canHibernate() const { return m_sessionManagement.canHibernate(); }
     QString userName() const { return m_userName; }
     QString userIcon() const { return m_userIcon; }
-    bool sessionActionPending() const { return m_sessionActionPending; }
+    // Compatibility only: KDE does not expose the lifetime of individual requests.
+    bool sessionActionPending() const { return false; }
+    bool canLock() const { return m_sessionManagement.canLock(); }
+    bool canLogout() const { return m_sessionManagement.canLogout(); }
+    bool canReboot() const { return m_sessionManagement.canReboot(); }
+    bool canShutdown() const { return m_sessionManagement.canShutdown(); }
     Q_INVOKABLE QVariantList commandSettingsPages() const;
     Q_INVOKABLE bool openCommandSettings(const QString &page);
     Q_INVOKABLE QUrl launcherUrl(const QUrl &url) const;
@@ -49,39 +58,29 @@ public:
 Q_SIGNALS:
     void applicationActionFinished(const QUrl &launcher, const QString &name, const QString &error);
     void overviewAvailableChanged();
+    void canLockChanged();
+    void canLogoutChanged();
+    void canRebootChanged();
+    void canShutdownChanged();
     void canSuspendChanged();
     void canHibernateChanged();
     void userNameChanged();
     void userIconChanged();
     void sessionActionPendingChanged();
+    // Legacy signals retained for QML consumers; KDE has no equivalent to forward.
     void sessionActionFailed(const QString &action, const QString &message);
     void sessionActionCancelled(const QString &action);
 private:
     void refreshOverview();
-    void refreshCapabilities();
     void refreshIdentity();
-    void queryCapability(bool hibernate, std::function<void(bool)> done = {});
     void call(const QDBusConnection &bus, const QDBusMessage &message,
               std::function<void(const QDBusMessage &)> done, int timeout = 3000);
-    void sessionAction(const QString &action, const QString &method);
-    void shutdownFinished();
-    bool beginAction();
-    void finishAction(const QString &action, const QDBusMessage &reply);
-    void failAction(const QString &action, const QString &error);
-    void sleepAction(bool hibernate);
-    void terminateSession();
     QDBusConnection m_bus;
     QDBusConnection m_systemBus;
-    QDBusServiceWatcher m_shutdownWatcher;
-    QString m_kdeAction;
-    quint64 m_actionSerial = 0;
+    SessionManagement m_sessionManagement;
     QTimer m_timer;
     bool m_overviewAvailable = false;
     bool m_pending = false;
-    bool m_canSuspend = false;
-    bool m_canHibernate = false;
-    bool m_sessionActionPending = false;
-    bool m_capabilityPending[2] = {false, false};
     QString m_userName;
     QString m_userIcon;
 };
