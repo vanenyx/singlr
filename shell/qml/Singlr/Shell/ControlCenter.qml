@@ -95,43 +95,16 @@ Controls.Control {
             }
         }
     }
-    // Context property supplied only by the native session launcher.
-    // qmllint disable unqualified
-    property var secrets: typeof SinglrSecrets !== "undefined" ? SinglrSecrets : null
-    // qmllint enable unqualified
-    property string secretId: ""
-    property bool secretRetry: false
     readonly property bool bluetoothEnabled: !Bluetooth.Manager.bluetoothBlocked && Bluetooth.Manager.adapters.some(adapter => adapter.powered)
     function setBluetooth(value) {
         Bluetooth.Manager.bluetoothBlocked = !value;
         for (const adapter of Bluetooth.Manager.adapters) adapter.powered = value;
     }
-    function cancelSecret() {
-        const request = secretId;
-        secretId = "";
-        if (request && secrets) secrets.cancel(request);
-    }
     function back() {
         if (panel.page === "wifi") panel.wifiView.closePassword();
-        if (pages.depth > 1) { cancelSecret(); pages.popCurrentItem(pages.busy ? Controls.StackView.Immediate : Controls.StackView.PopTransition); }
+        if (pages.depth > 1) { pages.popCurrentItem(pages.busy ? Controls.StackView.Immediate : Controls.StackView.PopTransition); }
         else closed();
         forceActiveFocus();
-    }
-    Connections {
-        target: panel.secrets
-        function onSecretRequested(requestId, ssid, connectionUuid, retry) {
-            if (panel.secretId !== requestId) panel.cancelSecret();
-            panel.openRequested();
-            if (panel.page !== "wifi") {
-                panel.resetPages(); pages.pushItem(wifiComponent, {}, Controls.StackView.Immediate);
-            }
-            panel.secretRetry = retry;
-            panel.wifiView.showPassword({Ssid: ssid, Uuid: connectionUuid}, requestId, retry);
-            panel.secretId = requestId;
-        }
-        function onRequestCancelled(requestId) {
-            if (panel.secretId === requestId) { panel.secretId = ""; if (panel.page === "wifi") panel.wifiView.closePassword(); }
-        }
     }
     property var bluetoothDevices: Bluetooth.Manager.devices
     property var deviceOperations: ({})
@@ -178,7 +151,7 @@ Controls.Control {
     palette.highlight: Theme.control
     onOpenedChanged: {
         if (opened) networkHandler.requestScan();
-        else { if (contextMenu) contextMenu.close(); if (panel.page === "wifi") panel.wifiView.closePassword(); cancelSecret(); errorText = ""; resetPages(); }
+        else { if (contextMenu) contextMenu.close(); if (panel.page === "wifi") panel.wifiView.closePassword(); errorText = ""; resetPages(); }
     }
     Component.onCompleted: if (opened) networkHandler.requestScan()
     Timer { interval: 15000; running: panel.opened; repeat: true; onTriggered: networkHandler.requestScan() }
@@ -330,9 +303,7 @@ Controls.Control {
                 Component.onCompleted: panel.wifiView = wifiList
                 Component.onDestruction: if (panel.wifiView === wifiList) panel.wifiView = null
                 pageActive: panel.opened && panel.page === "wifi"
-                onNetworkUpdated: (key, data) => { if (key === panel.selectedKey || (panel.secretId && data.Ssid === panel.selectedNetwork.Ssid)) panel.selectedNetwork = data; }
-                onSecretSubmitted: (requestId, password) => { if (panel.secretId === requestId) panel.secretId = ""; if (panel.secrets) panel.secrets.provide(requestId, password); }
-                onPasswordCancelled: panel.cancelSecret()
+                onNetworkUpdated: (key, data) => { if (key === panel.selectedKey) panel.selectedNetwork = data; }
                 onMenuRequested: (data, anchor, px, py) => panel.openNetworkMenu(data, anchor, px, py)
                 onSettingsRequested: KCMUtils.KCMLauncher.openSystemSettings("kcm_networkmanagement")
             }

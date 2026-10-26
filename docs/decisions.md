@@ -181,3 +181,14 @@ KDE Overview y Window View (journal reversible). Tres o cuatro dedos hacia arrib
 abren la multitarea de Singlr y hacia abajo la cierran. El desplazamiento natural
 del touchpad no lo gestiona Singlr: el creador lo configura en Ajustes de KDE.
 [Entrega T262](handoffs/T262-touchpad-gestures.md).
+
+## T266 — inicio oficial de Plasma (explícita y solución derivada, 26 oct 2026)
+
+El encargo del creador fija startplasma-wayland de Plasma 6.8.1 como propietario
+del ciclo de sesión y retira el grafo/supervisor propios y el agente de secretos.
+Solución técnica derivada: conservar la unidad canónica plasma-plasmashell.service
+(Type=dbus y un único BusName), con drop-in ExecStart y selección del binario por
+XDG_SESSION_DESKTOP. La transacción KWin se integra mediante una unidad oneshot
+ordenada antes del compositor y detenida después. El agente de plasma-nm/kded
+atiende los secretos. No es una aprobación visual ni certificación de login real.
+[Diseño, fuentes y comprobaciones](handoffs/T266-startplasma.md).

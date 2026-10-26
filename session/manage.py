@@ -16,8 +16,10 @@ FILES = {
     'usr/lib/systemd/user/plasma-kwin_wayland.service.d/50-singlr-recovery.conf':
         ('systemd/plasma-kwin_wayland.service.d/50-singlr-recovery.conf', 0o644),
     'usr/lib/singlr/startsinglr-wayland': ('startsinglr-wayland', 0o755),
-    'usr/lib/systemd/user/singlr-workspace.target': ('systemd/singlr-workspace.target', 0o644),
-    'usr/lib/systemd/user/singlr-shell.service': ('systemd/singlr-shell.service', 0o644),
+    'usr/lib/singlr/singlr-shell-exec': ('singlr-shell-exec', 0o755),
+    'usr/lib/systemd/user/plasma-plasmashell.service.d/50-singlr.conf':
+        ('systemd/plasma-plasmashell.service.d/50-singlr.conf', 0o644),
+    'usr/lib/systemd/user/singlr-kwin-prepare.service': ('systemd/singlr-kwin-prepare.service', 0o644),
     'usr/lib/systemd/user/singlr-shell-failed.service': ('systemd/singlr-shell-failed.service', 0o644),
 }
 MANIFEST = 'usr/lib/singlr/session-install.json'

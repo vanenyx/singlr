@@ -7,7 +7,11 @@
 # bloqueo y las unidades siguen siendo las del paquete instalado.
 set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
-dropin="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/singlr-shell.service.d/dev-channel.conf"
+# T266: Singlr runs inside Plasma's own shell unit; singlr-shell-exec only honours
+# SINGLR_DEV_ROOT in the Singlr session, so Plasma keeps plasmashell.
+unit=plasma-plasmashell.service
+dropin="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/$unit.d/singlr-dev-channel.conf"
+legacy="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/singlr-shell.service.d/dev-channel.conf"
 build() {
     "$root/shell/session/build.sh" >/dev/null
     cmake --build "$root/build" >/dev/null
@@ -15,21 +19,21 @@ build() {
 case "${1:-}" in
     enable)
         build
+        rm -f -- "$legacy"
         mkdir -p "$(dirname "$dropin")"
         cat > "$dropin" <<CONF
 # Creado por tools/dev-channel.sh; borrar con «tools/dev-channel.sh disable».
 [Service]
 Environment=SINGLR_DEV_ROOT=$root
-Environment=QML_IMPORT_PATH=$root/build/qml
 CONF
         echo "Canal de desarrollo activado: se aplica al próximo arranque del shell ($dropin)" ;;
     reload)
         build
         systemctl --user daemon-reload
-        systemctl --user restart singlr-shell.service
+        systemctl --user restart "$unit"
         echo "Shell recargado desde $root" ;;
     disable)
-        rm -f -- "$dropin"
+        rm -f -- "$dropin" "$legacy"
         rmdir --ignore-fail-on-non-empty "$(dirname "$dropin")" 2>/dev/null || true
         echo "Canal de desarrollo desactivado: se aplica al próximo arranque del shell" ;;
     status)

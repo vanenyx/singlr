@@ -20,9 +20,10 @@ def verify(stage):
         'usr/lib/singlr/apps/settings/Main.qml', 'usr/bin/singlr-settings',
         'usr/share/applications/singlr-settings.desktop',
         'usr/share/wayland-sessions/singlr.desktop',
-        'usr/lib/systemd/user/singlr-shell.service',
+        'usr/lib/singlr/singlr-shell-exec',
+        'usr/lib/systemd/user/plasma-plasmashell.service.d/50-singlr.conf',
+        'usr/lib/systemd/user/singlr-kwin-prepare.service',
         'usr/lib/systemd/user/singlr-shell-failed.service',
-        'usr/lib/systemd/user/singlr-workspace.target',
         'usr/share/kwin/tabbox/singlr/metadata.json',
         'usr/share/kwin/tabbox/singlr/contents/ui/main.qml',
         'usr/share/kwin/tabbox/singlr/contents/ui/SwitcherView.qml',
@@ -40,7 +41,7 @@ def verify(stage):
     ]
     for relative in required:
         assert (root / relative).is_file(), f'Missing payload: {relative}'
-    for relative in required[:3] + ['usr/bin/singlr-settings', 'usr/lib/singlr/singlr-kwin']:
+    for relative in required[:3] + ['usr/bin/singlr-settings', 'usr/lib/singlr/singlr-kwin', 'usr/lib/singlr/singlr-shell-exec']:
         assert (root / relative).stat().st_mode & 0o111, f'Not executable: {relative}'
     import re
     theme = root / 'usr/lib/singlr/qml/Singlr/Ui/Theme.qml'
@@ -49,10 +50,10 @@ def verify(stage):
     lockscreen = root / 'usr/share/plasma/shells/org.singlr.desktop/contents/lockscreen'
     for font in re.findall(r'source:\s*"([^"]+\.ttf)"', (lockscreen / 'Theme.qml').read_text()):
         assert (lockscreen / font).is_file(), f'Missing greeter font: {font}'
-    for relative in ('usr/share/wayland-sessions/singlr.desktop',
-                     'usr/lib/systemd/user/singlr-shell.service'):
-        text = (root / relative).read_text()
-        assert '/usr/lib/singlr/startsinglr-wayland' in text
+    assert '/usr/lib/singlr/startsinglr-wayland' in (root / 'usr/share/wayland-sessions/singlr.desktop').read_text()
+    assert '/usr/lib/singlr/singlr-shell-exec' in (root / 'usr/lib/systemd/user/plasma-plasmashell.service.d/50-singlr.conf').read_text()
+    from test_session_entry import verify_shell_selection
+    verify_shell_selection(root)
     import json
     switcher = root / 'usr/share/kwin/tabbox/singlr'
     assert json.loads((switcher / 'metadata.json').read_text())['KPackageStructure'] == 'KWin/WindowSwitcher'

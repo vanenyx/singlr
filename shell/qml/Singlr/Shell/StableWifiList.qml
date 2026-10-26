@@ -8,8 +8,6 @@ ListView {
     property var sourceModel: null
     property bool pageActive: false
     readonly property alias stableModel: stable
-    signal secretSubmitted(string requestId, string password)
-    signal passwordCancelled()
     property var pendingPassword: null
     property WifiRow editingRow: null
     signal menuRequested(var data, var anchor, real px, real py)
@@ -35,8 +33,8 @@ ListView {
         }
         return null;
     }
-    function showPassword(data, requestId = "", retry = false) {
-        pendingPassword = {data: data, requestId: requestId, retry: retry};
+    function showPassword(data, retry = false) {
+        pendingPassword = {data: data, retry: retry};
         resolvePassword();
     }
     function resolvePassword() {
@@ -49,7 +47,7 @@ ListView {
                 if (!target) { Qt.callLater(resolvePassword); return; }
                 const pending = pendingPassword; pendingPassword = null;
                 if (editingRow && editingRow !== target) editingRow.closePassword();
-                target.showPassword(pending.requestId, pending.retry);
+                target.showPassword(pending.retry);
                 return;
             }
         }
@@ -110,8 +108,6 @@ ListView {
                 list.editingRow = this;
             } else if (list.editingRow === this) list.editingRow = null;
         }
-        onSecretSubmitted: (requestId, password) => list.secretSubmitted(requestId, password)
-        onPasswordCancelled: list.passwordCancelled()
         onMenuRequested: (anchor, px, py) => list.menuRequested(networkData, anchor, px, py)
         onSettingsRequested: list.settingsRequested()
     }

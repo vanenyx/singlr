@@ -42,16 +42,6 @@ Item {
         property bool inhibited: false
         function setInhibited(value) { inhibited = value; }
     }
-    QtObject {
-        id: secretAgent
-        property string operation: ""
-        property string request: ""
-        property string password: ""
-        signal secretRequested(string requestId, string ssid, string connectionUuid, bool retry)
-        signal requestCancelled(string requestId)
-        function provide(requestId, value) { operation = "provide"; request = requestId; password = value; }
-        function cancel(requestId) { operation = "cancel"; request = requestId; }
-    }
     SystemControls { id: audio; sink: output; source: input; player: mediaPlayer.stub }
     OnScreenDisplay { id: osd; width: 240; height: 44 }
     Component { id: panelComponent; ControlCenter { width: 340; audio: fixture.controls; notifications: fixture.notificationState } }
@@ -102,41 +92,6 @@ Item {
             tryCompare(osd, "showing", false, 1200);
             tryCompare(osd, "surfaceVisible", false, 500);
             osd.request("showText", ["input-keyboard", "Español"]); compare(osd.message, "Español"); compare(osd.percent, -1);
-        }
-        function test_inlineSecretContract() {
-            const panel = createTemporaryObject(panelComponent, fixture, {secrets: secretAgent});
-            verify(panel !== null);
-            panel.networkSource = null;
-            panel.openPage("wifi"); wait(150);
-            const list = findChild(panel.navigation.currentItem, "wifiList");
-            list.stableModel.sync([{deviceKey: "uuid:saved-uuid", rank: 70, active: false, payload: {
-                Name: "Red protegida", Ssid: "Red protegida", Uuid: "saved-uuid", Signal: 70,
-                DevicePath: "/device", SpecificPath: "/ap", ConnectionPath: "/connection",
-                SecurityType: Network.Enums.Wpa2Psk, Type: Network.Enums.Wireless,
-                ConnectionState: Network.Enums.Deactivated
-            }}]);
-            list.forceLayout();
-            secretAgent.operation = "";
-            secretAgent.secretRequested("request-1", "Red protegida", "saved-uuid", true);
-            compare(panel.page, "wifi"); compare(panel.navigation.depth, 2);
-            let field = findChild(list.editingRow, "wifiPassword");
-            tryCompare(field, "activeFocus", true);
-            compare(panel.secretRetry, true); verify(list.editingRow.failed);
-            compare(field.placeholderText, "Contraseña incorrecta");
-            field.text = "test-password"; keyClick(Qt.Key_Return);
-            compare(secretAgent.operation, "provide"); compare(secretAgent.request, "request-1");
-            compare(secretAgent.password, "test-password"); compare(field.text, "test-password"); verify(field.readOnly);
-            secretAgent.secretRequested("request-2", "Red protegida", "saved-uuid", true);
-            field = findChild(list.editingRow, "wifiPassword");
-            tryCompare(field, "activeFocus", true);
-            verify(list.editingRow.failed); verify(!field.readOnly);
-            compare(field.selectionStart, 0); compare(field.selectionEnd, field.length);
-            compare(field.text, "test-password");
-            keyClick(Qt.Key_Escape); compare(panel.page, "wifi");
-            wait(150);
-            compare(secretAgent.operation, "cancel"); compare(secretAgent.request, "request-2");
-            secretAgent.secretRequested("request-3", "Red protegida", "saved-uuid", false);
-            secretAgent.requestCancelled("request-3"); compare(panel.secretId, ""); verify(!list.editingRow);
         }
         function test_controlCenterLoadAndEscape() {
             const panel = createTemporaryObject(panelComponent, parent);

@@ -1,6 +1,7 @@
 # Keep source launchers usable for development; configure only the installed copies.
 set(SINGLR_ROOT "${KDE_INSTALL_FULL_LIBDIR}/singlr")
 function(singlr_configure_path source output)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/${source}")
     file(READ "${PROJECT_SOURCE_DIR}/${source}" content)
     string(REPLACE "/usr/lib/singlr" "${SINGLR_ROOT}" content "${content}")
     file(WRITE "${PROJECT_BINARY_DIR}/${output}" "${content}")
@@ -8,13 +9,17 @@ endfunction()
 singlr_configure_path(session/startsinglr-wayland startsinglr-wayland)
 singlr_configure_path(session/systemd/singlr-kwin-recover.service singlr-kwin-recover.service)
 singlr_configure_path(session/singlr.desktop singlr.desktop)
-singlr_configure_path(session/systemd/singlr-shell.service singlr-shell.service)
+singlr_configure_path(session/systemd/singlr-kwin-prepare.service singlr-kwin-prepare.service)
+singlr_configure_path(session/singlr-shell-exec singlr-shell-exec)
+singlr_configure_path(session/systemd/plasma-plasmashell.service.d/50-singlr.conf singlr-shell.conf)
 singlr_configure_path(session/systemd/singlr-shell-failed.service singlr-shell-failed.service)
 singlr_configure_path(apps/settings/singlr-settings singlr-settings)
 install(PROGRAMS "${PROJECT_BINARY_DIR}/startsinglr-wayland" DESTINATION "${KDE_INSTALL_LIBDIR}/singlr")
 install(PROGRAMS "${PROJECT_BINARY_DIR}/singlr-settings" DESTINATION "${KDE_INSTALL_BINDIR}")
 install(FILES "${PROJECT_BINARY_DIR}/singlr.desktop" DESTINATION "${KDE_INSTALL_DATADIR}/wayland-sessions")
-install(FILES "${PROJECT_BINARY_DIR}/singlr-shell.service" session/systemd/singlr-workspace.target
+install(PROGRAMS "${PROJECT_BINARY_DIR}/singlr-shell-exec" DESTINATION "${KDE_INSTALL_LIBDIR}/singlr")
+install(FILES "${PROJECT_BINARY_DIR}/singlr-shell.conf" DESTINATION "${KDE_INSTALL_SYSTEMDUSERUNITDIR}/plasma-plasmashell.service.d" RENAME 50-singlr.conf)
+install(FILES "${PROJECT_BINARY_DIR}/singlr-kwin-prepare.service"
     "${PROJECT_BINARY_DIR}/singlr-shell-failed.service"
     DESTINATION "${KDE_INSTALL_SYSTEMDUSERUNITDIR}")
 install(FILES apps/settings/singlr-settings.desktop DESTINATION "${KDE_INSTALL_APPDIR}")

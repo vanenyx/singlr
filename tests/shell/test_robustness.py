@@ -50,15 +50,17 @@ class RobustnessTests(unittest.TestCase):
             data = configparser.ConfigParser(interpolation=None, strict=False)
             data.read(ROOT / 'session/systemd' / name)
             return data
-        shell = unit('singlr-shell.service')
+        shell = configparser.ConfigParser(interpolation=None, strict=False)
+        shell.read('/usr/lib/systemd/user/plasma-plasmashell.service')
         self.assertEqual(shell['Service']['Restart'], 'on-failure')
         self.assertEqual(shell['Unit']['StartLimitBurst'], '3')
         self.assertEqual(shell['Unit']['StartLimitIntervalSec'], '60s')
-        self.assertEqual(shell['Unit']['OnFailure'], 'singlr-shell-failed.service')
+        self.assertEqual(shell['Service']['Type'], 'dbus')
+        self.assertEqual(shell['Service']['BusName'], 'org.kde.plasmashell')
         # Inspect every dependency directive (ConfigParser merges duplicate keys).
-        for line in (ROOT / 'session/systemd/singlr-workspace.target').read_text().splitlines():
+        for line in Path('/usr/lib/systemd/user/plasma-core.target').read_text().splitlines():
             if line.startswith(('Requires=', 'BindsTo=')):
-                self.assertNotIn('singlr-shell.service', line)
+                self.assertNotIn('plasma-plasmashell.service', line)
         notice = unit('singlr-shell-failed.service')
         self.assertEqual(notice['Service']['Type'], 'oneshot')
         self.assertNotIn('Restart', notice['Service'])

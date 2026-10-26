@@ -44,8 +44,8 @@ eliminar el staging. Si CMake no existe, informa y termina con 0; ese resultado
 no acredita compilación ni instalación. Si existe, cualquier fallo es un error.
 `build.py` y `qml-shell` siguen siendo la vía de desarrollo sin CMake.
 
-CMake configura las copias instaladas del supervisor, entrada de sesión,
-servicio y lanzador con `${KDE_INSTALL_FULL_LIBDIR}/singlr`. El QML se instala
+CMake configura las copias instaladas del wrapper de entorno, entrada de sesión,
+unidades, drop-in de plasmashell y dispatcher con `${KDE_INSTALL_FULL_LIBDIR}/singlr`. El QML se instala
 allí en `qml`, los ajustes en `apps/settings` y las fuentes en `third_party`.
 Solo la copia generada de `Theme.qml` adapta la referencia relativa a las
 fuentes; el QML del checkout permanece intacto. El lanzador usa el checkout
@@ -54,7 +54,7 @@ configurada. No compila durante el login. Los prefijos con espacios no están
 soportados por Exec de la entrada de sesión.
 
 Targets contrastados con los Config/Targets.cmake locales: Qt 6.12.0,
-KF6 6.31.0, LayerShellQt/Plasma 6.8.1. `libnm` se enlaza mediante pkg-config.
+KF6 6.31.0, LayerShellQt/Plasma 6.8.1. El shell ya no enlaza NetworkManagerQt, KWallet ni libnm directamente.
 Directorios según [KDEInstallDirs6](https://api.kde.org/ecm/kde-module/KDEInstallDirs6.html).
 Moc se gestiona con [AUTOMOC de Qt](https://doc.qt.io/qt-6/moc.html).
 Dependencias Arch contrastadas con pacman local (propiedad de plugins QML) y
@@ -116,3 +116,13 @@ Overview existente. La sesión aplica el tema Alt+Tab mediante el journal de
 Las copias instaladas del QML de Workspace apuntan a los tokens `Singlr.Ui`
 instalados, no al checkout. Guía de uso, organización nativa de ventanas y
 procedimiento de dos pantallas/escritorios: [session/WORKSPACE.md](../session/WORKSPACE.md).
+
+## Cambio de sesión T266
+
+`pkgrel=2` fija plasma-workspace 6.8.1 y mantiene plasma-nm como proveedor del
+agente de secretos. El login usa startplasma y el grafo oficial; CMake instala un
+drop-in de plasmashell y la transacción KWin. Las antiguas unidades
+`singlr-workspace.target` y `singlr-shell.service` ya no forman parte del paquete.
+Actualizar fuera de Singlr; pacman retira los archivos antiguos de su propiedad.
+No ejecutar daemon-reload ni pruebas de caídas sobre la sesión cotidiana.
+Véase [T266](../docs/handoffs/T266-startplasma.md) para aceptación y diagnóstico.

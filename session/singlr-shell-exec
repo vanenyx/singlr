@@ -1,0 +1,18 @@
+#!/bin/sh
+# Preserve the upstream unit and its single D-Bus readiness name.
+set -eu
+if [ "${XDG_SESSION_DESKTOP:-}" != Singlr ]; then
+    exec /usr/bin/plasmashell --no-respawn
+fi
+root=/usr/lib/singlr
+if [ -n "${SINGLR_DEV_ROOT:-}" ]; then
+    case "$SINGLR_DEV_ROOT" in /*) ;; *) echo 'SINGLR_DEV_ROOT requiere una ruta absoluta' >&2; exit 1 ;; esac
+    binary="$SINGLR_DEV_ROOT/shell/session/build/singlr-shell"
+    qml="$SINGLR_DEV_ROOT/shell/qml"
+    # Native QML modules of the checkout; set here so plasmashell never sees them.
+    export QML_IMPORT_PATH="$SINGLR_DEV_ROOT/build/qml${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}"
+else
+    binary="$root/singlr-shell"
+    qml="$root/qml"
+fi
+exec "$binary" "$qml" "$qml/Shell.qml"

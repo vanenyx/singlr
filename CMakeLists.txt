@@ -10,11 +10,7 @@ set(CMAKE_AUTOMOC ON)
 find_package(Qt6 6.6 REQUIRED COMPONENTS Gui Qml Quick DBus Widgets)
 find_package(KF6WindowSystem 6.0 REQUIRED)
 find_package(KF6GlobalAccel 6.0 REQUIRED)
-find_package(KF6NetworkManagerQt 6.0 REQUIRED)
-find_package(KF6Wallet 6.0 REQUIRED)
 find_package(LayerShellQt REQUIRED)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBNM REQUIRED IMPORTED_TARGET libnm)
 
 add_subdirectory(shell/session)
 # Local review tool only; never installed in the desktop session.

@@ -1,3 +1,8 @@
+> T266: las menciones históricas a `SinglrSecrets` describen un agente retirado.
+> La sesión instalada usa el agente de plasma-nm/kded. Se conserva la entrada
+> inicial de contraseña para redes nuevas; los secretos de perfiles existentes
+> los solicita KDE. Véase [sesión](../../session/README.md).
+
 # T212 — Audio, multimedia, OSD y centro de control
 
 Encargo explícito del creador; cambios propios solo en `shell/qml/**`, sin

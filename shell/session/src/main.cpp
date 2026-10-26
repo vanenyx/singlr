@@ -18,7 +18,6 @@
 #include <QQuickWindow>
 #include <QRegion>
 #include <QUrl>
-#include "secretagent.h"
 #include "tray.h"
 #include "system.h"
 #include "shortcuts.h"
@@ -234,7 +233,6 @@ int main(int argc, char *argv[])
     QObject::connect(&app, &QCoreApplication::aboutToQuit, &app, cleanupShortcuts);
     if (ownsPlasma) {
         engine.rootContext()->setContextProperty(QStringLiteral("SinglrSystem"), new System(&engine));
-        engine.rootContext()->setContextProperty(QStringLiteral("SinglrSecrets"), new SecretAgent(&engine));
         auto *tray = new Tray(&engine);
         engine.addImageProvider(QStringLiteral("singlrtray"), tray->createImageProvider());
         engine.rootContext()->setContextProperty(QStringLiteral("SinglrTray"), tray);

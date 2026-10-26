@@ -21,36 +21,30 @@ Item {
     property bool sawActivation: false
     property string failure: ""
     property bool editing: false
-    property string requestId: ""
     readonly property bool failed: editing && !!failure
-    signal secretSubmitted(string requestId, string password)
-    signal passwordCancelled()
-    function showPassword(secret = "", retry = false) {
+    function showPassword(retry = false) {
         if (!editing) password.clear();
-        editing = true; requestId = secret; requested = false; sawActivation = false;
+        editing = true; requested = false; sawActivation = false;
         failure = retry ? "Contraseña incorrecta" : "";
         timeout.stop(); password.echoMode = TextInput.Password;
         password.forceActiveFocus();
         if (retry) password.selectAll();
     }
-    function closePassword(cancel = true) {
+    function closePassword() {
         if (!editing) return;
-        editing = false; password.clear(); requestId = "";
+        editing = false; password.clear();
         if (!requested) timeout.stop();
-        if (cancel) passwordCancelled();
     }
     function submit() {
         if (!password.length || requested) return;
         begin();
-        if (requestId) secretSubmitted(requestId, password.text);
-        else handler.addAndActivateConnection(networkData.DevicePath, networkData.SpecificPath, password.text);
+        handler.addAndActivateConnection(networkData.DevicePath, networkData.SpecificPath, password.text);
     }
     signal menuRequested(var anchor, real px, real py)
     signal settingsRequested()
     height: 36
     implicitHeight: 36
-    Component.onDestruction: if (editing) passwordCancelled()
-    onConnectedChanged: if (connected) { requested = false; attempted = false; failure = ""; timeout.stop(); closePassword(false); }
+    onConnectedChanged: if (connected) { requested = false; attempted = false; failure = ""; timeout.stop(); closePassword(); }
     onActivatingChanged: {
         if (activating && requested) sawActivation = true;
         else if (sawActivation && requested && !connected) {

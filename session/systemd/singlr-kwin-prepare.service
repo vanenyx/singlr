@@ -1,0 +1,13 @@
+[Unit]
+Description=Transactional Singlr KWin preferences
+ConditionEnvironment=XDG_SESSION_DESKTOP=Singlr
+Before=plasma-kwin_wayland.service
+PartOf=graphical-session.target
+StopWhenUnneeded=yes
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/lib/singlr/singlr-kwin --apply --offline
+# Also runs after a partially failed apply; retain the journal on restore errors.
+ExecStopPost=/usr/lib/singlr/singlr-kwin --restore --offline

@@ -24,17 +24,15 @@ def main():
     if not compiler or not shutil.which(compiler[0]) or not shutil.which('pkg-config'):
         raise RuntimeError('Se requieren g++ (o CXX) y pkg-config; no se instalan automáticamente')
     compiler[0] = shutil.which(compiler[0])
-    flags = subprocess.run(['pkg-config', '--cflags', '--libs', 'Qt6Gui', 'Qt6Qml', 'Qt6Quick', 'Qt6DBus', 'KF6WindowSystem', 'libnm'],
+    flags = subprocess.run(['pkg-config', '--cflags', '--libs', 'Qt6Gui', 'Qt6Qml', 'Qt6Quick', 'Qt6DBus', 'KF6WindowSystem'],
                            capture_output=True, text=True)
     if flags.returncode:
-        raise RuntimeError('Faltan cabeceras/metadatos de Qt6 Gui/Qml/Quick o libnm (qt6-base, qt6-declarative, libnm):\n' + flags.stderr)
+        raise RuntimeError('Faltan cabeceras/metadatos de Qt6 Gui/Qml/Quick (qt6-base, qt6-declarative):\n' + flags.stderr)
     command = compiler + ['-std=c++17', '-O2', '-fPIC'] + shlex.split(os.environ.get('CXXFLAGS', ''))
     command += shlex.split(flags.stdout) + [
         # KF6GlobalAccel no instala un .pc: cabeceras y biblioteca directas.
         '-I/usr/include/kworkspace6', '-lkworkspace6',
         '-I/usr/include/KF6/KGlobalAccel', '-lKF6GlobalAccel', '-lLayerShellQtInterface',
-        '-I/usr/include/KF6/NetworkManagerQt', '-lKF6NetworkManagerQt',
-        '-I/usr/include/KF6/KWallet', '-lKF6Wallet',
         '-I/usr/include/KF6/KService', '-I/usr/include/KF6/KConfigCore', '-lKF6Service',
         '-I/usr/include/KF6/KIO', '-I/usr/include/KF6/KIOGui',
         '-I/usr/include/KF6/KIOCore', '-I/usr/include/KF6/KCoreAddons',
@@ -65,7 +63,7 @@ def main():
             binary, deps = Path(directory) / 'singlr-shell', Path(directory) / 'deps.d'
             generated = []
             includes = [flag for flag in command if flag.startswith(('-I', '-D'))]
-            for name in ('secretagent', 'tray', 'system'):
+            for name in ('tray', 'system'):
                 output_moc = Path(directory) / f'moc_{name}.cpp'
                 subprocess.run([str(moc), *includes, str(HERE / f'src/{name}.h'), '-o', str(output_moc)],
                                check=True, stdout=sys.stderr)
@@ -80,7 +78,7 @@ def main():
             if result.returncode:
                 raise RuntimeError('No se pudo compilar el lanzador. Revise el diagnóstico anterior; '
                                    'se requieren las cabeceras Qt6 y LayerShellQt/Shell y '
-                                   'libLayerShellQtInterface (layer-shell-qt), NetworkManagerQt y KWallet. No se reutiliza un binario obsoleto.')
+                                   'libLayerShellQtInterface (layer-shell-qt). No se reutiliza un binario obsoleto.')
             paths = shlex.split(deps.read_text().replace('\\\n', '').split(':', 1)[1])
             dependencies = {str(Path(p).resolve()): stamp(p) for p in paths
                             if Path(p).resolve().parent != Path(directory).resolve()}
