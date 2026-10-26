@@ -72,6 +72,16 @@ solo copiar, destino cerrado, cambio de foco y entrada actual comprobados en KWi
 privado. Requiere paquete actualizado y nueva sesión para cargar el puente nativo.
 [Entrega, evidencia y límites](handoffs/T258-clipboard-paste.md).
 
+El creador confirmó el funcionamiento de T258 el 26 oct.
+
+T259/P-027: anillo de la barra algo más grueso con diámetro exterior conservado.
+Tooltip del dock corregido de 62 a 8 px en la muestra de 40 px; separación nativa
+8 px en doce combinaciones de modo/altura/autohide, también menú contextual.
+QML 241 shell + 9 Ajustes por modo, 0 fallos. Capturas claro/oscuro revisadas;
+grosor propuesto pendiente de valoración del creador. La esquina de KDE se
+identificó, pero no se ha desactivado: la consulta del creador sigue abierta.
+[Comparación y entrega](handoffs/T259-bar-dock-polish.md).
+
 ## Siguientes cierres necesarios
 
 1. Aceptación visual y nativa del dock corregido: touchpad, DND, autohide y espacio reservado en distintas salidas.

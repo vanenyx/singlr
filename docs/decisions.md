@@ -126,3 +126,26 @@ Ctrl+V para aplicaciones; Ctrl+Shift+V para servicios con categoría TerminalEmu
 Si desaparece el destino o cambia el foco a otra app, no se envía el atajo.
 Espera acotada a 1,5 s, sin temporizador activo en reposo. Ver
 [verificación y límites](handoffs/T258-clipboard-paste.md).
+
+
+## P-027 — peso del logo de la barra (explícita, 26 oct 2026)
+
+El creador pide un anillo algo más grueso conservando su tamaño exterior. El
+valor de trazo concreto es un ajuste visual para valorar, no un token global.
+También pide acercar los tooltips de las aplicaciones al dock.
+
+## T259 — logo, anclaje de tooltips y diagnóstico de esquina
+
+Logo de barra: anillo vectorial con diámetro 11,375 px (contorno del glifo Phosphor
+anterior a 14 px), trazo 1,5 px hacia dentro y color secundario existente. Solo
+cambia esta instancia; no las fuentes, iconos ni otras representaciones de marca.
+
+Tooltips y menú contextual del dock usan zona exclusiva -1 y margen inferior
+altura + margen real del dock + 8 px. Con zona 0, KWin ya añadía la reserva del
+dock al margen explícito, duplicando el desplazamiento. Conservan entrada/foco
+previos y superficies independientes. Doce geometrías nativas verificadas.
+
+La esquina superior izquierda activa por defecto Overview de KDE (Effect-overview,
+BorderActivate=ElectricTopLeft en KWin 6.8). El usuario lo plantea como duda: se
+recomienda evitar duplicidad con Singlr, pero **no se modifica la configuración**
+ni se aprueba aún eliminar o reasignar la esquina. [Entrega](handoffs/T259-bar-dock-polish.md).

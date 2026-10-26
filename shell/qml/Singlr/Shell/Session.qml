@@ -370,6 +370,7 @@ Item {
         }
     }
     // Tight, independent layer surfaces: never enlarge the dock's input region.
+    readonly property int dockPopupBottom: dock.bottomMargin + dock.height + 8
     Loader {
         id: dockMenuSurface; objectName: "dockMenuSurface"; active: dock.menuOpen
         sourceComponent: Component {
@@ -381,8 +382,8 @@ Item {
                 transientParent: null; visible: true; width: 240; height: dock.menuHeight; color: "transparent"
                 LayerShell.Window.layer: LayerShell.Window.LayerTop
                 LayerShell.Window.anchors: LayerShell.Window.AnchorBottom
-                LayerShell.Window.margins.bottom: dockWindow.height + 18
-                LayerShell.Window.exclusionZone: 0
+                LayerShell.Window.margins.bottom: session.dockPopupBottom
+                LayerShell.Window.exclusionZone: -1 // Screen-relative: do not add the dock's reserved area again.
                 LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityOnDemand
                 LayerShell.Window.scope: "utility"
                 LayerShell.Window.activateOnShow: true
@@ -404,9 +405,9 @@ Item {
                 color: "transparent"; flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowTransparentForInput
                 LayerShell.Window.layer: LayerShell.Window.LayerTop
                 LayerShell.Window.anchors: LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft
-                LayerShell.Window.margins.bottom: dockWindow.height + 18
+                LayerShell.Window.margins.bottom: session.dockPopupBottom
                 LayerShell.Window.margins.left: Math.round(Math.max(0, Math.min(screen.width - width, (screen.width - dock.width) / 2 + dock.tooltipCenter - width / 2)))
-                LayerShell.Window.exclusionZone: 0
+                LayerShell.Window.exclusionZone: -1 // Screen-relative, including when auto-hide reserves no space.
                 LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
                 LayerShell.Window.scope: "tooltip"
                 Rectangle { anchors.fill: parent; radius: 8; color: Theme.surface; border.color: Theme.surfaceBorder }

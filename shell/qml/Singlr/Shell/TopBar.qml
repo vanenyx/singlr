@@ -33,7 +33,18 @@ Rectangle {
         onTriggered: { bar.now = new Date(); interval = 60000 - (Date.now() % 60000); restart(); }
     }
     Row { x: 16; height: 28; spacing: 8
-        Tool { objectName: "sessionRing"; y: 3; width: 24; height: 22; icon: "circle"; iconSize: 14; description: "Menú Singlr"; onClicked: bar.menuOpen = !bar.menuOpen }
+        Tool {
+            objectName: "sessionRing"; y: 3; width: 24; height: 22; icon: ""; description: "Menú Singlr"
+            onClicked: bar.menuOpen = !bar.menuOpen
+            Rectangle {
+                objectName: "sessionLogo"
+                anchors.centerIn: parent
+                // Match the original 14 px Phosphor circle's outer diameter.
+                width: 11.375; height: width; radius: width / 2
+                color: "transparent"; border.color: Theme.secondary; border.width: 1.5
+                antialiasing: true
+            }
+        }
         UiText { height: 28; width: Math.min(360, bar.width-trailing.width-100); text: bar.activeAppName; weight: 590 }
     }
     Row {

@@ -1,0 +1,23 @@
+{
+  "result": "BASELINE",
+  "cases": [
+    {
+      "mode": "floating",
+      "height": 40,
+      "auto_hide": false,
+      "gap": 62,
+      "tooltip": {
+        "x": 994,
+        "y": 1143,
+        "width": 60,
+        "height": 31
+      },
+      "dock": {
+        "x": 936.5,
+        "y": 1236,
+        "width": 175,
+        "height": 40
+      }
+    }
+  ]
+}
