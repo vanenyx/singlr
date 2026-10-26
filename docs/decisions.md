@@ -166,3 +166,10 @@ los gestos y el resto de efectos. El journal captura el valor original, incluida
 su ausencia, y acepta los journals previos para actualizar y restaurar sin perder
 preferencias. No se aplicó ni reconfiguró KWin en la sesión activa como prueba.
 [Entrega y comprobación](handoffs/T260-overview-corner.md).
+
+## P-029 — Claude orquesta y reparto por consumo (explícita, 26 oct 2026)
+
+El creador restablece el equipo: el creador más Claude Code, que controla su trabajo
+y el de Codex 1 y Codex 2 mediante el plugin. Sustituye el encargo del 25/26 oct de
+trabajar solo con Codex. Al delegar, los encargos de mayor consumo de tokens van a
+Codex 1 y los de menor consumo a Codex 2; el consumo prevalece sobre la especialidad.

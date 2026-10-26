@@ -1,17 +1,20 @@
 # Colaboración y continuidad
 
-**Encargo vigente, 25/26 oct 2026:** el creador continúa directamente con Codex para
-reservar Claude para otros trabajos. Un solo escritor mantiene código, documentación
-y evidencia. No requiere delegación ni cambio de cuenta. El flujo descrito a
-continuación corresponde al trabajo anterior y se conserva como procedimiento alternativo.
+**Encargo vigente, 26 oct 2026 (P-029):** Claude Code vuelve a orquestar todo el
+trabajo con el flujo descrito aquí. Sustituye el encargo del 25/26 oct en que Codex
+desarrollaba directamente sin Claude.
 
 El creador da objetivos y feedback a Claude Code. Claude actúa como arquitecto principal y orquestador: divide el trabajo, define contratos de implementación, encarga tareas a Codex mediante el plugin oficial, revisa resultados e integra. El creador conserva las decisiones de producto.
 
 | Participante | Modelo | Responsabilidad |
 | --- | --- | --- |
 | Claude | Claude Code, Opus 5.5 | Comprender la visión, investigar y evaluar alternativas, proponer requisitos técnicos, definir contratos, repartir tareas, coordinar dependencias, revisar entregas e integrar |
-| Codex 1 | `gpt-6.1-sol`, Medium | Implementación de interfaz, componentes Qt Quick/QML, interacciones y funcionalidades visuales |
-| Codex 2 | `gpt-6.1-sol`, Medium | Integración, herramientas, pruebas, rendimiento, corrección de errores y revisión independiente; funcionalidades técnicas cuando puedan avanzar en paralelo |
+| Codex 1 | `gpt-6.1-sol`, Medium | Encargos de mayor consumo de tokens: implementaciones largas, cambios en muchos archivos, refactors y depuración extensa. Especialidad por defecto: interfaz, Qt Quick/QML e interacciones |
+| Codex 2 | `gpt-6.1-sol`, Medium | Encargos de menor consumo: correcciones acotadas, revisiones de solo lectura, ejecución de pruebas y cambios pequeños de herramientas o documentación. Especialidad por defecto: integración, pruebas y revisión independiente |
+
+**Reparto por consumo (P-029, explícita del creador):** al elegir delegado, el consumo
+previsto de tokens prevalece sobre la especialidad. Un encargo técnico pesado va a Codex 1;
+uno de interfaz pequeño puede ir a Codex 2.
 
 Claude reserva su razonamiento para lo que lo requiere (arquitectura, contratos, revisión crítica) y delega la programación extensa, la ejecución de pruebas y las correcciones rutinarias. High solo se usa en encargos que justifiquen razonamiento más profundo y se indica en el encargo. Los roles se fijan en cada encargo; no se adquieren por abrir una app ni por elegir una cuenta.
 
