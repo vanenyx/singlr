@@ -6,6 +6,53 @@
 class SingularityTest : public QObject {
     Q_OBJECT
 private slots:
+    void fullFieldAndLocalWake() {
+        QQuickWindow window;
+        window.setColor(Qt::black); window.resize(1000, 640);
+        auto *effect = new Singularity(window.contentItem());
+        effect->setSize(QSizeF(1000, 640));
+        window.show(); QVERIFY(QTest::qWaitForWindowExposed(&window));
+        auto capture = [&] { effect->update(); QTest::qWait(35); return window.grabWindow(); };
+        effect->m_time = 2.;
+        const QImage base = capture(); QVERIFY(!base.isNull());
+        // Every part of the output has actual rendered particles, not just the disk.
+        for (int row = 0; row < 4; ++row) for (int col = 0; col < 6; ++col) {
+            int lit = 0;
+            for (int y = row * 160; y < (row + 1) * 160; ++y)
+                for (int x = col * 166; x < (col + 1) * 166; ++x)
+                    if (qRed(base.pixel(x, y)) > 6) ++lit;
+            QVERIFY2(lit > 12, qPrintable(QString("tile %1,%2: %3").arg(col).arg(row).arg(lit)));
+        }
+        effect->setPointer(QPointF(.22, .20));
+        QCOMPARE(capture(), base); // No hover: never repel around an invented center.
+        effect->m_wakes[0] = {QPointF(.22, .20), QPointF(.3, .1), 2.};
+        const QImage disturbed = capture();
+        QVERIFY(disturbed.copy(100, 20, 260, 240) != base.copy(100, 20, 260, 240));
+        QCOMPARE(disturbed.copy(500, 0, 500, 640), base.copy(500, 0, 500, 640));
+        QCOMPARE(disturbed.copy(0, 320, 1000, 320), base.copy(0, 320, 1000, 320));
+        const QString captureDir = qEnvironmentVariable("SINGLR_CAPTURE_DIR");
+        if (!captureDir.isEmpty()) {
+            QVERIFY(base.save(captureDir + "/flow-base.png"));
+            QVERIFY(disturbed.save(captureDir + "/flow-local-wake.png"));
+        }
+        effect->m_wakes[0].born = -.1; // >2 s: fully restored at exactly the same orbit time.
+        QCOMPARE(capture(), base);
+        effect->m_wakes[0].born = 2.;
+        effect->setReactive(false);
+        QCOMPARE(capture(), base);
+        effect->setReactive(true);
+        effect->setPointerActive(true);
+        effect->advanceFrame(.1f);
+        const qreal born = effect->m_wakes[0].born;
+        QVERIFY(born > 2.);
+        for (int i = 0; i < 25; ++i) effect->advanceFrame(.1f);
+        QCOMPARE(effect->m_wakes[0].born, born); // A stationary cursor creates no new impulses.
+        QVERIFY(effect->m_time - born > 2.);
+        effect->setPointerActive(false);
+        effect->m_time = 5.;
+        const QImage later = capture();
+        QVERIFY(later.copy(0, 0, 300, 200) != base.copy(0, 0, 300, 200));
+    }
     void lifecycleAndRendering() {
         QQuickWindow window;
         window.setColor(Qt::black); window.resize(1000, 640);

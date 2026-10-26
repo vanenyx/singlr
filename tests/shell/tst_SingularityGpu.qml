@@ -29,6 +29,9 @@ Item {
             wait(100); verify(loader.item.elapsed > 0);
             mouseMove(wall, 850, 100); wait(50);
             verify(loader.item.pointer.x > .8);
+            compare(loader.item.pointerActive, true);
+            mouseMove(fixture, 999, 639);
+            // The item also exposes pointerActive for the native local-wake model.
             Appearance.wallpaperAnimated = false;
             compare(loader.active, false); compare(loader.item, null);
             tryCompare(findChild(wall, "singularityStill"), "status", Image.Ready);

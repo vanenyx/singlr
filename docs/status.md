@@ -138,6 +138,11 @@ Activado en sesión real el 26 oct 11:00, con excepción local autorizada a redu
 movimiento (kdeglobals conservado). Pendientes valoración visual y aceptación de DPMS,
 bloqueo/suspensión físicos y multimonitor. [Entrega](handoffs/T267-singularity-wallpaper.md).
 
+T268: Singularidad amplía las partículas a toda la pantalla, con trayectorias
+hacia el horizonte. El cursor produce una perturbación local que se amortigua;
+retirado el movimiento global de cámara. Pruebas gráficas verifican cobertura,
+movimiento exterior, invariancia lejos del cursor y recuperación. [Entrega](handoffs/T268-particle-flow.md).
+
 ## Siguientes cierres necesarios
 
 1. Aceptación visual y nativa del dock corregido: touchpad, DND, autohide y espacio reservado en distintas salidas.

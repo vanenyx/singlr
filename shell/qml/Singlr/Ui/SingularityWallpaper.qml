@@ -10,7 +10,8 @@ Singularity {
     onAnimatingChanged: console.info("Singlr Singularidad:", animating ? "animación activa" : "animación pausada")
     quality: Appearance.wallpaperQuality
     reactive: Appearance.wallpaperReactive
-    pointer: hover.hovered ? Qt.point(hover.point.position.x / Math.max(1, effect.width), hover.point.position.y / Math.max(1, effect.height)) : Qt.point(.5, .5)
+    pointerActive: hover.hovered
+    pointer: Qt.point(hover.point.position.x / Math.max(1, effect.width), hover.point.position.y / Math.max(1, effect.height))
     // Passive desktop hover only: no mouse grab, keyboard focus or global tracking.
     HoverHandler { id: hover; enabled: effect.reactive }
 }

@@ -217,3 +217,12 @@ Singularidad, manteniendo las demás animaciones desactivadas». Se añade
 solo en este fondo». La excepción se ha activado en su equipo por este encargo;
 no modifica `kdeglobals`. Sin excepción, el fondo sigue respetando reducir
 movimiento y muestra el motivo junto a sus controles, con Movimiento inactivo.
+
+### P-031 — campo completo y cursor local (explícita, 26 oct 2026)
+
+El creador pide partículas aleatorias por todo el fondo que converjan en el
+agujero negro. La reacción del cursor debe dispersar únicamente las partículas
+cercanas, con fluidez y retorno, como pasar la mano por agua. Se retira el
+paralaje de cámara; centro y composición permanecen fijos. Solución derivada:
+órbitas de entrada procedurales y 16 impulsos locales de duración limitada,
+con amortiguación y un leve sobrepaso. [Entrega T268](handoffs/T268-particle-flow.md).

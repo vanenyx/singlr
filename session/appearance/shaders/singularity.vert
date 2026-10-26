@@ -8,60 +8,87 @@ layout(location=3) out float behind;
 layout(std140,binding=0) uniform buf {
     mat4 matrix;
     float opacity; float time; vec2 size;
-    vec2 pointer; float density;
+    vec2 pointer; float density; float padding;
+    vec4 wakes[16];
+    vec4 pushes[16];
 } u;
-const float PI = 3.14159265359;
 void main() {
+    float scale=min(u.size.x/11.6,u.size.y/5.8);
+    vec2 center=vec2(u.size.x*.51,u.size.y*.50);
     float seed=particle.z, kind=particle.w;
+    bool infalling=kind>.64;
     float r=1.12 + 3.9*pow(particle.x,1.65);
     float a=particle.y + u.time*.16/pow(r,1.5);
-    // Thin orbital filaments with coherent differential rotation and vertical turbulence.
-    r = floor(r*110.)/110. + .006*sin(a*9. + r*18. + u.time*.13);
+    r=floor(r*110.)/110. + .006*sin(a*9. + r*18. + u.time*.13);
     float z=sin(a)*r;
-    vec2 p=vec2(cos(a)*r, z*.20);
+    vec2 p=vec2(cos(a)*r,z*.20);
     vec2 tangent=normalize(vec2(-sin(a),cos(a)*.20));
-    p.y += .018*sin(a*5.+r*12.+u.time*.2) + (seed-.5)*.035;
-    float depth=5.8/(5.8+z*.19);
-    p*=depth;
+    p.y+=.018*sin(a*5.+r*12.+u.time*.2)+(seed-.5)*.035;
+    p*=5.8/(5.8+z*.19);
     behind=step(z,0.);
-    float brightness=(.15+.85*pow(1.-particle.x,1.4))*(.3+.7*seed);
+    float brightness=1.35*(.15+.85*pow(1.-particle.x,1.4))*(.3+.7*seed);
     float radius=mix(.65,1.35,pow(seed,5.));
-    if (kind < .26) {
-        // Secondary images of the disk bent around the black silhouette.
-        // Artistic lensing, deliberately not a relativistic ray tracer.
+    float trail=mix(1.4,5.5,pow(seed,3.));
+    if (kind<.26) {
+        // Artistic secondary images of the accretion disk around a fixed silhouette.
         float band=pow(particle.x,2.8);
-        float angle=particle.y + u.time*.095/(1.+band);
+        float angle=particle.y+u.time*.095/(1.+band);
         r=1.035+band*.72;
-        p=vec2(cos(angle)*r, sin(angle)*r);
+        p=vec2(cos(angle)*r,sin(angle)*r*1.02);
         tangent=vec2(-sin(angle),cos(angle));
-        p.y*=1.02;
         brightness=(.16+.55*pow(1.-band,2.))*(.3+.7*seed);
         brightness*=p.y<0. ? 1.0 : .48;
         behind=1.; radius=mix(.5,1.15,seed);
-    } else if (kind < .30) {
-        // Photon rim: a fine granular edge, not a solid glowing circle.
+    } else if (kind<.30) {
         r=1.015+.045*pow(particle.x,2.);
-        p=vec2(cos(a),sin(a))*r; tangent=vec2(-sin(a),cos(a));
+        p=vec2(cos(a),sin(a))*r;
+        tangent=vec2(-sin(a),cos(a));
         brightness=.28+.45*seed; behind=1.; radius=.65;
-    } else if (kind > .975) {
-        p=vec2((particle.x-.5)*16.,(particle.y/6.2831853-.5)*10.);
-        brightness=.035+.11*pow(seed,7.); radius=.6+seed*.7; behind=1.;
     }
-    // Restrained camera parallax, with inertia supplied by the frame clock.
-    float tilt=-.13+(u.pointer.x-.5)*.065;
+    // A fixed composition: the pointer never rotates/translates the camera.
+    const float tilt=-.13;
     mat2 rotation=mat2(cos(tilt),sin(tilt),-sin(tilt),cos(tilt));
-    p=rotation*p;
-    p += (u.pointer-vec2(.5))*vec2(.08,.05)*(1.+abs(z)*.1);
-    float scale=min(u.size.x/11.6,u.size.y/5.8);
-    vec2 center=vec2(u.size.x*.51,u.size.y*.50);
+    p=rotation*p; tangent=rotation*tangent;
+    if (infalling) {
+        // Staggered lifetimes distribute particles over the whole rectangular
+        // output, including its corners; each path spirals inward and is recycled.
+        float life=fract(particle.x+seed*.731+u.time*(.012+.012*seed));
+        float angle=particle.y+.4*life+1.1*pow(life,5.);
+        vec2 direction=vec2(cos(angle),sin(angle));
+        vec2 halfSize=u.size/(2.*scale)+vec2(.22);
+        float edge=min(halfSize.x/max(.001,abs(direction.x)),halfSize.y/max(.001,abs(direction.y)));
+        r=.76+(edge-.76)*pow(1.-life,.55);
+        p=direction*r;
+        tangent=normalize(-direction+vec2(-direction.y,direction.x)*(.2+life*.9));
+        brightness=(.12+.30*pow(seed,5.)+.20*life)*smoothstep(0.,.06,life);
+        brightness*=smoothstep(.82,1.25,r);
+        radius=.48+.66*seed;
+        trail=1.15+1.7*pow(life,4.);
+        behind=1.;
+    }
+    vec2 base=center+p*scale;
+    vec2 displacement=vec2(0.);
+    float totalWeight=0.;
+    float influence=min(u.size.x,u.size.y)*.12;
+    // Compact-support cursor wakes: pixels outside the local field are exactly
+    // unchanged. Past impulses decay and overshoot slightly like disturbed water.
+    for (int i=0;i<16;++i) {
+        if (abs(u.wakes[i].z)<.0001) continue;
+        vec2 delta=base-u.wakes[i].xy*u.size;
+        float support=influence*(1.+min(u.wakes[i].w,1.5)*.3);
+        float f=max(0.,1.-dot(delta,delta)/(support*support));
+        f=f*f*f;
+        float weight=u.wakes[i].z*f;
+        vec2 swirl=vec2(-delta.y,delta.x)*.25;
+        displacement+=(delta*1.4+swirl+u.pushes[i].xy*u.size*.035)*weight;
+        totalWeight+=abs(weight);
+    }
+    displacement/=max(1.,totalWeight);
+    p+=displacement/scale;
     float pixels=radius*max(.15,scale/110.);
-    // Sparse broad sprites add local soft light without a fullscreen blur pass.
-    if (seed < .10 && kind < .975) { pixels *= 8.; brightness *= .018; }
-    brightness *= 2.2;
-    // Slightly elongated specks convey orbital flow while staying individually visible.
-    tangent=rotation*tangent;
-    float trail=kind > .975 ? 1. : mix(1.4,5.5,pow(seed,3.));
-    vec2 extent=tangent*corner.x*pixels*trail + vec2(-tangent.y,tangent.x)*corner.y*pixels*.7;
+    if (seed<.10 && !infalling) { pixels*=8.; brightness*=.018; }
+    brightness*=2.2;
+    vec2 extent=tangent*corner.x*pixels*trail+vec2(-tangent.y,tangent.x)*corner.y*pixels*.7;
     scene=p+extent/scale;
     uv=corner;
     light=brightness*sqrt(u.density)*u.opacity;

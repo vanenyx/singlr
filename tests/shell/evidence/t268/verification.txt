@@ -1,0 +1,14 @@
+GPU/OpenGL, Qt 6.12.0, Radeon 610M
+PASS   : SingularityTest::initTestCase()
+PASS   : SingularityTest::fullFieldAndLocalWake()
+PASS   : SingularityTest::lifecycleAndRendering()
+PASS   : SingularityTest::cleanupTestCase()
+Totals: 4 passed, 0 failed, 0 skipped, 0 blacklisted, 979ms
+PASS   : qmltestrunner::SingularityGpuLifecycle::initTestCase()
+PASS   : qmltestrunner::SingularityGpuLifecycle::test_loadAnimateAndRelease()
+PASS   : qmltestrunner::SingularityGpuLifecycle::cleanupTestCase()
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 225ms
+PASS   : qmltestrunner::SingularityGpuLifecycle::initTestCase()
+PASS   : qmltestrunner::SingularityGpuLifecycle::test_loadAnimateAndRelease()
+PASS   : qmltestrunner::SingularityGpuLifecycle::cleanupTestCase()
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 275ms
