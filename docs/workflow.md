@@ -9,12 +9,12 @@ El creador da objetivos y feedback a Claude Code. Claude actúa como arquitecto 
 | Participante | Modelo | Responsabilidad |
 | --- | --- | --- |
 | Claude | Claude Code, Opus 5.5 | Comprender la visión, investigar y evaluar alternativas, proponer requisitos técnicos, definir contratos, repartir tareas, coordinar dependencias, revisar entregas e integrar |
-| Codex 1 | `gpt-6.1-sol`, Medium | Encargos de mayor consumo de tokens: implementaciones largas, cambios en muchos archivos, refactors y depuración extensa. Especialidad por defecto: interfaz, Qt Quick/QML e interacciones |
-| Codex 2 | `gpt-6.1-sol`, Medium | Encargos de menor consumo: correcciones acotadas, revisiones de solo lectura, ejecución de pruebas y cambios pequeños de herramientas o documentación. Especialidad por defecto: integración, pruebas y revisión independiente |
+| Codex 1 | `gpt-6.1-sol`, Medium | Encargos de menor consumo (desde el 26 oct): correcciones acotadas, revisiones de solo lectura, ejecución de pruebas y cambios pequeños. Especialidad por defecto: interfaz, Qt Quick/QML e interacciones |
+| Codex 2 | `gpt-6.1-sol`, Medium | Encargos de mayor consumo (desde el 26 oct): implementaciones largas, cambios en muchos archivos, refactors y depuración extensa. Especialidad por defecto: integración, pruebas y revisión independiente |
 
 **Reparto por consumo (P-029, explícita del creador):** al elegir delegado, el consumo
-previsto de tokens prevalece sobre la especialidad. Un encargo técnico pesado va a Codex 1;
-uno de interfaz pequeño puede ir a Codex 2.
+previsto de tokens prevalece sobre la especialidad. Desde el 26 oct (uso restante de las cuentas) los pesados van a Codex 2 y los ligeros
+a Codex 1; la especialidad por defecto no cambia el reparto.
 
 Claude reserva su razonamiento para lo que lo requiere (arquitectura, contratos, revisión crítica) y delega la programación extensa, la ejecución de pruebas y las correcciones rutinarias. High solo se usa en encargos que justifiquen razonamiento más profundo y se indica en el encargo. Los roles se fijan en cada encargo; no se adquieren por abrir una app ni por elegir una cuenta.
 

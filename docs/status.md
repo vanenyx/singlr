@@ -7,7 +7,7 @@ Actualizado el **26 oct 2026**. Prototipo integrado e instalable de Fase 1.
 ## Coordinación vigente
 
 Desde el 26 oct (P-029) Claude Code orquesta de nuevo el trabajo y delega en
-Codex 1 (encargos de mayor consumo de tokens) y Codex 2 (encargos ligeros) con
+Codex 2 (encargos de mayor consumo de tokens) y Codex 1 (encargos ligeros; invertido el 26 oct) con
 [workflow.md](workflow.md). Un solo escritor a la vez en la carpeta principal.
 
 El 26 oct, con autorización del creador y autenticación GitHub realizada por él,

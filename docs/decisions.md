@@ -171,8 +171,8 @@ preferencias. No se aplicó ni reconfiguró KWin en la sesión activa como prueb
 
 El creador restablece el equipo: el creador más Claude Code, que controla su trabajo
 y el de Codex 1 y Codex 2 mediante el plugin. Sustituye el encargo del 25/26 oct de
-trabajar solo con Codex. Al delegar, los encargos de mayor consumo de tokens van a
-Codex 1 y los de menor consumo a Codex 2; el consumo prevalece sobre la especialidad.
+trabajar solo con Codex. Al delegar, el consumo de tokens prevalece sobre la especialidad. Reparto vigente
+(invertido el 26 oct por el uso restante de las cuentas): pesados a Codex 2, ligeros a Codex 1.
 
 ## P-030 — gestos de multitarea como en macOS (explícita, 26 oct 2026)
 
