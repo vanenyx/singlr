@@ -143,6 +143,12 @@ Item {
             mouseRelease(moved, 16, -70, Qt.LeftButton);
             compare(Array.from(panel.tasksModel.launcherList, String), ["applications:systemsettings.desktop", "applications:org.kde.dolphin.desktop"]);
         }
+        function test_defaultPinStoreIsTheUserConfigFile() {
+            const panel = persistentDock.createObject(fixture) as Dock;
+            const location = String(panel.settingsLocation);
+            verify(/^file:\/\/\/[^:]+\/singlr\/dock\.json$/.test(location), location);
+            panel.destroy();
+        }
         function test_nativeManualOrderPersists() {
             const path = "file:///tmp/singlr-t242-order-" + Date.now() + ".ini";
             const first = persistentDock.createObject(fixture, {settingsLocation:path}) as Dock;

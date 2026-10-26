@@ -105,7 +105,9 @@ Rectangle {
     property var pinUrls: []
     property var appOrder: []
     property bool restoringOrder: false
-    property url settingsLocation: "file://" + StandardPaths.writableLocation(StandardPaths.GenericConfigLocation) + "/singlr/dock.json"
+    // writableLocation() already returns a file: URL; prefixing it produced
+    // "file://file:///…" and pins were never stored.
+    property url settingsLocation: StandardPaths.writableLocation(StandardPaths.GenericConfigLocation) + "/singlr/dock.json"
     readonly property var pinStore: pinSettings.item
     readonly property bool pinsLoaded: pinSettings.status === Loader.Ready
     // Settings uses QSettings/INI, even with the requested dock.json filename.
