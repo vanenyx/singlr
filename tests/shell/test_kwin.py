@@ -121,16 +121,23 @@ class KWinTests(unittest.TestCase):
         kwin.restore(self.backup)
         self.assertEqual(self.values, before)
 
-    def test_reload_retires_extensions_and_leaves_kde_effects_to_reconfigure(self):
+    def test_reload_retires_extensions_and_returns_kde_multitasking(self):
         for applying in (True, False):
-            with patch.object(kwin.subprocess, 'run') as run:
-                kwin.reload_kwin(applying=applying)
-            calls = [call.args[0][2:] for call in run.call_args_list]
-            self.assertIn(['/KWin', 'reconfigure'], calls)
-            self.assertFalse(any(c[-1] in ('overview', 'windowview') for c in calls))
-            if applying:
-                self.assertIn(['/Effects', 'org.kde.kwin.Effects.unloadEffect', kwin.RETIRED_EFFECT], calls)
-                self.assertIn(['/Scripting', 'org.kde.kwin.Scripting.unloadScript', kwin.RETIRED_SCRIPT], calls)
+            for disabled in (None, 'windowview'):
+                values = {('Plugins', disabled + 'Enabled'): 'false'} if disabled else {}
+                with patch.object(kwin.subprocess, 'run') as run, \
+                        patch.object(kwin, 'read', side_effect=lambda g, k: values.get((g, k))):
+                    kwin.reload_kwin(applying=applying)
+                calls = [call.args[0][2:] for call in run.call_args_list]
+                self.assertIn(['/KWin', 'reconfigure'], calls)
+                loaded = {c[-1] for c in calls if c[1] == 'org.kde.kwin.Effects.loadEffect'}
+                if applying:
+                    self.assertIn(['/Effects', 'org.kde.kwin.Effects.unloadEffect', kwin.RETIRED_EFFECT], calls)
+                    self.assertIn(['/Scripting', 'org.kde.kwin.Scripting.unloadScript', kwin.RETIRED_SCRIPT], calls)
+                    # A user who disabled a KDE effect keeps it disabled.
+                    self.assertEqual(loaded & {'overview', 'windowview'}, {'overview', 'windowview'} - {disabled})
+                else:
+                    self.assertFalse(loaded & {'overview', 'windowview'})
 
     def test_desktop_layout_is_not_changed(self):
         self.values[('Desktops', 'Rows')] = '2'

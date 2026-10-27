@@ -178,6 +178,11 @@ def reload_kwin(*, applying):
         calls.extend([('/Effects', 'org.kde.kwin.Effects.unloadEffect', RETIRED_EFFECT),
                       ('/Scripting', 'org.kde.kwin.Scripting.unloadScript', RETIRED_SCRIPT)])
     calls.append(('/KWin', 'reconfigure'))
+    if applying:
+        # reconfigure does not load default-on effects an older Singlr unloaded
+        # live; bring KDE's multitasking back unless the user turned it off.
+        calls.extend(('/Effects', 'org.kde.kwin.Effects.loadEffect', effect)
+                     for effect in ('overview', 'windowview') if read('Plugins', effect + 'Enabled') != 'false')
     # Restore a pre-existing user effect activation as well as its configuration.
     calls.append(('/Effects', 'org.kde.kwin.Effects.' +
                   ('loadEffect' if applying or read('Plugins', 'singlr-liquidglassEnabled') == 'true' else 'unloadEffect'),
