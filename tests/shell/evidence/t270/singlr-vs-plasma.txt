@@ -1,0 +1,16 @@
+T270 — consumo en reposo: shell de Singlr frente a plasmashell, 26 oct 2026
+Método: KWin 6.8.1 virtual privado a 2560×1600, bus D-Bus privado y XDG limpio.
+25 s de asentamiento y 30 s de muestra. Radeon 610M, Qt 6.12.0. Dos ejecuciones
+alternas de cada uno.
+singlr: PSS=140 MB, CPU=1 tick/30 s, GPU=0 ms, ctxsw=6
+plasma: PSS=162 MB, CPU=0 ticks/30 s, GPU=0 ms, ctxsw=0
+singlr: PSS=138 MB, CPU=70 ticks/30 s (arranque tardío), GPU=0 ms, ctxsw=25
+plasma: PSS=159 MB, CPU=1 tick/30 s, GPU=0 ms, ctxsw=0
+Sesión real del creador (fondo estático): shell PSS 132 MB; CPU 0 ticks/20 s; GPU 3 ms/20 s.
+Despertares por hilo en 30 s: QDBusConnection 13, principal 11, por señales D-Bus de la sesión.
+Ajustes del equipo aplicados a petición del creador (no versionados):
+- fondo estático;
+- Warp en la GPU integrada;
+- animaciones KDE/GTK reactivadas;
+- panel a 60 Hz, elegido por el creador.
+Resultado: la RTX 4070 quedó suspendida y la APU pasó de 25,3 W a ~16–20 W según actividad.

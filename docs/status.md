@@ -145,6 +145,8 @@ movimiento exterior, invariancia lejos del cursor y recuperación. [Entrega](han
 
 T269: Singularidad más ligera y fluida. Un punto por partícula en lugar de dos triángulos, con la misma imagen. Cadencia alineada al refresco: 30 fps en reposo y 60 fps con cursor. Estela del cursor con entrada suave y sin cortes. Coste GPU por fotograma −35/50 % en el banco. Sesión real en calidad alta: GPU del shell 21–29 % → 15 %. Pruebas nativas, QML y GPU en verde. Pendiente la revisión visual del creador. [Entrega](handoffs/T269-singularity-performance.md).
 
+T270: consumo en reposo. El shell de Singlr usa menos memoria que plasmashell en las mismas condiciones (138–140 MB frente a 159–162 MB) y, como Plasma, ~0 de CPU y GPU. En la sesión real, con fondo estático, la APU pasó de 25,3 W a ~16–20 W y la RTX 4070 quedó suspendida. Sigue abierto P-016 (<120 MB): hoy son 132 MB. [Evidencia](../tests/shell/evidence/t270/singlr-vs-plasma.txt).
+
 ## Siguientes cierres necesarios
 
 1. Aceptación visual y nativa del dock corregido: touchpad, DND, autohide y espacio reservado en distintas salidas.
