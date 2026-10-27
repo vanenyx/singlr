@@ -30,6 +30,11 @@
 #include <QJsonDocument>
 #include <csignal>
 #include <malloc.h>
+#include <EGL/egl.h>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QStandardPaths>
 #include <QLoggingCategory>
 #include <QSocketNotifier>
 #include <sys/socket.h>
@@ -42,6 +47,63 @@ Q_LOGGING_CATEGORY(shellLog, "singlr.shell")
 
 namespace
 {
+// True only when KWin can only be rendering on a non-NVIDIA GPU: no explicit
+// device choice (KWIN_DRM_DEVICES/KWIN_RENDER_NODES), the boot VGA device is not
+// NVIDIA and no NVIDIA card drives a connected output.
+bool compositorOnMesaGpu()
+{
+    if (qEnvironmentVariableIsSet("KWIN_DRM_DEVICES") || qEnvironmentVariableIsSet("KWIN_RENDER_NODES"))
+        return false;
+    const QDir drm(QStringLiteral("/sys/class/drm"));
+    const auto driverOf = [&drm](const QString &card) {
+        return QFileInfo(drm.filePath(card + QStringLiteral("/device/driver"))).symLinkTarget().section(QLatin1Char('/'), -1);
+    };
+    bool bootVgaFound = false;
+    for (const QString &entry : drm.entryList({QStringLiteral("card*")}, QDir::Dirs | QDir::System)) {
+        const QString card = entry.section(QLatin1Char('-'), 0, 0);
+        const bool nvidia = driverOf(card).startsWith(QLatin1String("nvidia"));
+        if (entry != card) {
+            QFile status(drm.filePath(entry + QStringLiteral("/status")));
+            if (nvidia && status.open(QIODevice::ReadOnly) && status.readAll().trimmed() == "connected")
+                return false;
+            continue;
+        }
+        QFile bootVga(drm.filePath(card + QStringLiteral("/device/boot_vga")));
+        if (bootVga.open(QIODevice::ReadOnly) && bootVga.readAll().trimmed() == "1") {
+            if (nvidia || driverOf(card).isEmpty())
+                return false;
+            bootVgaFound = true;
+        }
+    }
+    return bootVgaFound;
+}
+// libglvnd loads every installed EGL vendor. On a hybrid laptop whose panel is
+// driven by a Mesa GPU, NVIDIA's EGL library still initialises inside the shell
+// and keeps ~11 MB it never uses. Load only Mesa's vendor when the compositor
+// cannot be rendering on NVIDIA; in any mixed or explicit setup keep them all. glvnd reads the variable once, on the first EGL call, so it
+// is removed right after and never reaches the applications the shell starts.
+void selectEglVendor()
+{
+    if (qEnvironmentVariableIsSet("__EGL_VENDOR_LIBRARY_FILENAMES") || qEnvironmentVariableIsSet("__EGL_VENDOR_LIBRARY_DIRS"))
+        return;
+    if (!compositorOnMesaGpu())
+        return;
+    QStringList dirs{QStringLiteral("/etc/glvnd/egl_vendor.d")};
+    QStringList dataDirs = QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation);
+    dataDirs << QStringLiteral("/usr/share");
+    for (const QString &data : std::as_const(dataDirs))
+        dirs << data + QStringLiteral("/glvnd/egl_vendor.d");
+    for (const QString &dir : std::as_const(dirs))
+        for (const QFileInfo &json : QDir(dir).entryInfoList({QStringLiteral("*.json")}, QDir::Files, QDir::Name)) {
+            QFile file(json.filePath());
+            if (!file.open(QIODevice::ReadOnly) || !file.readAll().contains("libEGL_mesa"))
+                continue;
+            qputenv("__EGL_VENDOR_LIBRARY_FILENAMES", QFile::encodeName(json.filePath()));
+            eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+            qunsetenv("__EGL_VENDOR_LIBRARY_FILENAMES");
+            return;
+        }
+}
 int quitSockets[2] = {-1, -1};
 void requestQuit(int) {
     const int saved = errno;
@@ -178,6 +240,7 @@ int main(int argc, char *argv[])
     // blocks in arenas it never returns: ~60 MB for a 2560x1600 wallpaper.
     // A fixed threshold returns them to the system (P-016).
     mallopt(M_MMAP_THRESHOLD, 128 * 1024);
+    selectEglVendor();
     QGuiApplication app(argc, argv);
     // Like plasmashell: outputs vanish briefly on resume or hotplug and the
     // per-screen windows go with them; that must not end the shell.

@@ -36,7 +36,7 @@ def main():
         '-I/usr/include/KF6/KService', '-I/usr/include/KF6/KConfigCore', '-lKF6Service',
         '-I/usr/include/KF6/KIO', '-I/usr/include/KF6/KIOGui',
         '-I/usr/include/KF6/KIOCore', '-I/usr/include/KF6/KCoreAddons',
-        '-lKF6KIOGui', '-lKF6CoreAddons']
+        '-lKF6KIOGui', '-lKF6CoreAddons', '-lEGL']
     command += shlex.split(os.environ.get('LDFLAGS', ''))
     libexec = subprocess.run(['pkg-config', '--variable=libexecdir', 'Qt6Core'],
                              check=True, capture_output=True, text=True).stdout.strip()
