@@ -1,0 +1,17 @@
+T269 — verificación con GPU (Claude), 26 oct 2026, Radeon 610M, Qt 6.12.0, KWin 6.8.1
+tools/test-singularity.sh (build .local/build-singularity):
+Totals: 7 passed, 0 failed, 0 skipped, 0 blacklisted, 1017ms
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 299ms
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 346ms
+tools/test-qml.sh:
+Totals: 246 passed, 0 failed, 5 skipped, 0 blacklisted, 31882ms
+Totals: 11 passed, 0 failed, 0 skipped, 0 blacklisted, 590ms
+tools/bench-singularity.sh, ejecución 1 (calidad escenario fps msGPU ocupación%):
+0 idle 29.99 1.818 5.45 | 0 cursor 59.83 2.214 13.25
+1 idle 30.00 3.414 10.24 | 1 cursor 59.83 3.520 21.06
+2 idle 30.00 5.750 17.25 | 2 cursor 59.83 4.735 28.33
+Ejecución 2:
+0 idle 30.03 1.725 5.18 | 0 cursor 60.00 1.815 10.89
+1 idle 30.00 3.473 10.42 | 1 cursor 59.83 3.638 21.77
+2 idle 30.00 5.814 17.44 | 2 cursor 59.83 5.009 29.97
+Sesión real (shell, drm-engine-gfx, 10 s, reposo, calidad alta): antes 21 %, después 15/15/15 %.

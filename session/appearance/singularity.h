@@ -8,7 +8,9 @@
 #include <array>
 #include <QtQml/qqmlregistration.h>
 
-// A single immutable particle batch. Only uniforms change while animated.
+// A single immutable particle batch, one point sprite per particle. Only
+// uniforms change while animated. Frames follow the output's vblank: 30 fps at
+// rest and 60 fps while cursor wakes are alive, skipping whole refresh periods.
 class Singularity : public QQuickItem {
     Q_OBJECT
     QML_ELEMENT
@@ -22,7 +24,7 @@ class Singularity : public QQuickItem {
 public:
     explicit Singularity(QQuickItem *parent = nullptr);
     bool running() const { return m_running; }
-    bool animating() const { return m_timer.isActive(); }
+    bool animating() const { return m_active; }
     QPointF pointer() const { return m_target; }
     bool pointerActive() const { return m_pointerActive; }
     bool reactive() const { return m_reactive; }
@@ -49,18 +51,25 @@ private slots:
     void setSleeping(bool value);
 private:
     friend class SingularityTest;
-    static constexpr int WakeCount = 16;
+    static constexpr int WakeCount = 32;
+    static constexpr qreal WakeLife = 1.6;
     struct Wake { QPointF position, velocity; qreal born = -100; };
+    static float wakeStrength(qreal age);
     void advanceFrame(float dt);
     void syncTimer();
+    void frameSwapped();
+    void requestFrame();
+    void scheduleFrame();
+    bool wakesAlive() const { return m_time - m_lastWake < WakeLife; }
     void attachWindow(QQuickWindow *window);
     QTimer m_timer;
     QElapsedTimer m_clock;
+    qint64 m_lastTick = -1, m_period = 33333333;
+    bool m_active = false, m_framePending = false;
     QPointer<QQuickWindow> m_window;
     QHash<QScreen *, bool> m_screenOff;
     QPointF m_target{.5, .5}, m_lastPointer{.5, .5};
     std::array<Wake, WakeCount> m_wakes{};
-    int m_nextWake = 0;
     qreal m_lastWake = -100;
     bool m_pointerActive = false, m_pointerDirty = false;
     qreal m_time = 0;

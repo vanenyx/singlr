@@ -143,6 +143,8 @@ hacia el horizonte. El cursor produce una perturbación local que se amortigua;
 retirado el movimiento global de cámara. Pruebas gráficas verifican cobertura,
 movimiento exterior, invariancia lejos del cursor y recuperación. [Entrega](handoffs/T268-particle-flow.md).
 
+T269: Singularidad más ligera y fluida. Un punto por partícula en lugar de dos triángulos, con la misma imagen. Cadencia alineada al refresco: 30 fps en reposo y 60 fps con cursor. Estela del cursor con entrada suave y sin cortes. Coste GPU por fotograma −35/50 % en el banco. Sesión real en calidad alta: GPU del shell 21–29 % → 15 %. Pruebas nativas, QML y GPU en verde. Pendiente la revisión visual del creador. [Entrega](handoffs/T269-singularity-performance.md).
+
 ## Siguientes cierres necesarios
 
 1. Aceptación visual y nativa del dock corregido: touchpad, DND, autohide y espacio reservado en distintas salidas.

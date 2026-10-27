@@ -1,16 +1,14 @@
 #version 440
-layout(location=0) in vec2 corner;
-layout(location=1) in vec4 particle;
-layout(location=0) out vec2 uv;
+layout(location=0) in vec4 particle;
+// Point sprite: travel direction and the ellipse's inverse half-axes.
+layout(location=0) out vec4 shape;
 layout(location=1) out float light;
-layout(location=2) out vec2 scene;
-layout(location=3) out float behind;
 layout(std140,binding=0) uniform buf {
     mat4 matrix;
     float opacity; float time; vec2 size;
-    vec2 pointer; float density; float padding;
-    vec4 wakes[16];
-    vec4 pushes[16];
+    float dpr; float wakeCount; float density; float padding;
+    vec4 wakes[32];
+    vec4 pushes[32];
 } u;
 void main() {
     float scale=min(u.size.x/11.6,u.size.y/5.8);
@@ -25,7 +23,7 @@ void main() {
     vec2 tangent=normalize(vec2(-sin(a),cos(a)*.20));
     p.y+=.018*sin(a*5.+r*12.+u.time*.2)+(seed-.5)*.035;
     p*=5.8/(5.8+z*.19);
-    behind=step(z,0.);
+    float behind=step(z,0.);
     float brightness=1.35*(.15+.85*pow(1.-particle.x,1.4))*(.3+.7*seed);
     float radius=mix(.65,1.35,pow(seed,5.));
     float trail=mix(1.4,5.5,pow(seed,3.));
@@ -72,8 +70,9 @@ void main() {
     float influence=min(u.size.x,u.size.y)*.12;
     // Compact-support cursor wakes: pixels outside the local field are exactly
     // unchanged. Past impulses decay and overshoot slightly like disturbed water.
-    for (int i=0;i<16;++i) {
-        if (abs(u.wakes[i].z)<.0001) continue;
+    int wakeCount=int(u.wakeCount+.5);
+    for (int i=0;i<32;++i) {
+        if (i>=wakeCount) break;
         vec2 delta=base-u.wakes[i].xy*u.size;
         float support=influence*(1.+min(u.wakes[i].w,1.5)*.3);
         float f=max(0.,1.-dot(delta,delta)/(support*support));
@@ -88,9 +87,12 @@ void main() {
     float pixels=radius*max(.15,scale/110.);
     if (seed<.10 && !infalling) { pixels*=8.; brightness*=.018; }
     brightness*=2.2;
-    vec2 extent=tangent*corner.x*pixels*trail+vec2(-tangent.y,tangent.x)*corner.y*pixels*.7;
-    scene=p+extent/scale;
-    uv=corner;
-    light=brightness*sqrt(u.density)*u.opacity;
-    gl_Position=u.matrix*vec4(center+p*scale+extent,0.,1.);
+    float along=pixels*trail*u.dpr, across=pixels*.7*u.dpr;
+    // The square sprite encloses the streak at any orientation.
+    float side=max(along,across)+.5;
+    gl_PointSize=2.*side;
+    shape=vec4(tangent,side/along,side/across);
+    // Far-side particles disappear behind the event-horizon silhouette.
+    light=brightness*sqrt(u.density)*u.opacity*mix(1.,smoothstep(1.,1.025,length(p)),behind);
+    gl_Position=u.matrix*vec4(center+p*scale,0.,1.);
 }

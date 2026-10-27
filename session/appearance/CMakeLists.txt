@@ -58,3 +58,10 @@ qt_add_shaders(singlr-system singularity-shaders
 add_executable(singlr-singularity-test EXCLUDE_FROM_ALL ../../tests/shell/singularity.cpp)
 target_include_directories(singlr-singularity-test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(singlr-singularity-test PRIVATE singlr-system Qt6::Quick Qt6::Test)
+
+# Opt-in measurement tool, never installed or built with the desktop by default.
+# QRhi's documented API requires GuiPrivate and has limited ABI guarantees.
+find_package(Qt6 6.6 REQUIRED COMPONENTS GuiPrivate)
+add_executable(singlr-singularity-bench EXCLUDE_FROM_ALL ../../tests/shell/singularity_bench.cpp)
+target_include_directories(singlr-singularity-bench PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(singlr-singularity-bench PRIVATE singlr-system Qt6::Quick Qt6::GuiPrivate)

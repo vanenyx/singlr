@@ -2,6 +2,8 @@
 #include <QQuickWindow>
 #include <QtTest>
 #include <QSignalSpy>
+#include <cmath>
+#include <algorithm>
 
 class SingularityTest : public QObject {
     Q_OBJECT
@@ -25,7 +27,7 @@ private slots:
         }
         effect->setPointer(QPointF(.22, .20));
         QCOMPARE(capture(), base); // No hover: never repel around an invented center.
-        effect->m_wakes[0] = {QPointF(.22, .20), QPointF(.3, .1), 2.};
+        effect->m_wakes[0] = {QPointF(.22, .20), QPointF(.3, .1), 1.85};
         const QImage disturbed = capture();
         QVERIFY(disturbed.copy(100, 20, 260, 240) != base.copy(100, 20, 260, 240));
         QCOMPARE(disturbed.copy(500, 0, 500, 640), base.copy(500, 0, 500, 640));
@@ -35,23 +37,88 @@ private slots:
             QVERIFY(base.save(captureDir + "/flow-base.png"));
             QVERIFY(disturbed.save(captureDir + "/flow-local-wake.png"));
         }
-        effect->m_wakes[0].born = -.1; // >2 s: fully restored at exactly the same orbit time.
+        effect->m_wakes[0].born = -.1; // Expired: fully restored at exactly the same orbit time.
         QCOMPARE(capture(), base);
-        effect->m_wakes[0].born = 2.;
+        effect->m_wakes[0].born = 1.85;
         effect->setReactive(false);
         QCOMPARE(capture(), base);
         effect->setReactive(true);
-        effect->setPointerActive(true);
-        effect->advanceFrame(.1f);
-        const qreal born = effect->m_wakes[0].born;
-        QVERIFY(born > 2.);
-        for (int i = 0; i < 25; ++i) effect->advanceFrame(.1f);
-        QCOMPARE(effect->m_wakes[0].born, born); // A stationary cursor creates no new impulses.
-        QVERIFY(effect->m_time - born > 2.);
         effect->setPointerActive(false);
         effect->m_time = 5.;
         const QImage later = capture();
         QVERIFY(later.copy(0, 0, 300, 200) != base.copy(0, 0, 300, 200));
+    }
+    void wakeEnvelope() {
+        QCOMPARE(Singularity::wakeStrength(0), 0.f);
+        QCOMPARE(Singularity::wakeStrength(Singularity::WakeLife), 0.f);
+        QCOMPARE(Singularity::wakeStrength(-.001), 0.f);
+        QCOMPARE(Singularity::wakeStrength(Singularity::WakeLife + .001), 0.f);
+        QVERIFY(Singularity::wakeStrength(.15) > .3f);
+        float previous = 0;
+        // The steepest part is the 70 ms rise: <0.012 per millisecond.
+        // This also crosses the fade boundary and expiry, including the overshoot.
+        for (int ms = 1; ms <= 1601; ++ms) {
+            const float strength = Singularity::wakeStrength(ms / 1000.);
+            QVERIFY(std::isfinite(strength));
+            QVERIFY2(std::abs(strength - previous) < .012f, qPrintable(QString::number(ms)));
+            previous = strength;
+        }
+    }
+    void pointerWakeHistory() {
+        Singularity effect;
+        effect.setSize(QSizeF(1000, 640));
+        auto live = [&] {
+            return std::count_if(effect.m_wakes.begin(), effect.m_wakes.end(), [&](const auto &wake) {
+                return effect.m_time - wake.born < Singularity::WakeLife;
+            });
+        };
+        effect.setPointer(QPointF(.2, .2));
+        effect.setPointerActive(true);
+        effect.advanceFrame(.1f);
+        QCOMPARE(live(), 0); // Entry without movement creates no impulse.
+        effect.setPointer(QPointF(.3, .2));
+        effect.advanceFrame(.016f);
+        QCOMPARE(live(), 1);
+        const auto wake = effect.m_wakes[0];
+        for (int i = 0; i < 120; ++i) {
+            effect.setPointer(QPointF(.3, .2));
+            effect.advanceFrame(.016f);
+            QCOMPARE(effect.m_wakes[0].born, wake.born);
+        }
+        QCOMPARE(live(), 0); // Stationary cursor neither renews nor adds wakes.
+        effect.setPointerActive(false);
+        effect.setPointer(QPointF(.8, .8));
+        effect.setPointerActive(true);
+        effect.advanceFrame(.1f);
+        QCOMPARE(live(), 0); // Re-entry does not join distant pointer positions.
+        effect.setReactive(false);
+        effect.setPointer(QPointF(.4, .4));
+        effect.advanceFrame(.1f);
+        QCOMPARE(live(), 0);
+    }
+    void fullWakeHistoryIsPreserved() {
+        Singularity effect;
+        effect.setSize(QSizeF(1000, 640));
+        effect.setPointerActive(true);
+        QCOMPARE(Singularity::WakeCount, 32);
+        for (int i = 0; i < Singularity::WakeCount; ++i) {
+            effect.setPointer(QPointF(i % 2 ? .2 : .8, .3));
+            effect.advanceFrame(.01f);
+        }
+        const auto history = effect.m_wakes;
+        for (const auto &wake : history)
+            QVERIFY(effect.m_time - wake.born < Singularity::WakeLife);
+        effect.setPointer(QPointF(.1, .8));
+        effect.advanceFrame(.01f);
+        for (int i = 0; i < Singularity::WakeCount; ++i) {
+            QCOMPARE(effect.m_wakes[i].born, history[i].born);
+            QCOMPARE(effect.m_wakes[i].position, history[i].position);
+            QCOMPARE(effect.m_wakes[i].velocity, history[i].velocity);
+        }
+        // Pending motion can use a slot only after its original wake expires.
+        effect.advanceFrame(float(Singularity::WakeLife));
+        QVERIFY(effect.m_wakes[0].born > history[0].born);
+        QCOMPARE(effect.m_wakes[0].position, QPointF(.1, .8));
     }
     void lifecycleAndRendering() {
         QQuickWindow window;
@@ -67,12 +134,16 @@ private slots:
             if (qRed(still.pixel(x, y)) > 35) ++lit;
         QVERIFY2(lit > 2000, qPrintable(QString::number(lit)));
         QVERIFY(!effect->animating()); QCOMPARE(effect->elapsed(), 0.);
+        QSignalSpy initialFrames(effect, &Singularity::elapsedChanged);
+        QTest::qWait(100); QCOMPARE(initialFrames.count(), 0);
         effect->setRunning(true); QTRY_VERIFY(effect->animating());
-        QTest::qWait(200); QVERIFY(effect->elapsed() > .1);
+        QTRY_VERIFY(effect->elapsed() > .1);
+        QVERIFY(initialFrames.count() > 1);
         const QImage moving = window.grabWindow(); QVERIFY(moving != still);
         QSignalSpy frames(effect, &Singularity::elapsedChanged);
         effect->setRunning(false); QVERIFY(!effect->animating());
-        QTest::qWait(120); QCOMPARE(frames.count(), 0);
+        const qreal paused = effect->elapsed();
+        QTest::qWait(120); QCOMPARE(frames.count(), 0); QCOMPARE(effect->elapsed(), paused);
         effect->setRunning(true); QTRY_VERIFY(effect->animating());
         QVERIFY(QMetaObject::invokeMethod(effect, "setLocked", Q_ARG(bool, true)));
         QVERIFY(!effect->animating()); frames.clear(); QTest::qWait(100); QCOMPARE(frames.count(), 0);
