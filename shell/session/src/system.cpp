@@ -56,32 +56,7 @@ System::System(const QDBusConnection &sessionBus, const QDBusConnection &systemB
     connect(&m_sessionManagement, &SessionManagement::canLogoutChanged, this, &System::canLogoutChanged);
     connect(&m_sessionManagement, &SessionManagement::canRebootChanged, this, &System::canRebootChanged);
     connect(&m_sessionManagement, &SessionManagement::canShutdownChanged, this, &System::canShutdownChanged);
-    m_timer.setInterval(10000);
-    connect(&m_timer, &QTimer::timeout, this, &System::refreshOverview);
-    m_timer.start();
-    refreshOverview();
     refreshIdentity();
-}
-
-void System::refreshOverview()
-{
-    if (m_pending)
-        return;
-    m_pending = true;
-    auto message = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"),
-        QStringLiteral("org.kde.kwin.Effects"), QStringLiteral("isEffectLoaded"));
-    message << QStringLiteral("singlr-overview");
-    auto *pending = new QDBusPendingCallWatcher(m_bus.asyncCall(message, 1500), this);
-    connect(pending, &QDBusPendingCallWatcher::finished, this, [this, pending] {
-        const QDBusPendingReply<bool> reply = *pending;
-        pending->deleteLater();
-        m_pending = false;
-        const bool available = !reply.isError() && reply.value();
-        if (m_overviewAvailable != available) {
-            m_overviewAvailable = available;
-            Q_EMIT overviewAvailableChanged();
-        }
-    });
 }
 
 void System::invokeShortcut(const QString &component, const QString &action)

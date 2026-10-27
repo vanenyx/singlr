@@ -12,7 +12,6 @@ bool decode(const QByteArray &json, Snapshot &snapshot);
 // Fail closed if availability cannot be established; allow only this exact action.
 bool canAssign(bool available, const QList<QStringList> &owners, const QString &component, const QString &action);
 QString backupPath();
-bool applyKWin();
 bool restoreKWin();
 void registerActions(QObject *parent, QObject *session);
 }

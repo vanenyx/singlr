@@ -23,7 +23,7 @@ La fuente de producto es [la recuperación original](../SINGLR_recuperacion_desd
 | P-012 | Explícita del creador | Vigente | Acciones de elementos al estilo Linear (2026-10-24): clic derecho o «…» abre un menú contextual flotante superpuesto junto al cursor, con atajos, sin cambiar de vista ni mover contenido. Confirmaciones destructivas dentro del propio menú (segundo clic). Complementa P-011. Actualizado: la contraseña de red también se pide en una barra flotante compacta tipo comando sobre la fila (sin página), con iconos y el mínimo texto. |
 | P-013 | Explícita del creador | Vigente | Conectar en el sitio (2026-10-24): clic en una red o dispositivo conecta si ya es conocido; si no, esa misma fila se convierte en el campo necesario (solo icono y entrada), Enter conecta y el error o el éxito se muestran en la misma fila. El clic derecho mantiene el menú flotante y su «Conectar» hace lo mismo. Se aplica de forma coherente a Wi-Fi, Bluetooth y donde corresponda. Sustituye la barra flotante de contraseña. |
 | P-014 | Explícita del creador | Vigente | Mínimo entendible (2026-10-24): preferir iconos y símbolos a texto, una sola fila cuando baste y nada de elementos redundantes (por ejemplo, barras que repiten un porcentaje). Batería: icono, porcentaje y perfiles de energía como tres círculos en la misma fila (Ahorro azul, Equilibrado blanco, Rendimiento rojo; contorno = no seleccionado, relleno = seleccionado). Se aplica a todo el shell. |
-| P-015 | Explícita del creador | Vigente | Gestos y atajos (2026-10-24). Panel táctil: 3 dedos arriba = multitarea (con progreso); 3 abajo = mostrar escritorio; 3 o 4 izq./der. = cambiar escritorio (KWin); pinza de 4 = todas las apps. Teclado: Meta = lanzador; Meta+Tab = multitarea; Alt+Tab = ventanas; Meta+D = escritorio; Meta+↑/↓ = maximizar/minimizar; Meta+←/→ = mitad de pantalla; Ctrl+Meta+←/→ = escritorios; Meta+1…9 = app N del dock; Meta+N = notificaciones; Meta+A = centro de control; Meta+L = bloquear. |
+| P-015 | Explícita del creador | Parcialmente sustituida por P-032 (ventanas, multitarea y gestos) | Gestos y atajos (2026-10-24). Panel táctil: 3 dedos arriba = multitarea (con progreso); 3 abajo = mostrar escritorio; 3 o 4 izq./der. = cambiar escritorio (KWin); pinza de 4 = todas las apps. Teclado: Meta = lanzador; Meta+Tab = multitarea; Alt+Tab = ventanas; Meta+D = escritorio; Meta+↑/↓ = maximizar/minimizar; Meta+←/→ = mitad de pantalla; Ctrl+Meta+←/→ = escritorios; Meta+1…9 = app N del dock; Meta+N = notificaciones; Meta+A = centro de control; Meta+L = bloquear. |
 | P-016 | Explícita del creador | Vigente | Eficiencia como prioridad de producto (2026-10-25): uno de los motivos del creador para pasar de Windows a Linux es un menor consumo de recursos. Presupuesto inicial del shell: memoria propia (PSS) < 120 MB, CPU en reposo ≈ 0 (sin animaciones ni temporizadores continuos innecesarios), y los paneles cerrados no consumen GPU ni mantienen modelos cargados. Toda funcionalidad nueva se mide con `tools/measure-resources.sh` antes de integrarse. Medida de partida: ~208 MB PSS (25 oct). |
 | P-017 | Explícita del creador | Vigente | Comportamientos estándar y sin parches (2026-10-25): donde existe una convención clara (sesión, ventanas, cierre), Singlr adopta el comportamiento estándar (macOS como referencia, que coincide con el valor por defecto de KDE) sin pedir decisión al creador, y los problemas se resuelven integrando el mecanismo correcto, no con reglas forzadas. Primera aplicación: gestión de sesión con ksmserver de KDE: al cerrar sesión las apps se cierran por el protocolo estándar (pueden pedir guardar) y al volver a entrar se reabre lo que estaba abierto al salir. |
 | P-018 | Explícita del creador | Vigente | Definición de producto Singlr 1.0 (2026-10-25): [docs/singlr-1.0.md](singlr-1.0.md). Siete sistemas (Desktop, Command, Workspace, System, Appearance, Session, Platform), criterio de publicación y alcance fuera de la v1. Hay que terminarla. Licencia: el creador decidirá más adelante (P-002). |
@@ -153,6 +153,8 @@ ni se aprueba aún eliminar o reasignar la esquina. [Entrega](handoffs/T259-bar-
 
 ## P-028 — retirar la esquina duplicada (explícita, 26 oct 2026)
 
+**Sustituida por P-032 (27 oct 2026).**
+
 Tras el diagnóstico T259, el creador autoriza quitar la activación de Overview
 nativo de KDE al llevar el cursor a la esquina superior izquierda durante Singlr.
 Meta+Tab y la vista general propia permanecen como acceso de Singlr.
@@ -175,6 +177,8 @@ trabajar solo con Codex. Al delegar, el consumo de tokens prevalece sobre la esp
 (invertido el 26 oct por el uso restante de las cuentas): pesados a Codex 2, ligeros a Codex 1.
 
 ## P-030 — gestos de multitarea como en macOS (explícita, 26 oct 2026)
+
+**Sustituida por P-032 (27 oct 2026).**
 
 En la sesión Singlr no existe una segunda multitarea: se desactivan los efectos
 KDE Overview y Window View (journal reversible). Tres o cuatro dedos hacia arriba
@@ -226,3 +230,22 @@ cercanas, con fluidez y retorno, como pasar la mano por agua. Se retira el
 paralaje de cámara; centro y composición permanecen fijos. Solución derivada:
 órbitas de entrada procedurales y 16 impulsos locales de duración limitada,
 con amortiguación y un leve sobrepaso. [Entrega T268](handoffs/T268-particle-flow.md).
+
+## P-032 — Singlr reducido; KDE gestiona Workspace (explícita, 27 oct 2026)
+
+Singlr se limita a **dock, barra superior (con su bandeja, centro de control,
+notificaciones y menú de sesión), lanzador de apps y portapapeles**, más el
+material vidrio de esas superficies (`singlr-liquidglass`) y el fondo. Todo lo
+demás lo hace **KDE tal cual**, con sus valores por defecto: ventanas,
+escritorios virtuales, multitarea/vista general, Alt+Tab, gestos del touchpad,
+animaciones de ventana y esquinas de pantalla. Sustituye a P-015 (solo la parte
+de gestos/atajos de ventana y multitarea), P-028 y P-030. Las preferencias que el
+usuario cambie en Ajustes de KDE se respetan.
+
+Solución técnica derivada T272: los journals anteriores restauran exactamente
+sus originales antes de capturar un journal solo de material; los backups de
+atajos se restauran sin crear otros. El dock invoca la acción nativa `Overview`
+y conserva su autoocultado sin sondear el estado de la multitarea. Se retira la
+asignación propia Meta+Alt+S por coincidir con el lector de pantalla de Plasma
+6.8.1; el menú de sesión conserva su acceso desde la barra.
+[Entrega y comprobaciones](handoffs/T272-singlr-scope.md).

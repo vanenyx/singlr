@@ -600,13 +600,10 @@ Pendientes para Claude **fuera de `shell/qml/**`**:
   atención, pero no permite distinguirlo del normal. Hasta entonces un ítem
   NeedsAttention lleva también punto de 4 px; al exponer el rol se suprime el
   punto cuando hay icono específico, sin otro cambio QML.
-- Exponer `SinglrSystem.invokeShortcut(component, name)` para llamar por D-Bus
-  a `org.kde.kglobalaccel /component/<component>` con
-  `org.kde.kglobalaccel.Component.invokeShortcut(name)`, y propiedad notificada
-  `overviewAvailable` que confirme que el efecto está cargado. `Dock.qml` ya
-  prepara el botón Phosphor squares-four junto al de aplicaciones y llama con
-  `("kwin", "Singlr Overview")`. Permanece oculto mientras falte este contrato;
-  no se deduce disponibilidad de la mera existencia del atajo.
+- P-032: `SinglrSystem.invokeShortcut("kwin", "Overview")` invoca la vista general
+  nativa por `org.kde.kglobalaccel.Component`. El botón de multitarea permanece
+  visible. No se consulta periódicamente su estado ni se mantiene abierto el dock
+  durante la vista general: aplica su autoocultado habitual; el lanzador sí lo retiene.
 
 Verificación T224 (Qt 6.12.0): `qmllint` completo sin avisos; suite
 `qmltestrunner` offscreen/software con pruebas de bandeja (acciones, overflow,

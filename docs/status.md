@@ -1,6 +1,6 @@
 # Estado de Singlr
 
-Actualizado el **26 oct 2026**. Prototipo integrado e instalable de Fase 1.
+Actualizado el **27 oct 2026**. Prototipo integrado e instalable de Fase 1.
 **Singlr 1.0 todavía no cumple su criterio de completo**: ver
 [definición](singlr-1.0.md) y [matriz de aceptación](compatibility.md).
 
@@ -20,7 +20,7 @@ La licencia y una release distribuible siguen pendientes; el push no declara v1 
 | --- | --- | --- |
 | Desktop | Shell, barras, dock configurable y bandeja | Desbordamiento corregido y probado en QML (T255); aceptación visual, autohide/DND nativos y multimonitor |
 | Command | KRunner, aplicaciones, archivos, calculadora, ajustes y acciones | Recorridos completos y aprobación UX |
-| Workspace | Overview, Alt+Tab, escritorios y atajos | Topologías, foco y gestos en uso real |
+| Workspace | KDE tal cual desde P-032; dock abre Overview nativo | Verificación de migración, foco y gestos en sesión aislada real |
 | System | Controles, notificaciones, multimedia y menú de sesión | Dispositivos y recorridos reales de extremo a extremo |
 | Appearance | Claro/oscuro, vidrio/sólido, preferencias KDE | Aprobación visual; matriz compositor/escalado; compatibilidad ABI KWin |
 | Session | Login dedicado, ksmserver, bloqueo propio, recuperación | PAM real, suspensión, salidas, ráfagas y continuidad completa |
@@ -148,6 +148,10 @@ T269: Singularidad más ligera y fluida. Un punto por partícula en lugar de dos
 T270: consumo en reposo. El shell de Singlr usa menos memoria que plasmashell en las mismas condiciones (138–140 MB frente a 159–162 MB) y, como Plasma, ~0 de CPU y GPU. En la sesión real, con fondo estático, la APU pasó de 25,3 W a ~16–20 W y la RTX 4070 quedó suspendida. Sigue abierto P-016 (<120 MB): hoy son 132 MB. [Evidencia](../tests/shell/evidence/t270/singlr-vs-plasma.txt).
 
 T271: memoria del shell. El buscador del launcher ya no carga el runner de la tienda (AppStream): costaba ~70 MB por búsqueda y retenía ~35 MB; para instalar software está Discover, por decisión del creador. Si KWin solo puede estar dibujando en una GPU que no es NVIDIA, el shell carga únicamente el vendor EGL de Mesa; sin heredarlo a las apps, y sin restringir nada si hay configuración explícita o salidas en la NVIDIA. Sesión real: 132–140 MB → 84–87 MB. KWin aislado: 76 MB, frente a 93 MB de plasmashell. Revisión de Codex 1 incorporada.
+
+| Tarea | Resultado | Evidencia / pendiente |
+| --- | --- | --- |
+| T272 / P-032 | Singlr reducido a superficies del shell, vidrio y fondo; KDE gestiona Workspace. Extensiones propias retiradas; journals antiguos recuperables. | [Entrega](handoffs/T272-singlr-scope.md); integración real y D-Bus privado pendientes fuera del sandbox. |
 
 ## Siguientes cierres necesarios
 

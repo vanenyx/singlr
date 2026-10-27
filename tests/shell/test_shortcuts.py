@@ -1,4 +1,4 @@
-"""P-015: native backup/conflict logic and a private fake KGlobalAccel bus."""
+"""P-032: native legacy restoration/conflict logic and a private fake KGlobalAccel bus."""
 import os
 from pathlib import Path
 import shlex

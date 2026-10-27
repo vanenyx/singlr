@@ -7,6 +7,8 @@
 #include <QDBusReply>
 #include <QDBusMetaType>
 #include <QDBusVirtualObject>
+#include <QDir>
+#include <QFileInfo>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -107,42 +109,43 @@ int main(int argc, char **argv)
     QTemporaryDir runtime;
     check(runtime.isValid());
     qputenv("XDG_RUNTIME_DIR", runtime.path().toUtf8());
+    // applyKWin() used to register these; the client now only reads and restores.
+    qDBusRegisterMetaType<QList<int>>();
+    qDBusRegisterMetaType<QKeySequence>();
+    qDBusRegisterMetaType<QList<QKeySequence>>();
     QProcess server;
     server.start(app.applicationFilePath(), {"--server"});
     check(server.waitForReadyRead() && server.readLine() == "READY\n");
-    check(applyKWin());
     QDBusInterface api("org.kde.kglobalaccel", "/kglobalaccel", "org.kde.KGlobalAccel");
     const auto keysFor = [&api](const QString &name) {
         QDBusReply<QList<QKeySequence>> reply = api.call("shortcutKeys", QStringList{"kwin", name, "KWin", name});
         check(reply.isValid());
         return reply.value();
     };
-    check(keysFor(actionNames()[0]) == QList<QKeySequence>{QKeySequence("Meta+Up")});
-    check(keysFor(actionNames()[1]) == QList<QKeySequence>{QKeySequence("Meta+Down")});
-    check(keysFor(actionNames()[2]) == QList<QKeySequence>{QKeySequence("Ctrl+Alt+T")});
-    check(keysFor(actionNames()[3]).isEmpty());
-    check(keysFor(actionNames()[4]) == QList<QKeySequence>{QKeySequence("Alt+Tab")});
-    check(keysFor(actionNames()[5]) == QList<QKeySequence>{QKeySequence("Alt+Shift+Tab")});
-    check(keysFor(actionNames()[6]) == QList<QKeySequence>{QKeySequence("Meta+Tab")});
     QFile backup(backupPath());
-    check(backup.open(QIODevice::ReadOnly));
-    const auto original = backup.readAll();
-    backup.close();
-    check(decode(original, parsed) && parsed == data);
-    check(applyKWin());
-    check(backup.open(QIODevice::ReadOnly) && backup.readAll() == original);
-    backup.close();
+    // Starting with no legacy backup must neither write KWin shortcuts nor create a backup.
     check(restoreKWin() && !backup.exists());
-    // Back up the restored state to prove exact restoration, including disabled/multi-stroke bindings.
-    check(applyKWin());
-    check(backup.open(QIODevice::ReadOnly) && backup.readAll() == original);
-    backup.close();
-    check(restoreKWin() && restoreKWin());
+    for (const auto &name : actionNames()) check(keysFor(name) == data[name]);
+    for (const auto &snapshot : {data, legacy}) {
+        check(QDir().mkpath(QFileInfo(backupPath()).absolutePath()));
+        check(backup.open(QIODevice::WriteOnly));
+        backup.write(encode(snapshot).toJson());
+        backup.close();
+        // Model shortcuts left behind by an older shell, including displaced keys.
+        for (const auto &name : snapshot.keys()) {
+            QDBusReply<void> reply = api.call("setForeignShortcutKeys", QStringList{"kwin", name, "KWin", name},
+                                             QVariant::fromValue(QList<QKeySequence>{QKeySequence("Meta+F12")}));
+            check(reply.isValid());
+        }
+        check(restoreKWin() && !backup.exists());
+        for (const auto &name : snapshot.keys()) check(keysFor(name) == snapshot[name]);
+        check(restoreKWin() && !backup.exists());
+    }
     check(backup.open(QIODevice::WriteOnly));
     backup.write("invalid");
     backup.close();
-    check(!applyKWin() && !restoreKWin() && backup.exists());
+    check(!restoreKWin() && backup.exists());
     server.terminate();
     check(server.waitForFinished());
-    QTextStream(stdout) << "PASS backup, conflicts, isolated D-Bus apply/reapply/restore\n";
+    QTextStream(stdout) << "PASS backup, conflicts, isolated D-Bus legacy restore/no new backup\n";
 }

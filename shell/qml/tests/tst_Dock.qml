@@ -58,7 +58,6 @@ Item {
         property var launched: []
         function applicationActions(url) { return actions; }
         function launchApplicationAction(url, name) { launched = [url, name]; return true; }
-        property bool overviewAvailable: false
         property string invoked: ""
         function acceptsUrls(url, urls) { return url === "applications:browser.desktop" && urls.every(u => u.endsWith(".txt")); }
         function invokeShortcut(component, action) { invoked = component + ":" + action; }
@@ -87,12 +86,11 @@ Item {
         function test_overviewBridge() {
             dock.systemBridge = bridge;
             const button = findChild(dock, "overviewButton");
-            verify(!button.visible);
-            bridge.overviewAvailable = true; verify(button.visible);
+            verify(button.visible);
             button.forceActiveFocus(Qt.TabFocusReason);
-            keyClick(Qt.Key_Return); compare(bridge.invoked, "kwin:Singlr Overview");
-            bridge.overviewAvailable = false; verify(!button.visible);
-            dock.systemBridge = null; verify(!button.visible);
+            keyClick(Qt.Key_Return); compare(bridge.invoked, "kwin:Overview");
+            verify(button.visible);
+            dock.systemBridge = null; verify(button.visible);
         }
         function test_numberedEntrySharesCycle() {
             doubleModel.delayActive = true;

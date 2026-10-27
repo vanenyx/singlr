@@ -12,16 +12,7 @@ import Singlr.System
 // ventanas normales: aparecen en la multitarea y en Alt+Tab.
 Item {
     id: session
-    Component.onCompleted: { WorkspaceBridge.enable(); ClipboardPasteBridge.enable(); placeDock(); }
-    Connections {
-        target: WorkspaceBridge
-        function onOverviewChanged(open) { session.overviewOpen = open; }
-        function onSearchRequested(text, screenName) {
-            const screen = session.screens.find(s => s.name === screenName) || session.effectiveDockScreen;
-            session.openLauncher(false, screen);
-            session.launcher.query = text;
-        }
-    }
+    Component.onCompleted: { ClipboardPasteBridge.enable(); placeDock(); }
     // First entry is Qt's primary screen; dockScreen remains an overridable policy.
     property var screens: Qt.application.screens
     property var dockScreen: screens.length ? screens[0] : null
@@ -214,7 +205,6 @@ Item {
     }
     // Invocado desde C++ (tecla Meta, Alt+Espacio) a través de D-Bus.
     function showApplications() { openLauncher(true); }
-    property bool overviewOpen: false
     property bool dockKeyboard: false
     function focusDock() {
         closeMenus(); if (launcher) launcher.close(); launcherOpen = false;
@@ -316,7 +306,7 @@ Item {
         onActiveChanged: if (!active) session.dockKeyboard = false
         LayerShell.Window.keyboardInteractivity: session.dockKeyboard ? LayerShell.Window.KeyboardInteractivityOnDemand : LayerShell.Window.KeyboardInteractivityNone  // None: un clic en el dock o la barra no debe quitar la actividad a la app de delante
         LayerShell.Window.scope: "dock"
-        Dock { Keys.onEscapePressed: session.dockKeyboard = false; id: dock; objectName: "sessionDock"; sessionMode: true; screenWidth: dockWindow.screen ? dockWindow.screen.width : 1; keyboardHeld: session.dockKeyboard; launcherHeld: session.launcherOpen || session.overviewOpen; menuHost: dockMenuSurface.item ? (dockMenuSurface.item as Window).contentItem : null; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.showApplications() }
+        Dock { Keys.onEscapePressed: session.dockKeyboard = false; id: dock; objectName: "sessionDock"; sessionMode: true; screenWidth: dockWindow.screen ? dockWindow.screen.width : 1; keyboardHeld: session.dockKeyboard; launcherHeld: session.launcherOpen; menuHost: dockMenuSurface.item ? (dockMenuSurface.item as Window).contentItem : null; onLauncherRequested: session.openLauncher(); onApplicationsRequested: session.showApplications() }
         Shortcut { sequences: ["Meta+Space", "Alt+Space"]; onActivated: session.openLauncher() }
     }
     // A minimal native edge target: no polling, pointer warps or KWin script.

@@ -146,19 +146,12 @@ public:
     QStringList order;
     QString host;
     QString menuMode;
-    bool effectLoaded = true;
     QString introspect(const QString &) const override { return {}; }
     bool handleMessage(const QDBusMessage &m, const QDBusConnection &bus) override
     {
         const auto args = m.arguments();
         QVariantList reply;
-        if (m.member() == QLatin1String("isEffectLoaded")) {
-            CHECK(m.path() == "/Effects" && m.interface() == "org.kde.kwin.Effects");
-            CHECK(args == QVariantList({"singlr-overview"}));
-            reply = {effectLoaded};
-        } else if (m.member() == QLatin1String("EffectLoaded")) {
-            effectLoaded = args[0].toBool();
-        } else if (m.member() == QLatin1String("invokeShortcut")) {
+        if (m.member() == QLatin1String("invokeShortcut")) {
             CHECK(m.path() == "/component/kwin" && m.interface() == "org.kde.kglobalaccel.Component");
             calls.insert(m.member(), args);
         } else if (m.member() == QLatin1String("MenuMode")) {
@@ -344,17 +337,9 @@ void wire()
     CHECK(ready == 1);
     until([&] { return ready == 2; });
     System system;
-    CHECK(!system.overviewAvailable());
-    until([&] { return system.overviewAvailable(); });
-    system.invokeShortcut("kwin", "Singlr Overview");
+    system.invokeShortcut("kwin", "Overview");
     until([&] { return qdbus_cast<QVariantMap>(qdbus_cast<QVariantMap>(invoke("Dump").arguments()[0]).value("calls")).contains("invokeShortcut"); });
-    CHECK(qdbus_cast<QVariantList>(qdbus_cast<QVariantMap>(qdbus_cast<QVariantMap>(invoke("Dump").arguments()[0]).value("calls")).value("invokeShortcut")) == QVariantList({"Singlr Overview"}));
-    invoke("EffectLoaded", {false});
-    QElapsedTimer poll; poll.start();
-    while (system.overviewAvailable() && poll.elapsed() < 12000) {
-        QCoreApplication::processEvents(); QThread::msleep(5);
-    }
-    CHECK(!system.overviewAvailable());
+    CHECK(qdbus_cast<QVariantList>(qdbus_cast<QVariantMap>(qdbus_cast<QVariantMap>(invoke("Dump").arguments()[0]).value("calls")).value("invokeShortcut")) == QVariantList({"Overview"}));
     const auto calls = qdbus_cast<QVariantMap>(dump.value("calls"));
     CHECK(qdbus_cast<QVariantList>(calls.value("Activate")) == QVariantList({17, 18}));
     CHECK(qdbus_cast<QVariantList>(calls.value("SecondaryActivate")) == QVariantList({19, 20}));

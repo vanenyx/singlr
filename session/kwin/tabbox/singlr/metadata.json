@@ -1,5 +1,0 @@
-{
-    "KPackageStructure": "KWin/WindowSwitcher",
-    "KPlugin": {"Id": "singlr", "Name": "Singlr", "Description": "Ventanas de Singlr con miniaturas"},
-    "X-Plasma-API": "declarativeappletscript"
-}

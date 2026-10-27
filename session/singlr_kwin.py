@@ -9,46 +9,31 @@ import subprocess
 import tempfile
 import uuid
 
+# P-032: only shell material belongs to Singlr. Everything else is KDE/user policy.
 KWIN_SETTINGS = [
-    ('TabBox', 'LayoutName', 'singlr'),
-    ('TabBox', 'ShowTabBox', 'true'),
-    ('Effect-scale', 'OutScale', '0.4'),
-    ('Effect-scale', 'OutOpacity', '0'),
-    ('Effect-scale', 'InScale', '0.92'),
-    ('Plugins', 'scaleEnabled', 'true'),
-    ('Plugins', 'squashEnabled', 'true'),
-    ('Plugins', 'magiclampEnabled', 'false'),
-    ('Plugins', 'maximizeEnabled', 'true'),
-    ('Plugins', 'singlr-overviewEnabled', 'true'),
-    ('Plugins', 'overviewEnabled', 'false'),
-    ('Plugins', 'windowviewEnabled', 'false'),
-    ('Effect-overview', 'BorderActivate', ''),
-    ('Plugins', 'singlr-gesturesEnabled', 'true'),
     ('Plugins', 'singlr-liquidglassEnabled', 'true'),
     ('Effect-singlrliquidglass', 'Enabled', 'true'),
     ('Effect-singlrliquidglass', 'Intensity', '65'),
 ]
+MATERIAL_KEYS = {(g, k) for g, k, _ in KWIN_SETTINGS}
 
-
-# Settings Singlr no longer applies (native KDE decoration, P-023). A journal written
-# before that still restores them exactly, so the user's original decoration returns.
-RETIRED_KEYS = {('org.kde.kdecoration2', 'library'), ('org.kde.kdecoration2', 'theme')}
-
-# New keys have their own original snapshot, including absence. Accept pre-T248 journals.
-MATERIAL_KEYS = {('Plugins', 'singlr-liquidglassEnabled'),
-                 ('Effect-singlrliquidglass', 'Enabled'), ('Effect-singlrliquidglass', 'Intensity')}
-
-# KWin 6.8: Overview defaults to ElectricTopLeft (7). An explicit empty IntList
-# disables that default; preserve any other corners chosen by the user.
+# Migration only: never apply these keys again. Preserve all accepted journal versions.
+DECORATION_KEYS = {('org.kde.kdecoration2', 'library'), ('org.kde.kdecoration2', 'theme')}
+WORKSPACE_KEYS = {
+    ('TabBox', 'LayoutName'), ('TabBox', 'ShowTabBox'),
+    ('Effect-scale', 'OutScale'), ('Effect-scale', 'OutOpacity'), ('Effect-scale', 'InScale'),
+    ('Plugins', 'scaleEnabled'), ('Plugins', 'squashEnabled'),
+    ('Plugins', 'magiclampEnabled'), ('Plugins', 'maximizeEnabled'),
+    ('Plugins', 'singlr-overviewEnabled'), ('Plugins', 'singlr-gesturesEnabled'),
+    ('Plugins', 'overviewEnabled'), ('Plugins', 'windowviewEnabled'),
+    ('Effect-overview', 'BorderActivate'),
+}
+RETIRED_KEYS = DECORATION_KEYS | WORKSPACE_KEYS
 OVERVIEW_EDGE_KEYS = {('Effect-overview', 'BorderActivate')}
-
-# Disable KDE multitasking entry points; journals before T262 omit both keys.
 GESTURE_KEYS = {('Plugins', 'overviewEnabled'), ('Plugins', 'windowviewEnabled')}
-
-
-def without_top_left(value):
-    return ','.join(edge for edge in (value or '').split(',')
-                    if edge.strip() not in ('7', 'ElectricTopLeft'))
+# These identifiers are retained solely to unload extensions from older installations.
+RETIRED_EFFECT = 'singlr-overview'
+RETIRED_SCRIPT = 'singlr-gestures'
 
 
 def material_settings():
@@ -137,14 +122,14 @@ def entries_from(path):
                    or (row[2] is not None and not isinstance(row[2], str)) for row in entries)
             or len({(row[0], row[1]) for row in entries}) != len(entries)):
         raise ValueError(f'Backup KWin no reconocido: {path}')
-    keys = {(row[0], row[1]) for row in entries} - RETIRED_KEYS
-    # Backups predating TabBox, materials or the Overview corner remain valid.
-    legacy = {(group, key) for group, key in allowed if group != 'TabBox'}
+    keys = {(row[0], row[1]) for row in entries} - DECORATION_KEYS
+    previous = allowed | WORKSPACE_KEYS
+    legacy = {pair for pair in previous if pair[0] != 'TabBox'}
     supported = [base - extras - new
-                 for base in (allowed, legacy, allowed - MATERIAL_KEYS, legacy - MATERIAL_KEYS)
+                 for base in (previous, legacy, previous - MATERIAL_KEYS, legacy - MATERIAL_KEYS)
                  for extras in (set(), OVERVIEW_EDGE_KEYS)
                  for new in (set(), GESTURE_KEYS)]
-    if keys not in supported:
+    if keys != allowed and keys not in supported:
         raise ValueError(f'Backup KWin incompleto: {path}')
     return entries
 
@@ -169,11 +154,8 @@ def apply(path=None, *, recover_pending=False):
             _restore(path)
         snapshot = [[group, key, read(group, key)] for group, key, _ in KWIN_SETTINGS]
         save(path, snapshot)
-        original = {(group, key): value for group, key, value in snapshot}
         try:
             for group, key, value in KWIN_SETTINGS:
-                if (group, key) in OVERVIEW_EDGE_KEYS:
-                    value = without_top_left(original[group, key])
                 write(group, key, value)
             for group, key, value in material_settings():
                 write(group, key, value)
@@ -191,13 +173,11 @@ def restore(path=None):
 
 def reload_kwin(*, applying):
     # Best effort only: live KWin may not yet know a newly linked effect.
-    calls = [('/KWin', 'reconfigure'),
-             ('/Effects', 'org.kde.kwin.Effects.' + ('loadEffect' if applying else 'unloadEffect'), 'singlr-overview'),
-             (('/Scripting', 'org.kde.kwin.Scripting.start') if applying else
-              ('/Scripting', 'org.kde.kwin.Scripting.unloadScript', 'singlr-gestures'))]
+    calls = []
     if applying:
-        calls.extend(('/Effects', 'org.kde.kwin.Effects.unloadEffect', effect)
-                     for effect in ('overview', 'windowview'))
+        calls.extend([('/Effects', 'org.kde.kwin.Effects.unloadEffect', RETIRED_EFFECT),
+                      ('/Scripting', 'org.kde.kwin.Scripting.unloadScript', RETIRED_SCRIPT)])
+    calls.append(('/KWin', 'reconfigure'))
     # Restore a pre-existing user effect activation as well as its configuration.
     calls.append(('/Effects', 'org.kde.kwin.Effects.' +
                   ('loadEffect' if applying or read('Plugins', 'singlr-liquidglassEnabled') == 'true' else 'unloadEffect'),

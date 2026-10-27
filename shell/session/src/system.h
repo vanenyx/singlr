@@ -11,7 +11,6 @@
 class System final : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(bool overviewAvailable READ overviewAvailable NOTIFY overviewAvailableChanged)
     Q_PROPERTY(bool canLock READ canLock NOTIFY canLockChanged)
     Q_PROPERTY(bool canLogout READ canLogout NOTIFY canLogoutChanged)
     Q_PROPERTY(bool canReboot READ canReboot NOTIFY canRebootChanged)
@@ -25,7 +24,6 @@ public:
     explicit System(QObject *parent = nullptr);
     // Metadata connections can be injected; KDE SessionManagement uses Qt default buses.
     System(const QDBusConnection &sessionBus, const QDBusConnection &systemBus, QObject *parent = nullptr);
-    bool overviewAvailable() const { return m_overviewAvailable; }
     bool canSuspend() const { return m_sessionManagement.canSuspend(); }
     bool canHibernate() const { return m_sessionManagement.canHibernate(); }
     QString userName() const { return m_userName; }
@@ -57,7 +55,6 @@ public:
     Q_INVOKABLE void placeOnScreen(QObject *window, const QString &screenName);
 Q_SIGNALS:
     void applicationActionFinished(const QUrl &launcher, const QString &name, const QString &error);
-    void overviewAvailableChanged();
     void canLockChanged();
     void canLogoutChanged();
     void canRebootChanged();
@@ -71,16 +68,12 @@ Q_SIGNALS:
     void sessionActionFailed(const QString &action, const QString &message);
     void sessionActionCancelled(const QString &action);
 private:
-    void refreshOverview();
     void refreshIdentity();
     void call(const QDBusConnection &bus, const QDBusMessage &message,
               std::function<void(const QDBusMessage &)> done, int timeout = 3000);
     QDBusConnection m_bus;
     QDBusConnection m_systemBus;
     SessionManagement m_sessionManagement;
-    QTimer m_timer;
-    bool m_overviewAvailable = false;
-    bool m_pending = false;
     QString m_userName;
     QString m_userIcon;
 };

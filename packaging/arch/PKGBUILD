@@ -24,6 +24,8 @@ build() {
     cmake --build build
 }
 
+
+# P-032: CMake installs shell material only; KDE supplies workspace packages.
 package() {
     DESTDIR="$pkgdir" cmake --install build
 }

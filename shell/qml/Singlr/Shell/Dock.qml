@@ -69,7 +69,6 @@ Rectangle {
     // qmllint disable unqualified
     property var systemBridge: typeof SinglrSystem !== "undefined" ? SinglrSystem : null
     // qmllint enable unqualified
-    readonly property bool overviewAvailable: !!systemBridge && systemBridge.overviewAvailable === true && typeof systemBridge.invokeShortcut === "function"
     property Item menuHost: null
     property string tooltipText: ""
     property real tooltipCenter: 0
@@ -444,7 +443,7 @@ Rectangle {
             }
             Rectangle { visible: pinned.count > 0; width: 1; height: Math.round(20 * dock.sizeFactor); anchors.verticalCenter: parent.verticalCenter; color: Theme.border }
             DockItem { id: appsButton; dockHeight: dock.height; sessionMode: dock.sessionMode; onActiveFocusChanged: if (activeFocus) dock.ensureVisible(appsButton); onTooltipRequested: (text, center) => dock.showTooltip(text, center); task: ({AppName: "Todas las aplicaciones", singlrGrid: true, decoration: ""}); onActivated: dock.applicationsRequested() }
-            Tool { id: overviewButton; objectName: "overviewButton"; visible: dock.overviewAvailable; width: dock.iconSize; height: dock.height; icon: "cards-three"; iconSize: Math.round(20 * dock.sizeFactor); description: "Multitarea"; onActiveFocusChanged: if (activeFocus) dock.ensureVisible(overviewButton); onClicked: { dock.reveal(); dock.systemBridge.invokeShortcut("kwin", "Singlr Overview"); } }
+            Tool { id: overviewButton; objectName: "overviewButton"; width: dock.iconSize; height: dock.height; icon: "cards-three"; iconSize: Math.round(20 * dock.sizeFactor); description: "Multitarea"; onActiveFocusChanged: if (activeFocus) dock.ensureVisible(overviewButton); onClicked: { dock.reveal(); if (dock.systemBridge) dock.systemBridge.invokeShortcut("kwin", "Overview"); } }
         }
     }
     component TaskEntry: Item {

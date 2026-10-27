@@ -93,9 +93,7 @@ def report():
                             'running': running_dev,
                             # User copies take precedence over the package in KWin's search path.
                             'shadowed_kwin_packages': sorted(
-                                f'{kind}/{name}' for kind, names in (('effects', ('singlr-overview', 'singlr-liquidglass')),
-                                                                     ('scripts', ('singlr-gestures',)),
-                                                                     ('tabbox', ('singlr',)))
+                                f'{kind}/{name}' for kind, names in (('effects', ('singlr-liquidglass',)),)
                                 for name in names
                                 if (Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local/share')) / 'kwin' / kind / name).exists()
                                 or (Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local/share')) / 'kwin' / kind / name).is_symlink())},

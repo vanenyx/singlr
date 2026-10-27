@@ -9,7 +9,7 @@ no certificación de Singlr 1.0. [Definición de producto](singlr-1.0.md).
 | Runtime | `shell/session/src/`: lanzador C++, atajos, servicios del sistema, bandeja SNI, fondo y regiones de blur |
 | Command | `shell/command/`: modelo de resultados KRunner; UI/acciones en el shell |
 | Appearance | `session/appearance/`: módulo QML nativo Singlr.System, KConfig/KConfigWatcher y puente Workspace; KDE es fuente de modo y acento |
-| Workspace | Efecto QML Overview, script de gestos y paquete KWin WindowSwitcher; KWin conserva la gestión de ventanas |
+| Workspace | KDE tal cual desde P-032; el dock invoca Overview nativo por KGlobalAccel |
 | Vidrio | Plugin C++ `kwin/effects/singlr-liquidglass/`: difusión y luminancia, sin Liquid Glass; requiere ABI KWin 6.8.1 exacta |
 | Session | `startplasma-wayland` oficial, grafo Plasma y sustitución de ExecStart del shell; bloqueo KScreenLocker/PAM con paquete Plasma/Shell propio |
 | Platform | CMake/ECM, paquete Arch local, diagnóstico y batería de aceptación/reversión |
@@ -20,7 +20,7 @@ no certificación de Singlr 1.0. [Definición de producto](singlr-1.0.md).
   no se degrada una configuración futura. Dock fijado/orden conserva su archivo previo.
 - Claro/oscuro y acento siguen KDE; los cambios explícitos de apariencia son compartidos
   y persistentes. La desinstalación no promete deshacer preferencias elegidas por el usuario.
-- Ajustes KWin y atajos temporales usan journals persistentes con restauración.
+- Solo material KWin usa journal persistente; se restauran journals y backups de atajos antiguos (P-032).
   Se retira la decoración Aurorae propia (P-023); se respeta la decoración KDE elegida.
 - `session/startsinglr-wayland` solo exporta identidad/defaults y hace exec de startplasma.
   `plasma-plasmashell.service.d/50-singlr.conf` selecciona el binario mediante

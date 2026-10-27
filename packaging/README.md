@@ -112,14 +112,14 @@ no hacerla mientras otro usuario esté usando Singlr. Las preferencias explícit
 de apariencia KDE son compartidas y persistentes; no se promete revertirlas con
 pacman. La [matriz](../docs/compatibility.md) distingue cobertura real y pendiente.
 
-## Workspace (T246)
+## Workspace (P-032 / T272)
 
-El paquete instala `KWin/WindowSwitcher` en `kwin/tabbox/singlr`, junto al
-Overview existente. La sesión aplica el tema Alt+Tab mediante el journal de
-`singlr_kwin.py` y restaura la elección de Plasma al salir, también tras fallos.
-Las copias instaladas del QML de Workspace apuntan a los tokens `Singlr.Ui`
-instalados, no al checkout. Guía de uso, organización nativa de ventanas y
-procedimiento de dos pantallas/escritorios: [session/WORKSPACE.md](../session/WORKSPACE.md).
+KDE gestiona ventanas, escritorios, vista general, Alt+Tab, gestos, animaciones
+y esquinas con sus preferencias. El paquete ya no instala extensiones propias
+para estas funciones. Los journals anteriores se restauran antes de aplicar
+únicamente el material del shell. Pacman retira los archivos antiguos de su
+propiedad al actualizar; copias manuales del usuario requieren revisión aparte.
+Véase [session/WORKSPACE.md](../session/WORKSPACE.md).
 
 ## Cambio de sesión T266
 

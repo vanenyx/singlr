@@ -44,9 +44,9 @@ componentes que necesita.
 | --- | --- |
 | 01. Singlr Desktop | Superficie del escritorio, fondo, paneles, navegación de aplicaciones, dock o equivalente, indicadores, bandeja y menús |
 | 02. Singlr Command | Búsqueda de aplicaciones, archivos y configuraciones, acciones rápidas, calculadora y operaciones contextuales |
-| 03. Singlr Workspace | Cambio de ventanas, multitarea, vista general, organización, escritorios virtuales, foco y atajos |
+| 03. Singlr Workspace | Cambio de ventanas, multitarea, vista general, organización, escritorios virtuales, foco y atajos. **[Registro]** gestionado por KDE desde P-032 |
 | 04. Singlr System | Centro de control, conectividad, audio, energía, notificaciones, controles multimedia y menú de sesión |
-| 05. Singlr Appearance | Sistema visual, decoración de ventanas, materiales, efectos, modos claro y oscuro, preferencias y personalización |
+| 05. Singlr Appearance | Sistema visual, decoración de ventanas, materiales, efectos, modos claro y oscuro, preferencias y personalización. **[Registro]** Animaciones de ventana: gestionado por KDE desde P-032 |
 | 06. Singlr Session | Inicio, bloqueo seguro, suspensión, recuperación ante fallos, multimonitor y funcionamiento de una sesión real |
 | 07. Singlr Platform | Instalador, empaquetado, actualizaciones, configuración persistente, compatibilidad, documentación y herramientas de diagnóstico |
 

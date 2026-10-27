@@ -284,6 +284,10 @@ int main(int argc, char *argv[])
         qCCritical(shellLog) << "Cannot acquire org.kde.plasmashell; refusing a partial or duplicate shell";
         return 1;
     }
+    if (ownsPlasma) {
+        if (!SinglrShortcuts::restoreKWin())
+            qCWarning(shellLog, "No se pudieron restaurar los atajos KWin anteriores; se conserva el backup");
+    }
     bool shortcutsCleanupDone = false;
     const auto cleanupShortcuts = [ownsPlasma, &shortcutsCleanupDone] {
         if (!ownsPlasma || shortcutsCleanupDone)
@@ -355,10 +359,6 @@ int main(int argc, char *argv[])
             bus.registerVirtualObject(QStringLiteral("/App"), bridge);
             bus.registerVirtualObject(QStringLiteral("/org/kde/krunner"), bridge);
         }
-    }
-    if (ownsPlasma) {
-        if (!SinglrShortcuts::applyKWin())
-            qCWarning(shellLog, "No se pudieron aplicar los atajos KWin; se restaurará el backup al salir");
     }
     for (QWindow *window : QGuiApplication::allWindows())
         if (auto *quick = qobject_cast<QQuickWindow *>(window))

@@ -94,7 +94,7 @@ Item {
             fakeTasks.append({AppName: "Editor", IsLauncher: false, HasLauncher: false, IsActive: true, IsWindow: true, decoration: "utilities-terminal"});
             fakeTasks.append({AppName: "Archivos", IsLauncher: true, HasLauncher: true, IsActive: false, IsWindow: false, decoration: "system-file-manager"});
             tryCompare(topbar, "activeAppName", "Editor");
-            tryCompare(dock, "width", 131);
+            tryCompare(dock, "width", 169); // Includes the always-visible KDE Overview button.
             fakeTasks.setProperty(0, "IsActive", false);
             fakeTasks.setProperty(1, "IsActive", true);
             tryCompare(topbar, "activeAppName", "Archivos");

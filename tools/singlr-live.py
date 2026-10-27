@@ -23,8 +23,6 @@ PLASMA_MARK = STATE / 'plasma-stopped'
 NETWORK_MARK = STATE / 'networkmanagement-unloaded'
 KWIN_BACKUP = singlr_kwin.backup_path()
 AURORAE = Path.home() / '.local/share/aurorae/themes/Singlr'
-OVERVIEW = Path.home() / '.local/share/kwin/effects/singlr-overview'
-GESTURES = Path.home() / '.local/share/kwin/scripts/singlr-gestures'
 PLASMA_UNIT = 'plasma-plasmashell.service'
 LOG = STATE / 'shell.log'
 
@@ -84,20 +82,6 @@ def remove_settings_app():
 
 
 def apply_kwin():
-    theme = Path(__file__).resolve().parents[1] / 'decoration/aurorae/Singlr'
-    if not (theme / 'decoration.svg').exists():
-        return
-    AURORAE.parent.mkdir(parents=True, exist_ok=True)
-    if not AURORAE.exists():
-        AURORAE.symlink_to(theme)
-    effect = Path(__file__).resolve().parents[1] / 'kwin/effects/singlr-overview'
-    OVERVIEW.parent.mkdir(parents=True, exist_ok=True)
-    if not OVERVIEW.exists():
-        OVERVIEW.symlink_to(effect)
-    gestures = Path(__file__).resolve().parents[1] / 'kwin/scripts/singlr-gestures'
-    GESTURES.parent.mkdir(parents=True, exist_ok=True)
-    if not GESTURES.exists():
-        GESTURES.symlink_to(gestures)
     singlr_kwin.apply(KWIN_BACKUP, recover_pending=True)
     singlr_kwin.reload_kwin(applying=True)
 

@@ -69,9 +69,6 @@ class PackagingTests(unittest.TestCase):
         cmake = (ROOT / 'shell/session/CMakeLists.txt').read_text()
         for source in (ROOT / 'shell/session/src').glob('*.cpp'):
             self.assertIn('src/' + source.name, cmake)
-        for kind, name in [('effects', 'singlr-overview'), ('scripts', 'singlr-gestures')]:
-            metadata = json.loads((ROOT / f'kwin/{kind}/{name}/metadata.json').read_text())
-            self.assertEqual(metadata['KPlugin']['Id'], name)
 
     @unittest.skipUnless(shutil.which('g++') and shutil.which('pkg-config'), 'requires Qt build tools')
     def test_reload_bridge(self):

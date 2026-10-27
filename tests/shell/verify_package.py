@@ -24,13 +24,6 @@ def verify(stage):
         'usr/lib/systemd/user/plasma-plasmashell.service.d/50-singlr.conf',
         'usr/lib/systemd/user/singlr-kwin-prepare.service',
         'usr/lib/systemd/user/singlr-shell-failed.service',
-        'usr/share/kwin/tabbox/singlr/metadata.json',
-        'usr/share/kwin/tabbox/singlr/contents/ui/main.qml',
-        'usr/share/kwin/tabbox/singlr/contents/ui/SwitcherView.qml',
-        'usr/share/kwin/effects/singlr-overview/metadata.json',
-        'usr/share/kwin/effects/singlr-overview/contents/ui/main.qml',
-        'usr/share/kwin/scripts/singlr-gestures/metadata.json',
-        'usr/share/kwin/scripts/singlr-gestures/contents/ui/main.qml',
         'usr/share/plasma/shells/org.singlr.desktop/metadata.json',
         'usr/share/plasma/shells/org.singlr.desktop/contents/lockscreen/LockScreen.qml',
         'usr/share/plasma/shells/org.singlr.desktop/contents/lockscreen/LockScreenUi.qml',
@@ -54,12 +47,6 @@ def verify(stage):
     assert '/usr/lib/singlr/singlr-shell-exec' in (root / 'usr/lib/systemd/user/plasma-plasmashell.service.d/50-singlr.conf').read_text()
     from test_session_entry import verify_shell_selection
     verify_shell_selection(root)
-    import json
-    switcher = root / 'usr/share/kwin/tabbox/singlr'
-    assert json.loads((switcher / 'metadata.json').read_text())['KPackageStructure'] == 'KWin/WindowSwitcher'
-    for qml in (switcher / 'contents/ui/SwitcherView.qml', root / 'usr/share/kwin/effects/singlr-overview/contents/ui/main.qml'):
-        assert 'import "file:///usr/lib/singlr/qml/Singlr/Ui" as Ui' in qml.read_text(), qml
-        assert 'shell/qml/Singlr/Ui' not in qml.read_text(), qml
     print('PASS staged payload, executable modes, fonts and session paths')
 
 

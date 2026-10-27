@@ -7,13 +7,10 @@
 #include <QDBusInterface>
 #include <QDBusMetaType>
 #include <QDBusReply>
-#include <QDir>
 #include <QFile>
-#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QLockFile>
-#include <QSaveFile>
 #include <QDebug>
 #include <cmath>
 #include <limits>
@@ -23,7 +20,7 @@ QStringList actionNames()
 {
     return {QStringLiteral("Window Maximize"), QStringLiteral("Window Minimize"),
             QStringLiteral("Window Quick Tile Top"), QStringLiteral("Window Quick Tile Bottom"),
-            // KWin 6 also binds Meta+Tab to the window switcher; P-015 gives it to the overview.
+            // Retired actions: accepted only to restore existing backups (P-032).
             QStringLiteral("Walk Through Windows"), QStringLiteral("Walk Through Windows (Reverse)"),
             QStringLiteral("Singlr Overview")};
 }
@@ -96,18 +93,6 @@ void registerTypes()
     qDBusRegisterMetaType<QList<QKeySequence>>();
 }
 QStringList actionId(const QString &name) { return {QStringLiteral("kwin"), name, QStringLiteral("KWin"), name}; }
-bool readKeys(QDBusInterface &api, Snapshot &snapshot)
-{
-    for (const auto &name : actionNames()) {
-        QDBusReply<QList<QKeySequence>> reply = api.call(QStringLiteral("shortcutKeys"), actionId(name));
-        if (!reply.isValid()) {
-            qWarning() << "Singlr: shortcutKeys" << name << reply.error();
-            return false;
-        }
-        snapshot.insert(name, reply.value());
-    }
-    return true;
-}
 bool writeKeys(QDBusInterface &api, const QString &name, const QList<QKeySequence> &keys)
 {
     QDBusReply<void> reply = api.call(QStringLiteral("setForeignShortcutKeys"), actionId(name), QVariant::fromValue(keys));
@@ -131,54 +116,6 @@ bool loadBackup(const QString &path, Snapshot &snapshot)
     }
     return true;
 }
-}
-bool applyKWin()
-{
-    registerTypes();
-    const QString path = backupPath();
-    if (path.isEmpty() || !QDir().mkpath(QFileInfo(path).absolutePath()))
-        return false;
-    QLockFile lock(path + ".lock");
-    if (!lock.tryLock(0))
-        return false;
-    QDBusInterface api("org.kde.kglobalaccel", "/kglobalaccel", "org.kde.KGlobalAccel");
-    api.setTimeout(1500);
-    Snapshot current, original;
-    if (!readKeys(api, current))
-        return false;
-    if (QFile::exists(path)) {
-        if (!loadBackup(path, original))
-            return false;
-    } else {
-        QSaveFile file(path);
-        const auto data = encode(current).toJson();
-        if (!file.open(QIODevice::WriteOnly) || !file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner)
-            || file.write(data) != data.size() || !file.commit()) {
-            qWarning() << "Singlr: no se pudo guardar backup de atajos" << path;
-            return false;
-        }
-    }
-    const QKeySequence up(Qt::META | Qt::Key_Up), down(Qt::META | Qt::Key_Down);
-    // Release these keys from all four actions first, including inverted custom bindings.
-    for (const auto &name : actionNames()) {
-        auto keys = current.value(name);
-        keys.removeAll(up);
-        keys.removeAll(down);
-        if (!writeKeys(api, name, keys))
-            return false;
-    }
-    if (!writeKeys(api, actionNames()[0], {up}) || !writeKeys(api, actionNames()[1], {down}))
-        return false;
-    // Alt+Tab stays the window switcher; Meta+Tab is the overview (P-015).
-    const QKeySequence metaTab(Qt::META | Qt::Key_Tab), metaShiftTab(Qt::META | Qt::SHIFT | Qt::Key_Tab);
-    for (const auto &name : {actionNames()[4], actionNames()[5]}) {
-        auto keys = current.value(name);
-        keys.removeAll(metaTab);
-        keys.removeAll(metaShiftTab);
-        if (!writeKeys(api, name, keys))
-            return false;
-    }
-    return writeKeys(api, actionNames()[6], {metaTab});
 }
 bool restoreKWin()
 {
@@ -220,9 +157,9 @@ void registerActions(QObject *parent, QObject *session)
         qWarning() << "Singlr: falta activateDockEntry(QVariant)";
     }
     struct Entry { const char *name; const char *method; QKeyCombination key; };
+    // Meta+Alt+S belongs to KDE screenreader; the session menu remains available in the bar.
     const Entry entries[] = {{"Mostrar notificaciones", "toggleNotifications", Qt::META | Qt::Key_N},
                              {"Foco en el dock", "focusDock", Qt::META | Qt::ALT | Qt::Key_D},
-                             {"Menú de sesión", "showSessionMenu", Qt::META | Qt::ALT | Qt::Key_S},
                              {"Centro de control", "toggleControlCenter", Qt::META | Qt::Key_A},
                              {"Historial del portapapeles", "toggleClipboard", Qt::META | Qt::Key_V}};
     for (const auto &entry : entries) {

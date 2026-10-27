@@ -87,8 +87,6 @@ Item {
                 compare(surface.LayerShell.Window.exclusionZone, 0);
                 session.focusDock(); verify(surface.visible); verify(panel.keyboardHeld);
                 session.dockKeyboard = false;
-                session.overviewOpen = true; verify(surface.visible);
-                session.overviewOpen = false;
                 DockSettings.setAutoHide(false); verify(!edge.active); verify(surface.visible);
             }
         }

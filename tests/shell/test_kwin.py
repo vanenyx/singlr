@@ -23,9 +23,8 @@ class KWinTests(unittest.TestCase):
         patcher.start(); self.addCleanup(patcher.stop)
         self.backup = Path(tmp.name) / 'state/kwinrc-backup.json'
         self.values = {(g, k): 'previous' for g, k, _ in kwin.KWIN_SETTINGS}
-        self.values[('Effect-overview', 'BorderActivate')] = '7'
-        self.values[('Effect-scale', 'OutOpacity')] = ''
-        self.values.pop(('Plugins', 'singlr-gesturesEnabled'))
+        self.values[('Effect-singlrliquidglass', 'Enabled')] = ''
+        self.values.pop(('Plugins', 'singlr-liquidglassEnabled'))
         self.original = self.values.copy()
         self.writes = []
         for name, function in [('read', lambda g, k: self.values.get((g, k))), ('write', self.write)]:
@@ -81,41 +80,57 @@ class KWinTests(unittest.TestCase):
         kwin.restore(self.backup)
         self.assertEqual(self.values, self.original)
 
-    def test_overview_corner_preserves_other_edges_and_restores_exactly(self):
-        key = ('Effect-overview', 'BorderActivate')
-        for original, expected in ((None, ''), ('', ''), ('7', ''), ('1,7,3', '1,3'), ('1,3', '1,3'), ('9', '9')):
-            with self.subTest(original=original):
-                if original is None:
-                    self.values.pop(key, None)
-                else:
-                    self.values[key] = original
-                kwin.apply(self.backup)
-                self.assertEqual(self.values[key], expected)
-                kwin.restore(self.backup)
-                self.assertEqual(self.values.get(key), original)
+    def test_all_accepted_legacy_versions_restore_exactly_before_new_material_snapshot(self):
+        previous = kwin.MATERIAL_KEYS | kwin.WORKSPACE_KEYS
+        legacy = {pair for pair in previous if pair[0] != 'TabBox'}
+        for base in (previous, legacy, previous - kwin.MATERIAL_KEYS, legacy - kwin.MATERIAL_KEYS):
+            for edges in (set(), kwin.OVERVIEW_EDGE_KEYS):
+                for gestures in (set(), kwin.GESTURE_KEYS):
+                    for decoration in (set(), kwin.DECORATION_KEYS):
+                        keys = (base - edges - gestures) | decoration
+                        for recover in (False, True):
+                            with self.subTest(keys=keys, recover=recover):
+                                originals = [[g, k, (None, '', 'custom')[i % 3]]
+                                             for i, (g, k) in enumerate(sorted(keys))]
+                                self.values = {(g, k): 'singlr-applied' for g, k in keys}
+                                expected = {(g, k): v for g, k, v in originals if v is not None}
+                                self.backup.parent.mkdir(exist_ok=True)
+                                self.backup.write_text(json.dumps(originals))
+                                self.writes.clear()
+                                if recover:
+                                    kwin.apply(self.backup, recover_pending=True)
+                                    self.assertEqual(self.writes[:len(originals)], [tuple(row) for row in originals])
+                                    journal = json.loads(self.backup.read_text())
+                                    self.assertEqual({(g, k) for g, k, _ in journal}, kwin.MATERIAL_KEYS)
+                                    for g, k, v in journal:
+                                        self.assertEqual(v, expected.get((g, k)))
+                                    kwin.restore(self.backup)
+                                else:
+                                    kwin.restore(self.backup)
+                                self.assertEqual(self.values, expected)
+                                self.assertFalse(self.backup.exists())
 
-    def test_native_multitasking_restores_absent_or_explicit(self):
-        for original in (None, 'true', 'false'):
-            for key in kwin.GESTURE_KEYS:
-                with self.subTest(key=key, original=original):
-                    self.write(*key, original)
-                    before = self.values.copy()
-                    kwin.apply(self.backup)
-                    self.assertEqual(self.values[('Plugins', 'overviewEnabled')], 'false')
-                    self.assertEqual(self.values[('Plugins', 'windowviewEnabled')], 'false')
-                    kwin.restore(self.backup)
-                    self.assertEqual(self.values, before)
+    def test_new_journal_only_material_leaves_workspace_preferences_untouched(self):
+        for i, pair in enumerate(sorted(kwin.RETIRED_KEYS)):
+            if i % 3:
+                self.values[pair] = '' if i % 3 == 1 else 'custom'
+        before = self.values.copy()
+        kwin.apply(self.backup)
+        self.assertEqual({(g, k) for g, k, _ in json.loads(self.backup.read_text())}, kwin.MATERIAL_KEYS)
+        self.assertTrue(all((g, k) in kwin.MATERIAL_KEYS for g, k, _ in self.writes))
+        kwin.restore(self.backup)
+        self.assertEqual(self.values, before)
 
-    def test_pre_t262_journals_recover_before_snapshot_of_new_keys(self):
-        for extras in (set(), kwin.MATERIAL_KEYS | kwin.OVERVIEW_EDGE_KEYS):
-            with self.subTest(extras=extras):
-                self.backup.parent.mkdir(exist_ok=True)
-                self.backup.write_text(json.dumps([
-                    [g, k, self.original.get((g, k))] for g, k, _ in kwin.KWIN_SETTINGS
-                    if (g, k) not in kwin.GESTURE_KEYS | extras]))
-                self.assertTrue(kwin.apply(self.backup, recover_pending=True))
-                self.assertTrue(kwin.restore(self.backup))
-                self.assertEqual(self.values, self.original)
+    def test_reload_retires_extensions_and_leaves_kde_effects_to_reconfigure(self):
+        for applying in (True, False):
+            with patch.object(kwin.subprocess, 'run') as run:
+                kwin.reload_kwin(applying=applying)
+            calls = [call.args[0][2:] for call in run.call_args_list]
+            self.assertIn(['/KWin', 'reconfigure'], calls)
+            self.assertFalse(any(c[-1] in ('overview', 'windowview') for c in calls))
+            if applying:
+                self.assertIn(['/Effects', 'org.kde.kwin.Effects.unloadEffect', kwin.RETIRED_EFFECT], calls)
+                self.assertIn(['/Scripting', 'org.kde.kwin.Scripting.unloadScript', kwin.RETIRED_SCRIPT], calls)
 
     def test_desktop_layout_is_not_changed(self):
         self.values[('Desktops', 'Rows')] = '2'
@@ -124,19 +139,6 @@ class KWinTests(unittest.TestCase):
         kwin.restore(self.backup)
         self.assertEqual(self.values[('Desktops', 'Rows')], '2')
         self.assertFalse(any((g, k) == ('Desktops', 'Rows') for g, k, _ in self.writes))
-
-    def test_pre_corner_journal_recovers_before_snapshot_of_new_key(self):
-        self.backup.parent.mkdir()
-        self.backup.write_text(json.dumps([[g, k, self.original.get((g, k))]
-                                          for g, k, _ in kwin.KWIN_SETTINGS
-                                          if (g, k) not in kwin.OVERVIEW_EDGE_KEYS]))
-        key = ('Effect-overview', 'BorderActivate')
-        self.values[key] = '1,7'
-        self.assertTrue(kwin.apply(self.backup, recover_pending=True))
-        self.assertEqual(self.values[key], '1')
-        self.assertEqual(next(v for g, k, v in json.loads(self.backup.read_text()) if (g, k) == key), '1,7')
-        kwin.restore(self.backup)
-        self.assertEqual(self.values[key], '1,7')
 
     def test_malformed_material_preferences_do_not_prevent_login(self):
         config = Path(os.environ['XDG_CONFIG_HOME']) / 'singlr/singlr.conf'
@@ -161,14 +163,6 @@ class KWinTests(unittest.TestCase):
         self.assertTrue(kwin.restore(self.backup))
         self.assertEqual(self.values, original)
 
-    def test_pre_t248_journal_can_recover_after_upgrade(self):
-        self.backup.parent.mkdir()
-        legacy = [[g, k, self.original.get((g, k))] for g, k, _ in kwin.KWIN_SETTINGS
-                  if (g, k) not in kwin.MATERIAL_KEYS]
-        self.backup.write_text(json.dumps(legacy))
-        self.assertTrue(kwin.restore(self.backup))
-        self.assertEqual(self.values, self.original)
-
     def test_apply_and_restore_are_idempotent(self):
         kwin.apply(self.backup)
         snapshot = self.backup.read_bytes()
@@ -184,7 +178,7 @@ class KWinTests(unittest.TestCase):
     def test_pending_restore_before_new_snapshot_after_partial_apply(self):
         kwin.apply(self.backup)
         # Model a crash partway through applying: some keys still have old values.
-        self.values[('Effect-scale', 'InScale')] = self.original[('Effect-scale', 'InScale')]
+        self.values[('Effect-singlrliquidglass', 'Intensity')] = self.original[('Effect-singlrliquidglass', 'Intensity')]
         kwin.apply(self.backup, recover_pending=True)
         journal = {(g, k): v for g, k, v in json.loads(self.backup.read_text())}
         self.assertEqual(journal, {(g, k): self.original.get((g, k)) for g, k, _ in kwin.KWIN_SETTINGS})
@@ -203,7 +197,7 @@ class KWinTests(unittest.TestCase):
 
     def test_failed_apply_rolls_back(self):
         def write(group, key, value):
-            if (group, key, value) == kwin.KWIN_SETTINGS[3]:
+            if (group, key, value) == kwin.KWIN_SETTINGS[1]:
                 raise OSError('write failed')
             self.write(group, key, value)
         with patch.object(kwin, 'write', side_effect=write):
@@ -220,16 +214,6 @@ class KWinTests(unittest.TestCase):
                 kwin.apply(self.backup, recover_pending=True)
             self.assertEqual(self.backup.read_text(), content)
             self.assertEqual(self.writes, [])
-
-    def test_old_journal_restores_before_new_switcher_snapshot(self):
-        self.backup.parent.mkdir()
-        legacy = [[g, k, self.original.get((g, k))] for g, k, _ in kwin.KWIN_SETTINGS if g != 'TabBox']
-        self.backup.write_text(json.dumps(legacy))
-        self.values[('TabBox', 'LayoutName')] = 'plasma-choice'
-        kwin.apply(self.backup, recover_pending=True)
-        self.assertEqual(self.values[('TabBox', 'LayoutName')], 'singlr')
-        kwin.restore(self.backup)
-        self.assertEqual(self.values[('TabBox', 'LayoutName')], 'plasma-choice')
 
     def test_duplicate_journal_is_rejected(self):
         self.backup.parent.mkdir()
@@ -256,16 +240,14 @@ class KConfigTests(unittest.TestCase):
             with patch.dict(os.environ, env):
                 kwin.write('org.kde.kdecoration2', 'theme', '')
                 kwin.write('Plugins', 'scaleEnabled', 'false')
-                self.assertIsNone(kwin.read('Plugins', 'singlr-overviewEnabled'))
                 self.assertEqual(kwin.read('org.kde.kdecoration2', 'theme'), '')
                 self.assertTrue(kwin.apply())
                 for effect in ('overviewEnabled', 'windowviewEnabled'):
-                    self.assertEqual(kwin.read('Plugins', effect), 'false')
-                self.assertEqual(kwin.read('Effect-overview', 'BorderActivate'), '')
+                    self.assertIsNone(kwin.read('Plugins', effect))
+                self.assertIsNone(kwin.read('Effect-overview', 'BorderActivate'))
                 # New process models recovery after the original process disappeared.
                 subprocess.run([str(ROOT / 'session/singlr-kwin'), '--restore', '--offline'],
                                check=True, env=os.environ | {'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/nonexistent'})
-                self.assertIsNone(kwin.read('Plugins', 'singlr-overviewEnabled'))
                 self.assertEqual(kwin.read('Plugins', 'scaleEnabled'), 'false')
                 self.assertEqual(kwin.read('org.kde.kdecoration2', 'theme'), '')
                 self.assertFalse(kwin.backup_path().exists())
@@ -274,7 +256,7 @@ class KConfigTests(unittest.TestCase):
                 self.assertIsNone(kwin.read('Effect-overview', 'BorderActivate'))
                 kwin.write('Effect-overview', 'BorderActivate', '1,7,3')
                 kwin.apply()
-                self.assertEqual(kwin.read('Effect-overview', 'BorderActivate'), '1,3')
+                self.assertEqual(kwin.read('Effect-overview', 'BorderActivate'), '1,7,3')
                 kwin.restore()
                 self.assertEqual(kwin.read('Effect-overview', 'BorderActivate'), '1,7,3')
 
