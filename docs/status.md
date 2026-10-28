@@ -153,6 +153,13 @@ T271: memoria del shell. El buscador del launcher ya no carga el runner de la ti
 | --- | --- | --- |
 | T272 / P-032 | Singlr reducido a superficies del shell, vidrio y fondo; KDE gestiona Workspace. Extensiones propias retiradas; journals antiguos recuperables. | [Entrega](handoffs/T272-singlr-scope.md); integración real y D-Bus privado pendientes fuera del sandbox. |
 
+T273/P-033: el historial conserva el orden de copia al pegar o usar «Copiar»;
+las copias nuevas siguen arriba. Vista sobre Klipper con UUID persistentes,
+sin duplicar textos/imágenes ni modificar KDE. QML: 244 shell + 11 Ajustes por
+modo, sin fallos; prueba nativa de selección/copia/eliminación/persistencia y
+recorridos KWin privados para texto, imagen y solo copiar correctos. Requiere
+paquete/módulo actualizado al próximo inicio. [Entrega](handoffs/T273-clipboard-copy-order.md).
+
 ## Siguientes cierres necesarios
 
 1. Aceptación visual y nativa del dock corregido: touchpad, DND, autohide y espacio reservado en distintas salidas.

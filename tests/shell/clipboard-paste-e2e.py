@@ -52,6 +52,7 @@ def case(folder, terminal=False, kind='paste'):
             call('toggleClipboard')
             e2e['wait_for'](lambda: int(read_state(panel_state).get('count', '-1')) >= 2, process, 10)
             e2e['wait_for'](lambda: read_state(panel_state).get('canpaste') == 'true', process, 5)
+            initial_order = e2e['wait_for'](lambda: read_state(panel_state).get('historyorder'), process, 5)
             if kind == 'target-gone':
                 target.terminate(); target.wait(timeout=5); target = None
                 time.sleep(.2)
@@ -79,8 +80,11 @@ def case(folder, terminal=False, kind='paste'):
                     e2e['wait_for'](lambda: read_state(target_state).get('content', '').strip('"').replace('\\n', '\n') == expected, process, 6)
                 if terminal and read_state(target_state).get('terminalchord') != 'true':
                     raise RuntimeError('Terminal did not receive Ctrl+Shift+V')
+            time.sleep(.3)
+            if read_state(panel_state).get('historyorder') != initial_order:
+                raise RuntimeError('Using history changed copy order')
             result = {'case': 'terminal' if terminal else kind, 'result': 'PASS',
-                'real_history': True, 'terminal_metadata_fixture': terminal}
+                'real_history': True, 'copy_order_preserved': True, 'terminal_metadata_fixture': terminal}
         finally:
             if other and other.poll() is None:
                 other.terminate()

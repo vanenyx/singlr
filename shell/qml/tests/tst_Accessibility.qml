@@ -19,7 +19,7 @@ Item {
     ListModel {
         id: clipboardHistory
         property string copied: ""
-        function moveToTop(uuid) { copied = uuid; }
+        function select(uuid) { copied = uuid; }
     }
     Component { id: launcherFactory; Launcher { modelOverride: results } }
     Component { id: clipboardFactory; ClipboardPanel { history: clipboardHistory } }

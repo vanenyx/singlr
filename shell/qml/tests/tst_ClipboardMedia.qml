@@ -17,7 +17,7 @@ Item {
         property string copied: ""
         property string removed: ""
         property int clears: 0
-        function moveToTop(uuid) { copied = uuid; }
+        function select(uuid) { copied = uuid; }
         function remove(uuid) {
             removed = uuid;
             for (let i = 0; i < clipboard.count; ++i) if (clipboard.get(i).uuid === uuid) { clipboard.remove(i); return; }

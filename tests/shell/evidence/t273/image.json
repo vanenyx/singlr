@@ -1,0 +1,7 @@
+{
+  "case": "image",
+  "result": "PASS",
+  "real_history": true,
+  "copy_order_preserved": true,
+  "terminal_metadata_fixture": false
+}

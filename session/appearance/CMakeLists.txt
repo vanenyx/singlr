@@ -10,7 +10,7 @@ qt_add_qml_module(singlr-system
     RESOURCE_PREFIX /qt/qml
     OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml/Singlr/System"
     SOURCES kdeappearance.h kdeappearance.cpp dockiconmetrics.h
-        clipboardpastebridge.h clipboardpastebridge.cpp singularity.h singularity.cpp
+        clipboardpastebridge.h clipboardpastebridge.cpp clipboardhistorymodel.h clipboardhistorymodel.cpp singularity.h singularity.cpp
 )
 target_link_libraries(singlr-system PRIVATE Qt6::Gui Qt6::Quick Qt6::DBus KF6::ConfigGui
     KF6::GuiAddons KF6::Service Plasma::KWaylandClient KF6::ScreenDpms)
@@ -65,3 +65,8 @@ find_package(Qt6 6.6 REQUIRED COMPONENTS GuiPrivate)
 add_executable(singlr-singularity-bench EXCLUDE_FROM_ALL ../../tests/shell/singularity_bench.cpp)
 target_include_directories(singlr-singularity-bench PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(singlr-singularity-bench PRIVATE singlr-system Qt6::Quick Qt6::GuiPrivate)
+
+add_executable(singlr-clipboard-history-test EXCLUDE_FROM_ALL
+    ../../tests/shell/clipboard_history.cpp clipboardhistorymodel.h clipboardhistorymodel.cpp)
+target_include_directories(singlr-clipboard-history-test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(singlr-clipboard-history-test PRIVATE Qt6::Core Qt6::Qml Qt6::Test)

@@ -249,3 +249,19 @@ y conserva su autoocultado sin sondear el estado de la multitarea. Se retira la
 asignación propia Meta+Alt+S por coincidir con el lector de pantalla de Plasma
 6.8.1; el menú de sesión conserva su acceso desde la barra.
 [Entrega y comprobaciones](handoffs/T272-singlr-scope.md).
+
+
+## P-033 — orden de copia del portapapeles (explícita, 28 oct 2026)
+
+El creador pide que usar una entrada del historial no la suba al principio.
+La lista de Singlr conserva el orden de copia; copiar contenido nuevo o volver a
+copiarlo desde una aplicación sí lo lleva arriba. Complementa el pegado de P-026.
+
+## T273 — vista ordenada sobre Klipper
+
+ClipboardHistoryModel conserva una secuencia de UUID, sin duplicar contenido.
+La selección delega la restauración MIME a moveToTop de KDE pero no adopta ese
+movimiento como nueva copia en la vista. Las copias externas sí actualizan el
+orden, incluso si la entrada ya era primera en el modelo nativo. El orden se
+persiste en el estado de Singlr y se poda con las eliminaciones. No se reemplaza
+Klipper ni se manipula su base SQLite. [Entrega](handoffs/T273-clipboard-copy-order.md).

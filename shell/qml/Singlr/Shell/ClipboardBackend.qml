@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import org.kde.plasma.private.clipboard as Clipboard
+import Singlr.System
 
 Item {
     id: backend
@@ -17,6 +18,7 @@ Item {
         readonly property alias history: history
         // Retain Klipper::self(): observation, persistence and D-Bus.
         Clipboard.KlipperInterface { id: service }
-        Clipboard.HistoryModel { id: history }
+        Clipboard.HistoryModel { id: nativeHistory }
+        ClipboardHistoryModel { id: history; sourceModel: nativeHistory }
     }
 }

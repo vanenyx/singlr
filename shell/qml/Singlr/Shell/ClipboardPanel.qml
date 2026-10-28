@@ -27,11 +27,11 @@ FocusScope {
     function move(delta) {
         if (list.count) selectedIndex = (Math.max(0, selectedIndex) + delta + list.count) % list.count;
     }
-    function copy(uuid) { history.moveToTop(uuid); close(); }
+    function copy(uuid) { history.select(uuid); close(); }
     function select(uuid) {
         if (!pasteOnSelect) { copy(uuid); return; }
         pasteBridge.preparePaste();
-        history.moveToTop(uuid);
+        history.select(uuid);
         pasteBridge.requestPaste();
         close();
     }

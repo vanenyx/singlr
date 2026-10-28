@@ -305,3 +305,11 @@ hashes host iguales. Sin A/B ni certificación del presupuesto en sesión real.
 El puente conserva metadatos de ventanas y referencias; no duplica historial o
 contenido. Reintento 15 ms y límite 1500 ms solo mientras hay una solicitud;
 ambos se detienen al completar o cancelar.
+
+
+## T273 — orden de copia del historial (28 oct 2026)
+
+Muestra privada de measure-resources.sh: 79,37 MB PSS, 61,03 MB anónimos,
+0,100 % CPU, 35 hilos y tres superficies. Sin A/B ni certificación de sesión real.
+El proxy retiene solo una lista de UUID y escribe cuando cambia el orden o se
+eliminan entradas; la selección no escribe metadatos nuevos. Sin polling de reposo.

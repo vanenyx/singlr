@@ -900,3 +900,11 @@ hasta ejecutar estos recorridos; no tocar la sesión KDE habitual.
 Actualiza el comportamiento de copia descrito en T238: clic o Enter selecciona y
 pega en el destino original con capacidad Wayland. Ctrl+Enter o menú «Copiar» solo
 copia. Sin destino válido se mantiene copia. [Entrega](../../docs/handoffs/T258-clipboard-paste.md).
+
+
+## T273 — orden al usar el historial
+
+La vista de Singlr conserva el orden de copia: seleccionar/pegar no sube entradas.
+Copias nuevas o repetidas desde una aplicación sí van arriba. Klipper conserva
+la restauración MIME; ClipboardHistoryModel guarda únicamente orden por UUID.
+[Contrato y verificación](../../docs/handoffs/T273-clipboard-copy-order.md).
